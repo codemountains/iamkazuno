@@ -105,7 +105,11 @@ MCPから取得した既存の3つの **リスト形式API** に合わせてい�
 
 ### 画像と説明文
 
-メイン画像はmicroCMSの画像APIで幅とWebP形式を指定して配信します。通常の外部画像URLも表示できます。
+メイン画像はmicroCMSの画像APIで幅・品質85を指定し、`picture` でAVIFを優先、WebPをフォールバックとして配信します。`auto=format` はmicroCMSで非対応のため使いません。通常の外部画像URLやSVGは変換せず表示します。
+
+一覧には160 / 240 / 320 / 480 / 640 / 960px、詳細には480 / 640 / 960 / 1280pxの画像候補を用意します。元画像より大きい候補は元の幅に揃えて重複を除去し、`sizes` は画像内の余白を除いた描画幅を指定します。ブラウザが画面幅と画素密度に応じて候補を選ぶため、画像APIの `dpr` は併用しません。
+
+カテゴリ付きURLでは、カードのHTMLを読み込む前に対象外を隠し、初期表示の絞り込み・件数をインラインのJavaScriptで確定します。一覧画像は最初は遅延読み込みにし、表示対象の先頭4枚だけ即時読み込みに切り替えます。カテゴリ操作用のJavaScriptの取得を待たずに対象のアイテムを表示し、JavaScript無効時は全件表示を維持します。
 
 `description` はビルド時に `sanitize-html` で処理してから、詳細ページでHTMLとして表示します。見出し、段落、強調、箇条書き、引用、コード、リンク、表、画像などの基本書式に対応しています。`script` / `iframe` / `style` などの実行可能な埋め込みや、イベント属性、危険なURLは除去します。見出しの `h1` はページタイトルと重複しないよう `h2` に変換します。
 
@@ -143,6 +147,8 @@ Workers Buildsで本番ブランチのDeploy Hookを作り、microCMSの `things
 - `src/pages/picks/index.astro`: コレクション一覧とカテゴリフィルター
 - `src/pages/picks/things/[id].astro`: アイテムの詳細ページを静的生成
 - `src/components/ItemCard.astro`: 詳細ページへ移動するアイテムカードと画像配信
+- `src/components/ThingImage.astro`: AVIF / WebPの切り替えと描画幅に応じた画像候補の指定
+- `src/lib/thing-image.ts`: microCMS画像APIのURL生成と元画像幅を超えない候補の作成
 - `src/styles/global.css`: 色、余白、フォント、レスポンシブ表示
 - `src/data/sample.ts`: 実APIと同じ構造のサンプルアイテム・ブランド・カテゴリ
 - `public/images/samples/`: オリジナルのサンプルSVG

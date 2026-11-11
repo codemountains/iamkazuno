@@ -8,6 +8,8 @@ import { getContent } from '../../lib/content';
 const { things, categories, source } = await getContent();
 const sample = source === 'sample';
 const count = (id: string) => things.filter((thing) => thing.categories.some((category) => category.id === id)).length;
+// URIエンコードしたキーなら、空白を含むIDもCSSの属性トークンで安全に照合できる。
+const categoryKeys = categories.map((category) => encodeURIComponent(category.id));
 ---
 
 <BaseLayout noindex={sample}>
@@ -15,6 +17,17 @@ const count = (id: string) => things.filter((thing) => thing.categories.some((ca
     <SiteHeader />
 
     <main id="main">
+      <script define:vars={{ categoryKeys }} data-filter-prepare>
+        (() => {
+          const key = encodeURIComponent(new URLSearchParams(window.location.search).get('category') || '');
+          if (!key || !categoryKeys.includes(key)) return;
+          // カードがHTMLから読み込まれる前に非対象を隠す。lazy画像の不要な取得も防ぐ。
+          const style = document.createElement('style');
+          style.id = 'picks-initial-filter';
+          style.textContent = `[data-item]:not([data-category-keys~="${key}"]) { display: none !important; } [data-results-label] { visibility: hidden; }`;
+          document.head.append(style);
+        })();
+      </script>
       <section class="collection" id="collection" aria-label="持ち物一覧">
         <div class="collection-toolbar">
           <div class="filter-navigation" hidden data-filter-navigation>
@@ -43,6 +56,33 @@ const count = (id: string) => things.filter((thing) => thing.categories.some((ca
           <p>まだ、ここには何もありません。</p>
           <p class="empty-state-note">お気に入りが見つかるまで、少しだけ。</p>
         </div>
+        <script is:inline data-filter-apply>
+          (() => {
+            // 外部の操作用moduleを待たず、初回の絞り込み・件数・画像優先度を確定する。
+            const buttons = Array.from(document.querySelectorAll('[data-filter]'));
+            const requested = new URLSearchParams(window.location.search).get('category') || '';
+            const selected = buttons.find((button) => button.dataset.filter === requested) || buttons[0];
+            const category = selected?.dataset.filter || '';
+            const key = encodeURIComponent(category);
+            let visible = 0;
+            for (const item of document.querySelectorAll('[data-item]')) {
+              item.hidden = category !== '' && !item.dataset.categoryKeys.split(' ').includes(key);
+              if (item.hidden) continue;
+              if (visible++ < 4) {
+                const image = item.querySelector('img');
+                if (image) image.loading = 'eager';
+              }
+            }
+            for (const button of buttons) button.setAttribute('aria-pressed', String(button === selected));
+            const label = document.querySelector('[data-results-label]');
+            if (label) label.textContent = category === ''
+              ? `${String(visible).padStart(2, '0')} things, well loved.`
+              : `${selected.dataset.filterLabel} — ${String(visible).padStart(2, '0')} things`;
+            const empty = document.querySelector('[data-empty-state]');
+            if (empty) empty.hidden = visible !== 0;
+            document.getElementById('picks-initial-filter')?.remove();
+          })();
+        </script>
       </section>
 
     </main>

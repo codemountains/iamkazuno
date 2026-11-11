@@ -7,12 +7,13 @@ interface Props { thing: Thing; index: number }
 const { thing, index } = Astro.props;
 ---
 
-<li class="item" data-item data-categories={JSON.stringify(thing.categories.map((category) => category.id))}>
+<li class="item" data-item data-categories={JSON.stringify(thing.categories.map((category) => category.id))} data-category-keys={thing.categories.map((category) => encodeURIComponent(category.id)).join(' ')}>
   <article class="item-card" aria-labelledby={`item-${thing.id}`}>
     <a class="item-card-link" href={thingPath(thing.id)} aria-labelledby={`item-${thing.id}`}>
       <div class="item-image-wrap">
         <span class="item-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
-        <ThingImage image={thing.image} name={thing.name} eager={index < 4} />
+        <!-- 初期カテゴリの適用後、表示対象の先頭画像だけを eager にする。 -->
+        <ThingImage image={thing.image} name={thing.name} />
         {thing.categories.length > 0 && <span class="item-category">{thing.categories.map((category) => category.name).join(' / ')}</span>}
       </div>
       <div class="item-copy">
