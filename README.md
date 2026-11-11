@@ -46,7 +46,7 @@ SITE_URL=https://iamkaz.uno
 ```
 
 - `MICROCMS_SERVICE_DOMAIN`: サービスIDのみ。`https://` と `.microcms.io` は含めません。
-- `MICROCMS_API_KEY`: `things` / `brands` / `categories` のGET権限を持つキー。書き込み権限は不要です。
+- `MICROCMS_API_KEY`: `things` / `brands` / `categories` のGET権限と、マネジメントAPIの「コンテンツの取得 (一覧・詳細)」権限を持つキー。書き込み権限は不要です。
 - `SITE_URL`: 本番サイトのURL。canonicalとOGP画像の絶対URLに使います。未設定時は `https://iamkaz.uno` を使用します。別の公開先を使う場合に上書きできます。
 - APIキーはビルド時だけ使用し、生成済みHTMLやブラウザ用JavaScriptには含めません。`.env` はGit対象外です。
 
@@ -83,6 +83,11 @@ MCPから取得した既存の3つの **リスト形式API** に合わせてい�
 | `ref_categories` | 複数コンテンツ参照 | `categories`への複数参照 |
 
 `id` はmicroCMSの標準コンテンツIDを使用し、詳細ページのURLにも使います。3つのAPIを `getAllContents()` で全件取得するため、APIの既定件数に切り詰められません。アイテムとカテゴリの表示順はAPIの取得順を維持します。
+
+`things` はビルド時にマネジメントAPIで公開状態も全件確認し、ステータスが `PUBLISH`（公開中）のみのアイテムを表示します。`DRAFT`（下書き）、`CLOSED`（公開終了）、`PUBLISH_AND_DRAFT`（公開中かつ下書き中）は一覧・件数・詳細ページ生成・旧URLリダイレクトの対象外です。下書きに戻したアイテムに過去の `publishedAt` が残っていても除外します。「公開中かつ下書き中」も除外するのは、下書き全取得権限のあるキーでは公開版ではなく下書き版が返るためです。公開状態の取得失敗や不正な応答では、下書きの混入を防ぐためビルドを中止します。
+
+- [コンテンツのステータス](https://document.microcms.io/manual/content-status)
+- [マネジメントAPIのコンテンツ一覧](https://document.microcms.io/management-api/get-list-contents-management)
 
 カテゴリフィルターは `all` と、`categories` APIから取得したカテゴリで構成します。コード内に固定カテゴリを追加しません。1つのアイテムに複数のカテゴリを設定でき、いずれのカテゴリからも絞り込めます。サンプルも実APIと同じフィールド構造で管理しています。
 
@@ -143,11 +148,19 @@ Workers Buildsで本番ブランチのDeploy Hookを作り、microCMSの `things
 - `public/images/samples/`: オリジナルのサンプルSVG
 - `src/lib/content.ts`: サンプル / microCMSの切り替えと取得
 - `src/lib/content-validation.ts`: 接続情報とCMSコンテンツの検証
+- `src/lib/content-publication.ts`: thingsの公開状態の取得と、下書きを含まない公開中IDの判定
 - `src/lib/rich-text.ts`: 説明文のHTMLをサニタイズ
 - `src/scripts/filters.ts`: カテゴリ絞り込み、URL共有、ブラウザの戻る・進む
+- `src/scripts/filter-motion.ts`: PCの短距離の再配置とフェード、タッチ操作時の短いフェード
+- `src/scripts/item-interactions.ts`: タッチ・ペンの押下反応とスクロール時の解除
+- `src/scripts/picks-navigation.ts`: 詳細から戻る際のカテゴリ・閲覧位置の復元
 
 ヘッダーの太陽・月のアイコントグルでライト / ダークを切り替えます。初期状態はシステム設定に従い、手動で切り替えるまではOSのテーマ変更にも追従します。手動で選んだテーマはブラウザの `localStorage` に保存し、ページ移動・再読み込み後も維持します。
 
 フォントとサンプル画像はローカル配信です。JavaScriptが無効でも一覧と静的な詳細ページを表示します。キーボード操作、スキップリンク、読み上げ用の絞り込み件数、動きを減らす設定に対応しています。
 
-下書きの画面プレビューは未実装です。microCMSモードでは公開済みコンテンツを取得します。CMSでの更新を静的な公開サイトへ反映するには、再ビルド・再公開が必要です。
+一覧の画像サイズや余白を変えず、PCでは画像が2pxだけ浮き、タッチ・ペンでは押している画像枠の背景色がわずかに変わります。カテゴリ切替は選択結果とURLを即時更新し、PCでは近くの位置への移動とフェード、タッチ操作では160msのフェードを加えます。連続操作では古い演出を解除し、動きを減らす設定では即時切替にします。詳細画面への遷移演出はありません。
+
+同じタブで一覧のアイテムを開いた場合、詳細の「Back to picks」で選択カテゴリとクリック前の画面内位置を復元します。詳細ページを再読み込みしても戻り先は維持します。詳細URLを直接開いた場合や、新しいタブで開いた場合は全件一覧の先頭へ戻ります。戻り先・カテゴリリンクに `#collection` は付けません。復元にはタブ内の `sessionStorage` と履歴情報を使用し、ストレージが利用できない場合も通常のリンクとして一覧へ移動できます。
+
+下書きの画面プレビューは未実装です。microCMSモードのthingsは、下書きを含まない公開中のものだけをビルド対象にします。CMSでの更新を静的な公開サイトへ反映するには、再ビルド・再公開が必要です。

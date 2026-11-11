@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import test from 'node:test';
+import test, { type TestContext } from 'node:test';
 import { sampleBrands, sampleCategories, sampleThings } from '../src/data/sample';
 import { getContent } from '../src/lib/content';
 import {
@@ -62,6 +62,39 @@ function cmsThing() {
     ...sampleThings[0],
     main_image: { url: 'https://images.microcms-assets.io/assets/image.webp', width: 640, height: 640 },
   };
+}
+
+function mockCMS(t: TestContext, things: unknown[], metadata: unknown[], managementStatus = 200) {
+  const requests: URL[] = [];
+  t.mock.method(globalThis, 'fetch', async (input: string | URL | Request) => {
+    const url = new URL(input instanceof Request ? input.url : String(input));
+    requests.push(url);
+    let all: unknown[];
+    if (url.hostname === 'my-picks.microcms-management.io' && url.pathname === '/api/v1/contents/things') {
+      if (managementStatus !== 200) {
+        return new Response(JSON.stringify({ message: `Forbidden: ${credentials.MICROCMS_API_KEY}` }), {
+          status: managementStatus,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      all = metadata;
+    } else {
+      assert.equal(url.hostname, 'my-picks.microcms.io');
+      const endpoints: Record<string, unknown[]> = {
+        '/api/v1/brands': sampleBrands,
+        '/api/v1/categories': sampleCategories,
+        '/api/v1/things': things,
+      };
+      all = endpoints[url.pathname];
+      assert.ok(all, `Unexpected endpoint: ${url.pathname}`);
+    }
+    const limit = Number(url.searchParams.get('limit') ?? 10);
+    const offset = Number(url.searchParams.get('offset') ?? 0);
+    return new Response(JSON.stringify({ contents: all.slice(offset, offset + limit), totalCount: all.length, limit, offset }), {
+      headers: { 'Content-Type': 'application/json' },
+    });
+  });
+  return requests;
 }
 
 test('things map main_image and resolve current brand and category names from their APIs', () => {
@@ -130,29 +163,85 @@ test('API ordering is preserved and duplicate content IDs are rejected', () => {
 });
 
 test('CMS retrieval uses all three real endpoints and retrieves more than one page of things', async (t) => {
-  const requests: URL[] = [];
   const sourceThings = Array.from({ length: 101 }, (_, index) => ({ ...cmsThing(), id: `thing-${index}` }));
-  t.mock.method(globalThis, 'fetch', async (input: string | URL | Request) => {
-    const url = new URL(input instanceof Request ? input.url : String(input));
-    requests.push(url);
-    const endpoint = url.pathname.split('/').pop();
-    const all = endpoint === 'brands' ? sampleBrands : endpoint === 'categories' ? sampleCategories : endpoint === 'things' ? sourceThings : null;
-    assert.ok(all, `Unexpected endpoint: ${endpoint}`);
-    const limit = Number(url.searchParams.get('limit') ?? 10);
-    const offset = Number(url.searchParams.get('offset') ?? 0);
-    return new Response(JSON.stringify({ contents: all.slice(offset, offset + limit), totalCount: all.length, limit, offset }), {
-      headers: { 'Content-Type': 'application/json' },
-    });
-  });
+  const requests = mockCMS(t, sourceThings, sourceThings.map(({ id }) => ({ id, status: ['PUBLISH'] })));
   const content = await getContent(credentials);
   assert.equal(content.source, 'microcms');
   assert.equal(content.things.length, 101);
   assert.equal(content.things[100].id, 'thing-100');
-  assert.deepEqual(new Set(requests.map((url) => url.pathname)), new Set(['/api/v1/brands', '/api/v1/categories', '/api/v1/things']));
-  const thingRequests = requests.filter((url) => url.pathname.endsWith('/things'));
+  assert.deepEqual(new Set(requests.map((url) => `${url.hostname}${url.pathname}`)), new Set([
+    'my-picks.microcms.io/api/v1/brands',
+    'my-picks.microcms.io/api/v1/categories',
+    'my-picks.microcms.io/api/v1/things',
+    'my-picks.microcms-management.io/api/v1/contents/things',
+  ]));
+  const thingRequests = requests.filter((url) => url.pathname === '/api/v1/things');
   assert.ok(thingRequests.some((url) => Number(url.searchParams.get('offset')) > 0));
   assert.ok(thingRequests.every((url) => url.searchParams.get('depth') === '1'));
   assert.ok(thingRequests.every((url) => url.searchParams.get('fields') === 'id,name,description,main_image,ref_brand,ref_categories'));
+  const metadataRequests = requests.filter((url) => url.pathname === '/api/v1/contents/things');
+  assert.ok(metadataRequests.some((url) => Number(url.searchParams.get('offset')) > 0));
+  assert.ok(metadataRequests.every((url) => url.searchParams.get('limit') === '100'));
+  assert.ok(requests.every((url) => !url.searchParams.has('draftKey')));
+});
+
+test('CMS publication status excludes every draft and closed item while preserving published order', async (t) => {
+  const sourceThings = [
+    { ...cmsThing(), id: 'published-first' },
+    { id: 'never-published', name: 42, main_image: { width: 0 } },
+    { ...cmsThing(), id: 'old-draft', publishedAt: '2025-01-01T00:00:00.000Z' },
+    { ...cmsThing(), id: 'closed', publishedAt: '2025-01-01T00:00:00.000Z' },
+    { ...cmsThing(), id: 'published-second' },
+    { ...cmsThing(), id: 'published-with-draft' },
+    { ...cmsThing(), id: 'mixed-status' },
+  ];
+  mockCMS(t, sourceThings, [
+    { id: 'published-second', status: ['PUBLISH'] },
+    { id: 'never-published', status: ['DRAFT'], publishedAt: null },
+    { id: 'old-draft', status: ['DRAFT'], publishedAt: '2025-01-01T00:00:00.000Z' },
+    { id: 'closed', status: ['CLOSED'], publishedAt: '2025-01-01T00:00:00.000Z' },
+    { id: 'published-first', status: ['PUBLISH'] },
+    { id: 'published-with-draft', status: ['PUBLISH_AND_DRAFT'] },
+    { id: 'mixed-status', status: ['PUBLISH', 'DRAFT'] },
+  ]);
+  const content = await getContent(credentials);
+  assert.deepEqual(content.things.map(({ id }) => id), ['published-first', 'published-second']);
+  assert.equal(content.things.filter((thing) => thing.categories.some(({ id }) => id === 'mountain')).length, 2);
+});
+
+test('an entirely draft collection becomes empty even when draft fields are incomplete', async (t) => {
+  mockCMS(t, [{ id: 'draft', description: {}, ref_categories: 'unfinished' }], [{ id: 'draft', status: ['DRAFT'] }]);
+  const content = await getContent(credentials);
+  assert.equal(content.source, 'microcms');
+  assert.deepEqual(content.things, []);
+});
+
+test('missing Management API permission stops the build without leaking credentials', async (t) => {
+  mockCMS(t, [cmsThing()], [], 403);
+  await assert.rejects(getContent(credentials), (error: unknown) => {
+    assert.ok(error instanceof Error);
+    assert.match(error.message, /マネジメントAPI|管理API|Management API/);
+    assert.match(error.message, /権限/);
+    assert.ok(!error.message.includes(credentials.MICROCMS_API_KEY));
+    return true;
+  });
+});
+
+test('malformed publication metadata never silently permits content into the build', async (t) => {
+  for (const [name, metadata] of Object.entries({
+    'missing status': [{ id: 'item' }],
+    'null status': [{ id: 'item', status: null }],
+    'empty status': [{ id: 'item', status: [] }],
+    'string status': [{ id: 'item', status: 'PUBLISH' }],
+    'unknown status': [{ id: 'item', status: ['UNKNOWN'] }],
+    'missing id': [{ status: ['PUBLISH'] }],
+    'duplicate id': [{ id: 'item', status: ['PUBLISH'] }, { id: 'item', status: ['DRAFT'] }],
+  })) {
+    await t.test(name, async (child) => {
+      mockCMS(child, [{ ...cmsThing(), id: 'item' }], metadata);
+      await assert.rejects(getContent(credentials));
+    });
+  }
 });
 
 test('an empty CMS remains empty instead of receiving sample data or fixed categories', async (t) => {
@@ -164,10 +253,18 @@ test('an empty CMS remains empty instead of receiving sample data or fixed categ
 });
 
 test('CMS access errors stop the build instead of falling back to samples or exposing credentials', async (t) => {
-  t.mock.method(globalThis, 'fetch', async () => new Response(JSON.stringify({ message: 'Forbidden' }), {
-    status: 403,
-    headers: { 'Content-Type': 'application/json' },
-  }));
+  t.mock.method(globalThis, 'fetch', async (input: string | URL | Request) => {
+    const url = new URL(input instanceof Request ? input.url : String(input));
+    if (url.hostname === 'my-picks.microcms-management.io' && url.pathname === '/api/v1/contents/things') {
+      return new Response(JSON.stringify({ contents: [], totalCount: 0, limit: 100, offset: 0 }), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    return new Response(JSON.stringify({ message: 'Forbidden' }), {
+      status: 403,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  });
   await assert.rejects(getContent(credentials), (error: unknown) => {
     assert.ok(error instanceof Error);
     assert.match(error.message, /things \/ brands \/ categories/);

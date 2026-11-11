@@ -126,19 +126,21 @@ export function validateThings(
   input: unknown,
   brands: Brand[],
   categories: Category[],
-  options: { allowLocalImages?: boolean } = {},
+  options: { allowLocalImages?: boolean; publishedIds?: ReadonlySet<string> } = {},
 ): Thing[] {
   if (!Array.isArray(input)) return fail('things API はリスト形式で作成してください。');
   const knownBrands = new Map(brands.map((brand) => [brand.id, brand]));
   const knownCategories = new Map(categories.map((category) => [category.id, category]));
   const seen = new Set<string>();
 
-  return input.map((entry, index) => {
+  return input.flatMap((entry, index) => {
     const path = `things[${index}]`;
     const data = record(entry, path);
     const id = requiredText(data.id, `${path}.id`);
     if (seen.has(id)) return fail(`${path}.id が重複しています。`);
     seen.add(id);
+    // 下書きには未入力や編集中のフィールドがあっても、公開ビルドへ影響させない。
+    if (options.publishedIds && !options.publishedIds.has(id)) return [];
 
     const brandId = referenceId(data.ref_brand, `${path}.ref_brand`);
     const references = data.ref_categories ?? [];
@@ -151,13 +153,13 @@ export function validateThings(
       if (category) selectedCategories.set(category.id, category);
     }
 
-    return {
+    return [{
       id,
       name: optionalText(data.name, `${path}.name`) || '名前のないアイテム',
       brand: brandId ? knownBrands.get(brandId) ?? null : null,
       image: data.main_image == null ? null : image(data.main_image, `${path}.main_image`, options.allowLocalImages ?? false),
       descriptionHtml: sanitizeDescription(optionalText(data.description, `${path}.description`)),
       categories: [...selectedCategories.values()],
-    };
+    }];
   });
 }

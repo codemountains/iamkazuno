@@ -27,7 +27,7 @@ const description = `${thing.name}${thing.brand ? ` — ${thing.brand.name}` : '
     <SiteHeader />
     <main id="main" class="thing-detail">
       <div class="detail-topline">
-        <a class="collection-back" href={`${collectionPath}#collection`}><span aria-hidden="true">←</span> コレクションに戻る</a>
+        <a class="collection-back" href={collectionPath} data-back-to-picks><span aria-hidden="true">←</span> Back to picks</a>
       </div>
       <article class="detail-grid" aria-labelledby="thing-title">
         <div class="detail-image-wrap"><ThingImage image={thing.image} name={thing.name} eager detail /></div>
@@ -46,3 +46,8 @@ const description = `${thing.name}${thing.brand ? ` — ${thing.brand.name}` : '
     <SiteFooter />
   </div>
 </BaseLayout>
+
+<script>
+  import { initDetailNavigation } from '../../../scripts/picks-navigation';
+  initDetailNavigation();
+</script>

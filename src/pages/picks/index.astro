@@ -53,5 +53,9 @@ const count = (id: string) => things.filter((thing) => thing.categories.some((ca
 
 <script>
   import { initFilters } from '../../scripts/filters';
+  import { initItemInteractions } from '../../scripts/item-interactions';
+  import { initCollectionNavigation } from '../../scripts/picks-navigation';
   initFilters();
+  initItemInteractions();
+  initCollectionNavigation();
 </script>
