@@ -1,0 +1,16 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import { collectionPath } from '../lib/paths';
+---
+<BaseLayout title="Page not found — /picks" noindex>
+  <div class="site-shell">
+    <SiteHeader />
+    <main id="main" class="not-found">
+      <p class="eyebrow">404 / NOT FOUND</p>
+      <h1>Not on<br />this <em>shelf.</em></h1>
+      <p>このページは見つかりませんでした。</p>
+      <a href={collectionPath} class="return-link">コレクションに戻る <span aria-hidden="true">↗</span></a>
+    </main>
+  </div>
+</BaseLayout>

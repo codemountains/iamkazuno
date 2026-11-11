@@ -1,0 +1,27 @@
+<button
+  type="button"
+  class="theme-toggle"
+  data-theme-toggle
+  role="switch"
+  aria-label="ダークモード"
+  aria-checked="false"
+  title="ダークモードに切り替える"
+  hidden
+  disabled
+>
+  <span class="theme-toggle-track" aria-hidden="true">
+    <span class="theme-toggle-thumb"></span>
+    <svg class="theme-icon theme-icon--sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+      <circle cx="12" cy="12" r="3.5" />
+      <path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42" />
+    </svg>
+    <svg class="theme-icon theme-icon--moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20.3 14.5A8.5 8.5 0 0 1 9.5 3.7a8.5 8.5 0 1 0 10.8 10.8Z" />
+    </svg>
+  </span>
+</button>
+
+<script>
+  import { initThemePicker } from '../scripts/theme';
+  initThemePicker();
+</script>

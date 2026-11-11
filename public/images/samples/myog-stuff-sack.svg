@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640" fill="none" role="img" aria-labelledby="title">
+  <title id="title">Ripstop Stuff Sack — sample product illustration</title>
+  <defs>
+    <linearGradient id="nylon" x1="232" y1="238" x2="432" y2="487" gradientUnits="userSpaceOnUse"><stop stop-color="#dfb45e"/><stop offset=".3" stop-color="#d5a249"/><stop offset=".66" stop-color="#bf8736"/><stop offset="1" stop-color="#a76b2e"/></linearGradient>
+    <linearGradient id="cuff" x1="258" y1="179" x2="390" y2="230" gradientUnits="userSpaceOnUse"><stop stop-color="#bd8335"/><stop offset=".25" stop-color="#f0c978"/><stop offset=".62" stop-color="#b87b2d"/><stop offset="1" stop-color="#d9aa51"/></linearGradient>
+    <linearGradient id="base" x1="220" y1="471" x2="425" y2="489" gradientUnits="userSpaceOnUse"><stop stop-color="#a87530"/><stop offset=".45" stop-color="#c38e3e"/><stop offset="1" stop-color="#93602a"/></linearGradient>
+    <pattern id="ripstop" width="18" height="18" patternUnits="userSpaceOnUse"><path d="M.5 0V18M0 .5H18" stroke="#694b28" stroke-opacity=".21" stroke-width=".8"/><path d="M3 0V18M7 0V18M11 0V18M15 0V18M0 3H18M0 7H18M0 11H18M0 15H18" stroke="#fff2bf" stroke-opacity=".12" stroke-width=".5"/></pattern>
+    <filter id="shadow" x="-50%" y="-100%" width="200%" height="300%"><feGaussianBlur stdDeviation="12"/></filter>
+  </defs>
+  <ellipse cx="320" cy="521" rx="118" ry="15" fill="#4c3e27" opacity=".15" filter="url(#shadow)"/>
+  <g transform="rotate(5 320 320)">
+    <path d="M361 196C390 176 411 137 440 145C477 156 452 197 411 203C390 207 383 205 369 204" stroke="#43443a" stroke-width="4" stroke-linecap="round"/>
+    <path d="M365 200C406 195 442 204 448 239C452 263 432 274 423 257C413 239 428 221 442 235" stroke="#43443a" stroke-width="4" stroke-linecap="round"/>
+    <path d="M364 196C391 175 410 140 437 149M389 203C418 206 439 215 444 239" stroke="#a7a68a" stroke-opacity=".7" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M264 209C256 235 233 250 224 288C211 347 210 407 215 465C218 495 250 509 320 510C388 511 420 499 426 468C436 406 434 350 423 289C416 251 389 234 382 208Z" fill="url(#nylon)" stroke="#ab7837" stroke-width="1.5"/>
+    <path d="M264 209C256 235 233 250 224 288C211 347 210 407 215 465C218 495 250 509 320 510C388 511 420 499 426 468C436 406 434 350 423 289C416 251 389 234 382 208Z" fill="url(#ripstop)"/>
+    <path d="M221 456C255 473 384 478 430 457L426 476C415 504 386 511 319 510C253 509 222 495 216 472Z" fill="url(#base)"/>
+    <path d="M228 476C268 494 378 498 417 478" stroke="#edc77d" stroke-opacity=".5" stroke-width="1.2" stroke-dasharray="3 4"/>
+    <path d="M268 210C274 240 264 277 249 308M290 212C304 238 288 275 286 304M314 211C332 252 318 281 324 317M339 210C331 242 353 263 354 289M363 209C354 245 386 273 395 306" stroke="#92622b" stroke-width="5" stroke-opacity=".32" stroke-linecap="round"/>
+    <path d="M276 218C284 245 272 276 266 292M304 220C316 250 304 278 309 302M347 220C347 245 365 265 369 287" stroke="#f6d793" stroke-width="4" stroke-opacity=".45" stroke-linecap="round"/>
+    <path d="M258 187C271 171 370 171 387 188L382 221C371 234 274 233 260 218Z" fill="url(#cuff)" stroke="#ad7530" stroke-width="1.5"/>
+    <ellipse cx="322" cy="186" rx="64" ry="13" fill="#8f632d"/>
+    <ellipse cx="322" cy="184" rx="49" ry="7" fill="#604c30"/>
+    <path d="M265 188L270 215M281 193L283 224M299 195L305 225M322 196L321 226M344 194L341 225M364 192L360 222M382 188L374 218" stroke="#f0cb7f" stroke-width="3" stroke-linecap="round"/>
+    <path d="M274 190L278 220M293 194L295 226M313 195L314 226M334 194L331 226M355 193L352 224M375 189L368 220" stroke="#99652a" stroke-width="2" stroke-opacity=".7"/>
+    <path d="M259 204C292 214 350 215 382 203" stroke="#44473c" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M263 203C294 212 348 213 378 203" stroke="#b4b49a" stroke-width=".9" stroke-linecap="round"/>
+    <rect x="376" y="188" width="20" height="29" rx="7" transform="rotate(15 386 202)" fill="#41463d" stroke="#777d69" stroke-width="1.2"/>
+    <path d="M382 192L390 194" stroke="#b5b9a3" stroke-width="2" stroke-linecap="round"/>
+    <path d="M232 295C226 352 225 417 230 458M413 294C425 356 422 417 415 463" stroke="#815d2e" stroke-width="1.2" stroke-dasharray="3 4" stroke-opacity=".7"/>
+    <path d="M259 334C252 368 251 404 255 430" stroke="#f4cf82" stroke-width="4" stroke-opacity=".3" stroke-linecap="round"/>
+    <path d="M379 360C388 392 384 421 377 439" stroke="#8b5c2b" stroke-width="3" stroke-opacity=".25" stroke-linecap="round"/>
+  </g>
+</svg>

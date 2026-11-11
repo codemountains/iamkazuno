@@ -1,0 +1,47 @@
+<script is:inline>
+  (() => {
+    const storageKey = 'picks-theme';
+    const values = ['light', 'dark', 'system'];
+    const root = document.documentElement;
+    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    let preference = 'system';
+
+    try {
+      const saved = window.localStorage.getItem(storageKey);
+      if (values.includes(saved)) preference = saved;
+    } catch {
+      // System preference remains usable when storage is unavailable.
+    }
+
+    const apply = () => {
+      root.dataset.themePreference = preference;
+      root.dataset.theme = preference === 'system'
+        ? (systemTheme.matches ? 'dark' : 'light')
+        : preference;
+      document.dispatchEvent(new CustomEvent('picks:theme-updated'));
+    };
+
+    document.addEventListener('picks:theme-change', (event) => {
+      if (!values.includes(event.detail)) return;
+      preference = event.detail;
+      apply();
+      try {
+        window.localStorage.setItem(storageKey, preference);
+      } catch {
+        // Apply the choice for this page even if it cannot be persisted.
+      }
+    });
+
+    systemTheme.addEventListener('change', () => {
+      if (preference === 'system') apply();
+    });
+
+    window.addEventListener('storage', (event) => {
+      if (event.key !== storageKey && event.key !== null) return;
+      preference = values.includes(event.newValue) ? event.newValue : 'system';
+      apply();
+    });
+
+    apply();
+  })();
+</script>

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640" fill="none" role="img" aria-labelledby="title">
+  <title id="title">Ceramic Mug — sample product illustration</title>
+  <defs>
+    <linearGradient id="ceramic" x1="196" y1="260" x2="394" y2="446" gradientUnits="userSpaceOnUse"><stop stop-color="#f4eddb"/><stop offset=".4" stop-color="#e5dcc5"/><stop offset="1" stop-color="#b6aa8d"/></linearGradient>
+    <linearGradient id="handle" x1="395" y1="271" x2="483" y2="408" gradientUnits="userSpaceOnUse"><stop stop-color="#e8dfc9"/><stop offset=".5" stop-color="#d3c7aa"/><stop offset="1" stop-color="#b2a382"/></linearGradient>
+    <radialGradient id="coffee" cx=".4" cy=".3"><stop stop-color="#77533a"/><stop offset=".6" stop-color="#473024"/><stop offset="1" stop-color="#291e18"/></radialGradient>
+    <linearGradient id="rim" x1="182" y1="218" x2="410" y2="294" gradientUnits="userSpaceOnUse"><stop stop-color="#fff9e8"/><stop offset="1" stop-color="#c9bfa5"/></linearGradient>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="12"/></filter>
+    <pattern id="speckle" width="33" height="29" patternUnits="userSpaceOnUse"><circle cx="7" cy="5" r=".8" fill="#867356" opacity=".3"/><circle cx="23" cy="20" r="1" fill="#867356" opacity=".23"/><circle cx="11" cy="25" r=".6" fill="#867356" opacity=".27"/></pattern>
+  </defs>
+  <ellipse cx="326" cy="485" rx="145" ry="17" fill="#54422b" opacity=".13" filter="url(#shadow)"/>
+  <g transform="rotate(-7 320 320)">
+    <path d="M391 270C458 250 494 278 490 332C487 378 452 417 391 400" stroke="#b9ac8d" stroke-width="27"/>
+    <path d="M395 266C458 250 484 278 480 326C477 366 448 402 398 387" stroke="url(#handle)" stroke-width="24"/>
+    <path d="M414 266C458 261 477 284 475 312" stroke="#f5edda" stroke-width="4" stroke-linecap="round" opacity=".65"/>
+    <path d="M185 251H414L399 424C397 458 371 476 301 476C230 476 205 458 202 424Z" fill="url(#ceramic)"/>
+    <path d="M185 251H414L399 424C397 458 371 476 301 476C230 476 205 458 202 424Z" fill="url(#speckle)"/>
+    <ellipse cx="300" cy="251" rx="115" ry="43" fill="url(#rim)"/>
+    <ellipse cx="300" cy="251" rx="101" ry="32" fill="#b8a98b"/>
+    <ellipse cx="300" cy="255" rx="98" ry="28" fill="url(#coffee)"/>
+    <path d="M204 255C222 269 254 278 300 278C344 278 379 269 395 255" stroke="#ac8c65" stroke-width="2" opacity=".7"/>
+    <path d="M213 247C236 230 275 226 317 230" stroke="#b59571" stroke-width="3" opacity=".5" stroke-linecap="round"/>
+    <ellipse cx="248" cy="248" rx="18" ry="4" fill="#d0b28c" opacity=".12"/>
+    <path d="M209 292L220 409C224 435 239 444 255 449" stroke="#fff8e6" stroke-width="8" stroke-linecap="round" opacity=".5"/>
+    <path d="M228 461C266 477 342 478 377 460" stroke="#998c6b" stroke-width="3" opacity=".4"/>
+  </g>
+</svg>

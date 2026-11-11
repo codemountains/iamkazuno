@@ -1,0 +1,48 @@
+---
+import type { GetStaticPaths } from 'astro';
+import type { Thing, Content } from '../../../types/content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import SiteHeader from '../../../components/SiteHeader.astro';
+import SiteFooter from '../../../components/SiteFooter.astro';
+import ThingImage from '../../../components/ThingImage.astro';
+import { getContent } from '../../../lib/content';
+import { categoryPath, collectionPath } from '../../../lib/paths';
+
+export const getStaticPaths = (async () => {
+  const content = await getContent();
+  return content.things.map((thing) => ({
+    params: { id: thing.id },
+    props: { thing, source: content.source },
+  }));
+}) satisfies GetStaticPaths;
+
+interface Props { thing: Thing; source: Content['source'] }
+const { thing, source } = Astro.props;
+const sample = source === 'sample';
+const description = `${thing.name}${thing.brand ? ` — ${thing.brand.name}` : ''}。/picksのコレクション。`;
+---
+
+<BaseLayout title={`${thing.name} — /picks`} description={description} noindex={sample}>
+  <div class="site-shell">
+    <SiteHeader />
+    <main id="main" class="thing-detail">
+      <div class="detail-topline">
+        <a class="collection-back" href={`${collectionPath}#collection`}><span aria-hidden="true">←</span> コレクションに戻る</a>
+      </div>
+      <article class="detail-grid" aria-labelledby="thing-title">
+        <div class="detail-image-wrap"><ThingImage image={thing.image} name={thing.name} eager detail /></div>
+        <div class="detail-copy">
+          {thing.brand && <p class="detail-brand">{thing.brand.name}</p>}
+          <h1 id="thing-title">{thing.name}</h1>
+          {thing.categories.length > 0 && <ul class="detail-categories" aria-label="カテゴリ">{thing.categories.map((category) => <li><a href={categoryPath(category.id)}>{category.name}</a></li>)}</ul>}
+          <div class="detail-description">
+            {thing.descriptionHtml
+              ? <div class="rich-text" set:html={thing.descriptionHtml} />
+              : <p class="description-empty">このアイテムの説明は、まだありません。</p>}
+          </div>
+        </div>
+      </article>
+    </main>
+    <SiteFooter />
+  </div>
+</BaseLayout>

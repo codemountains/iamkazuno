@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640" fill="none" role="img" aria-labelledby="title">
+  <title id="title">Daypack — sample product illustration</title>
+  <defs>
+    <linearGradient id="canvas" x1="217" y1="181" x2="438" y2="495" gradientUnits="userSpaceOnUse"><stop stop-color="#859076"/><stop offset=".4" stop-color="#657454"/><stop offset="1" stop-color="#44553a"/></linearGradient>
+    <linearGradient id="pocket" x1="236" y1="361" x2="400" y2="483" gradientUnits="userSpaceOnUse"><stop stop-color="#788568"/><stop offset="1" stop-color="#506342"/></linearGradient>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="12"/></filter>
+    <pattern id="weave" width="5" height="5" patternUnits="userSpaceOnUse"><path d="M1 0V5M0 2H5" stroke="#c3c6ab" stroke-opacity=".09"/></pattern>
+  </defs>
+  <ellipse cx="320" cy="522" rx="135" ry="17" fill="#2d3b24" opacity=".16" filter="url(#shadow)"/>
+  <g transform="rotate(5 320 320)">
+    <path d="M245 206C209 233 187 330 197 422C203 469 225 466 233 435L252 278M391 209C429 237 452 331 440 425C433 469 411 466 405 433L386 277" stroke="#3a4b31" stroke-width="24"/>
+    <path d="M248 199C220 247 204 328 209 390M388 198C419 246 433 329 429 390" stroke="#7d8a6d" stroke-width="8"/>
+    <path d="M283 177V158C283 126 357 126 357 158V177" stroke="#4b5a3e" stroke-width="16"/>
+    <path d="M287 167V157C287 135 353 135 353 157V167" stroke="#879275" stroke-width="3"/>
+    <path d="M198 282C198 207 236 167 320 167C404 167 442 207 442 282V472C442 505 421 515 320 515S198 505 198 472Z" fill="url(#canvas)" stroke="#44533a" stroke-width="2"/>
+    <path d="M198 282C198 207 236 167 320 167C404 167 442 207 442 282V472C442 505 421 515 320 515S198 505 198 472Z" fill="url(#weave)"/>
+    <path d="M216 309V278C216 217 246 184 320 184C394 184 424 217 424 278V309" stroke="#3e4e32" stroke-width="7"/>
+    <path d="M216 309V278C216 217 246 184 320 184C394 184 424 217 424 278V309" stroke="#a6ad8f" stroke-width="1.5" stroke-dasharray="3 3"/>
+    <path d="M235 223C249 204 276 195 306 193" stroke="#b2ba9a" stroke-width="3" opacity=".4" stroke-linecap="round"/>
+    <path d="M207 326L221 492M431 326L419 492" stroke="#34482b" stroke-width="2" opacity=".5"/>
+    <rect x="227" y="357" width="187" height="133" rx="24" fill="url(#pocket)" stroke="#425637" stroke-width="2"/>
+    <rect x="227" y="357" width="187" height="133" rx="24" fill="url(#weave)"/>
+    <path d="M241 377H400" stroke="#37492e" stroke-width="6" stroke-linecap="round"/>
+    <path d="M241 377H400" stroke="#a1aa8a" stroke-width="1.5" stroke-dasharray="3 3"/>
+    <path d="M239 397V460C239 473 245 479 258 479H384C396 479 403 473 403 460V397" stroke="#9da88b" stroke-opacity=".4" stroke-dasharray="3 4"/>
+    <rect x="292" y="278" width="56" height="35" rx="3" fill="#b59b6f"/>
+    <rect x="296" y="282" width="48" height="27" rx="2" stroke="#806c4c" stroke-dasharray="2 2"/>
+    <path d="M306 300L320 289L334 300H306Z" stroke="#5d654b" stroke-width="2"/>
+    <path d="M415 285L421 308" stroke="#beb995" stroke-width="3" stroke-linecap="round"/>
+    <path d="M393 377V396" stroke="#bbb38c" stroke-width="3" stroke-linecap="round"/>
+    <path d="M417 308L425 329" stroke="#544831" stroke-width="7" stroke-linecap="round"/>
+    <path d="M393 397L396 413" stroke="#544831" stroke-width="7" stroke-linecap="round"/>
+    <path d="M216 497C257 507 384 510 424 496" stroke="#a0a98b" stroke-opacity=".3"/>
+  </g>
+</svg>

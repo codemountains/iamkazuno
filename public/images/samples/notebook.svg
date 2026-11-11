@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640" fill="none" role="img" aria-labelledby="title">
+  <title id="title">Daily Notebook — sample product illustration</title>
+  <defs>
+    <linearGradient id="cover" x1="200" y1="161" x2="420" y2="489" gradientUnits="userSpaceOnUse"><stop stop-color="#a27050"/><stop offset=".4" stop-color="#895a3e"/><stop offset="1" stop-color="#6d442e"/></linearGradient>
+    <linearGradient id="paper" x1="210" y1="455" x2="415" y2="477" gradientUnits="userSpaceOnUse"><stop stop-color="#d8cbb1"/><stop offset=".5" stop-color="#eee6d4"/><stop offset="1" stop-color="#c5b89f"/></linearGradient>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="12"/></filter>
+    <pattern id="texture" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M2 1h1M5 5h1" stroke="#f9dfb7" stroke-opacity=".11"/><path d="M0 6h1M7 2h1" stroke="#3e291e" stroke-opacity=".13"/></pattern>
+  </defs>
+  <ellipse cx="324" cy="516" rx="119" ry="16" fill="#493f31" opacity=".15" filter="url(#shadow)"/>
+  <g transform="rotate(-13 320 320)">
+    <rect x="197" y="160" width="252" height="335" rx="15" fill="#5e3d2a"/>
+    <path d="M215 173H439V478H215C205 478 202 472 202 463V187C202 178 207 173 215 173Z" fill="url(#paper)"/>
+    <path d="M219 471H436M219 465H436M219 459H436" stroke="#a99a7f" stroke-opacity=".7"/>
+    <path d="M197 159H426A14 14 0 0 1 440 173V456A14 14 0 0 1 426 470H197Z" fill="url(#cover)"/>
+    <path d="M197 159H426A14 14 0 0 1 440 173V456A14 14 0 0 1 426 470H197Z" fill="url(#texture)"/>
+    <path d="M213 159V470" stroke="#593e2d" stroke-width="4"/>
+    <path d="M221 165V461" stroke="#c59367" stroke-opacity=".35"/>
+    <path d="M232 174H421C425 174 427 177 427 181V449C427 453 425 455 421 455H232" stroke="#cf9f70" stroke-opacity=".3" stroke-dasharray="3 4"/>
+    <rect x="400" y="159" width="10" height="311" rx="1" fill="#482e21" opacity=".82"/>
+    <path d="M402 160V469" stroke="#ba916a" stroke-opacity=".38"/>
+    <path d="M339 470V523L350 514L360 523V470" fill="#bc5c36"/>
+    <path d="M343 472V512" stroke="#e39362" stroke-width="2" opacity=".6"/>
+    <rect x="266" y="284" width="99" height="59" rx="2" stroke="#c79a6e" stroke-opacity=".48"/>
+    <path d="M281 304H350M290 314H341M301 324H330" stroke="#d3b48a" stroke-width="2" opacity=".6"/>
+  </g>
+</svg>

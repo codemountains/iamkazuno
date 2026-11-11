@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640" fill="none" role="img" aria-labelledby="title">
+  <title id="title">Field Watch — sample product illustration</title>
+  <defs>
+    <linearGradient id="strap" x1="275" y1="140" x2="364" y2="470" gradientUnits="userSpaceOnUse"><stop stop-color="#6f7761"/><stop offset=".45" stop-color="#4f5944"/><stop offset="1" stop-color="#727960"/></linearGradient>
+    <linearGradient id="steel" x1="226" y1="242" x2="410" y2="399" gradientUnits="userSpaceOnUse"><stop stop-color="#e0e0d5"/><stop offset=".22" stop-color="#868d7f"/><stop offset=".5" stop-color="#d3d6c8"/><stop offset=".76" stop-color="#7c8574"/><stop offset="1" stop-color="#e3e3d4"/></linearGradient>
+    <radialGradient id="dial"><stop stop-color="#f5efdb"/><stop offset="1" stop-color="#dedbc7"/></radialGradient>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="12"/></filter>
+    <pattern id="weave" width="5" height="5" patternUnits="userSpaceOnUse"><path d="M0 1H5M1 0V5" stroke="#bec1a6" stroke-opacity=".17"/></pattern>
+  </defs>
+  <ellipse cx="321" cy="519" rx="103" ry="14" fill="#2c3626" opacity=".13" filter="url(#shadow)"/>
+  <g transform="rotate(17 320 320)">
+    <rect x="275" y="123" width="90" height="395" rx="27" fill="url(#strap)"/>
+    <rect x="275" y="123" width="90" height="395" rx="27" fill="url(#weave)"/>
+    <path d="M284 146V489M356 146V489" stroke="#9a9f81" stroke-width="2" stroke-dasharray="3 4" opacity=".65"/>
+    <rect x="280" y="141" width="80" height="19" rx="4" fill="#404b35"/>
+    <rect x="280" y="141" width="80" height="5" rx="2" fill="#8b9278"/>
+    <path d="M320 447V451M320 463V467M320 479V483M320 495V499" stroke="#2d3827" stroke-width="5" stroke-linecap="round"/>
+    <path d="M267 260L272 234H289V255M351 255V234H368L373 260M267 383L272 409H289V390M351 390V409H368L373 383" fill="url(#steel)" stroke="#7d8775" stroke-width="2"/>
+    <rect x="410" y="309" width="16" height="27" rx="4" fill="url(#steel)"/>
+    <path d="M414 313H424M414 318H424M414 323H424M414 328H424M414 333H424" stroke="#69755e"/>
+    <circle cx="320" cy="322" r="99" fill="#5e6954"/>
+    <circle cx="320" cy="319" r="98" fill="url(#steel)" stroke="#e0e4d2" stroke-width="2"/>
+    <circle cx="320" cy="319" r="85" fill="url(#dial)" stroke="#68705e" stroke-width="3"/>
+    <g stroke="#46503d" stroke-width="3"><path d="M320 243V252M320 386V395M244 319H253M387 319H396"/><path d="M282 253L286 260M354 378L358 385M254 281L261 285M379 353L386 357M254 357L261 353M379 285L386 281M282 385L286 378M354 260L358 253"/></g>
+    <g fill="#47523e" font-family="Georgia,serif" font-size="17" text-anchor="middle"><text x="320" y="273">12</text><text x="373" y="325">3</text><text x="320" y="377">6</text><text x="267" y="325">9</text></g>
+    <path d="M320 319L293 289" stroke="#3b4734" stroke-width="8" stroke-linecap="round"/>
+    <path d="M320 319L350 277" stroke="#3b4734" stroke-width="5" stroke-linecap="round"/>
+    <path d="M320 319L293 289" stroke="#e8e5ce" stroke-width="3" stroke-linecap="round"/>
+    <path d="M320 319L350 277" stroke="#e8e5ce" stroke-width="2" stroke-linecap="round"/>
+    <path d="M309 338L347 273" stroke="#b16c44" stroke-width="2"/>
+    <circle cx="320" cy="319" r="5" fill="#59644d" stroke="#bfc4ae" stroke-width="2"/>
+    <path d="M299 347H341M309 353H331" stroke="#8e977e" stroke-width="2"/>
+    <path d="M267 266C290 245 326 239 354 252" stroke="white" stroke-width="5" stroke-linecap="round" opacity=".38"/>
+  </g>
+</svg>

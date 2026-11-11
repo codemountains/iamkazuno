@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640" fill="none" role="img" aria-labelledby="title">
+  <title id="title">Silver Compact Camera — sample product illustration</title>
+  <defs>
+    <linearGradient id="silver" x1="161" y1="217" x2="475" y2="417" gradientUnits="userSpaceOnUse"><stop stop-color="#eeece4"/><stop offset=".3" stop-color="#c9ccc5"/><stop offset=".63" stop-color="#adb4af"/><stop offset="1" stop-color="#7e8984"/></linearGradient>
+    <linearGradient id="top" x1="173" y1="208" x2="455" y2="245" gradientUnits="userSpaceOnUse"><stop stop-color="#f0efe8"/><stop offset=".5" stop-color="#d5d7d0"/><stop offset="1" stop-color="#a7b0aa"/></linearGradient>
+    <linearGradient id="leather" x1="171" y1="269" x2="475" y2="407" gradientUnits="userSpaceOnUse"><stop stop-color="#505350"/><stop offset=".5" stop-color="#333936"/><stop offset="1" stop-color="#242b28"/></linearGradient>
+    <linearGradient id="barrel" x1="268" y1="257" x2="410" y2="424" gradientUnits="userSpaceOnUse"><stop stop-color="#e6e6dc"/><stop offset=".22" stop-color="#bcc4be"/><stop offset=".48" stop-color="#6d7973"/><stop offset=".76" stop-color="#b5bcb3"/><stop offset="1" stop-color="#626f68"/></linearGradient>
+    <radialGradient id="glass" cx=".36" cy=".28" r=".77"><stop stop-color="#6e8691"/><stop offset=".2" stop-color="#3c5264"/><stop offset=".47" stop-color="#28333e"/><stop offset=".75" stop-color="#151e24"/><stop offset="1" stop-color="#080f12"/></radialGradient>
+    <pattern id="grain" width="5" height="5" patternUnits="userSpaceOnUse"><path d="M1 1h1M3 4h1" stroke="#bbc3b9" stroke-opacity=".14" stroke-width=".8"/></pattern>
+    <pattern id="brush" width="3" height="4" patternUnits="userSpaceOnUse"><path d="M0 1H3" stroke="#f8faf0" stroke-opacity=".2" stroke-width=".5"/></pattern>
+    <filter id="shadow" x="-50%" y="-100%" width="200%" height="300%"><feGaussianBlur stdDeviation="12"/></filter>
+  </defs>
+  <ellipse cx="321" cy="483" rx="165" ry="15" fill="#323d36" opacity=".16" filter="url(#shadow)"/>
+  <g transform="rotate(6 320 320)">
+    <path d="M178 216H459C476 216 486 229 486 245V405C486 423 475 434 458 434H178C161 434 152 423 152 406V243C152 226 161 216 178 216Z" fill="#68736e"/>
+    <rect x="148" y="216" width="328" height="210" rx="22" fill="url(#silver)" stroke="#89958d" stroke-width="1.5"/>
+    <path d="M170 216H454C467 216 476 225 476 238V269H148V238C148 225 157 216 170 216Z" fill="url(#top)"/>
+    <path d="M152 270H472V397H152Z" fill="url(#leather)"/>
+    <path d="M152 270H472V397H152Z" fill="url(#grain)"/>
+    <path d="M153 270H471M154 399H470" stroke="#25332b" stroke-opacity=".55" stroke-width="2"/>
+    <path d="M170 222H452M168 418H453" stroke="#f7f7eb" stroke-opacity=".55" stroke-width="2" stroke-linecap="round"/>
+    <path d="M154 220H466V268H154Z" fill="url(#brush)"/>
+    <path d="M179 288C190 279 210 280 221 291V380C212 393 191 394 178 384Z" fill="#292f2c" stroke="#59625a" stroke-width="1.5"/>
+    <path d="M187 293V379M194 289V384M201 289V384M208 291V381" stroke="#6c746b" stroke-opacity=".25" stroke-width="1"/>
+    <rect x="176" y="235" width="50" height="23" rx="4" fill="#828f88" stroke="#eff0e4" stroke-width="1.5"/>
+    <rect x="182" y="239" width="38" height="15" rx="2" fill="#263c42"/>
+    <path d="M184 241H216L185 251Z" fill="#9eb0ac" opacity=".45"/>
+    <rect x="242" y="237" width="37" height="16" rx="2" fill="#e7e7dc" stroke="#8e9a92"/>
+    <path d="M247 240V250M252 240V250M257 240V250M262 240V250M267 240V250M272 240V250" stroke="#b4bdb3"/>
+    <rect x="184" y="203" width="39" height="13" rx="4" fill="#8b9790"/>
+    <ellipse cx="203.5" cy="203" rx="19.5" ry="5" fill="#d8ddd3" stroke="#9da99f"/>
+    <rect x="402" y="194" width="48" height="23" rx="5" fill="#7b8780" stroke="#657269"/>
+    <ellipse cx="426" cy="194" rx="24" ry="8" fill="#d9ded4" stroke="#96a399"/>
+    <path d="M407 201V213M413 203V215M419 204V216M425 204V216M431 204V216M437 203V215M443 201V213" stroke="#d2d8cc" stroke-width="1.5"/>
+    <circle cx="426" cy="194" r="10" stroke="#8d9b90" stroke-width="1.2"/>
+    <path d="M426 186V189" stroke="#45554a" stroke-width="2" stroke-linecap="round"/>
+    <path d="M300 211V204H335V211" stroke="#96a198" stroke-width="4"/>
+    <ellipse cx="345" cy="347" rx="93" ry="90" fill="#15221b" opacity=".65"/>
+    <circle cx="337" cy="338" r="91" fill="url(#barrel)" stroke="#6f7e73" stroke-width="2"/>
+    <circle cx="337" cy="338" r="84" stroke="#e8ebdf" stroke-opacity=".65" stroke-width="2"/>
+    <circle cx="337" cy="338" r="78" stroke="#53645a" stroke-width="7"/>
+    <circle cx="337" cy="338" r="77" stroke="#bcc9b9" stroke-opacity=".7" stroke-width="5" stroke-dasharray="1.3 4"/>
+    <circle cx="337" cy="338" r="68" fill="#25342c" stroke="#d4ddce" stroke-width="2"/>
+    <circle cx="337" cy="338" r="58" fill="url(#glass)" stroke="#54665c" stroke-width="3"/>
+    <circle cx="337" cy="338" r="46" stroke="#91a0ae" stroke-opacity=".2" stroke-width="1.5"/>
+    <circle cx="337" cy="338" r="29" fill="#101c24" opacity=".8"/>
+    <ellipse cx="318" cy="313" rx="20" ry="11" transform="rotate(-35 318 313)" fill="#c2d1e0" opacity=".22"/>
+    <ellipse cx="355" cy="361" rx="11" ry="8" transform="rotate(-35 355 361)" fill="#8e789e" opacity=".25"/>
+    <path d="M294 302A57 57 0 0 1 328 282" stroke="#acbec5" stroke-opacity=".4" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="448" cy="286" r="4" fill="#9c6852"/>
+    <path d="M141 277H148V302H141Z" fill="#b2bcb2" stroke="#79897b" stroke-width="1.2"/>
+    <path d="M476 277H483V302H476Z" fill="#b2bcb2" stroke="#79897b" stroke-width="1.2"/>
+  </g>
+</svg>

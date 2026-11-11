@@ -1,0 +1,54 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { collectionPath } from '../lib/paths';
+---
+
+<BaseLayout title="iamkaz.uno" description="iamkaz.uno" siteName="iamkaz.uno" image={false}>
+  <main id="main" class="home">
+    <div class="home-content">
+      <h1>iamkaz.uno</h1>
+      <a class="home-link" href={collectionPath}>/picks</a>
+    </div>
+  </main>
+</BaseLayout>
+
+<style>
+  .home {
+    min-height: 100svh;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+  }
+
+  .home-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  h1 {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: clamp(28px, 5vw, 42px);
+    font-weight: 400;
+    letter-spacing: -0.06em;
+    line-height: 1.2;
+  }
+
+  .home-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 4px 12px;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    text-decoration: underline;
+    text-underline-offset: 5px;
+  }
+
+  .home-link:hover {
+    color: var(--ink);
+  }
+</style>

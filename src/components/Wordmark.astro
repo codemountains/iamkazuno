@@ -1,0 +1,9 @@
+---
+import { collectionPath } from '../lib/paths';
+
+interface Props { small?: boolean }
+const { small = false } = Astro.props;
+---
+<a href={collectionPath} class:list={['wordmark', { 'wordmark--small': small }]} aria-label="/picks ホーム">
+  <span class="wordmark-slash">/</span>picks<span class="wordmark-dot" aria-hidden="true">.</span>
+</a>

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640" fill="none" role="img" aria-labelledby="title">
+  <title id="title">Studio Headphones — sample product illustration</title>
+  <defs>
+    <linearGradient id="band" x1="155" y1="140" x2="470" y2="350" gradientUnits="userSpaceOnUse"><stop stop-color="#5a5b57"/><stop offset=".38" stop-color="#252724"/><stop offset="1" stop-color="#10120f"/></linearGradient>
+    <linearGradient id="metal" x1="0" x2="1"><stop stop-color="#767a73"/><stop offset=".3" stop-color="#e1e2d9"/><stop offset=".55" stop-color="#92968d"/><stop offset="1" stop-color="#565a53"/></linearGradient>
+    <linearGradient id="cup" x1="185" y1="310" x2="260" y2="470" gradientUnits="userSpaceOnUse"><stop stop-color="#52554f"/><stop offset=".5" stop-color="#32352f"/><stop offset="1" stop-color="#20231e"/></linearGradient>
+    <linearGradient id="cup2" x1="390" y1="300" x2="480" y2="470" gradientUnits="userSpaceOnUse"><stop stop-color="#575a54"/><stop offset="1" stop-color="#262923"/></linearGradient>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="12"/></filter>
+  </defs>
+  <ellipse cx="321" cy="514" rx="147" ry="16" fill="#2b3027" opacity=".12" filter="url(#shadow)"/>
+  <g transform="rotate(-10 320 320)">
+    <path d="M176 354V282C176 193 231 137 320 137S464 193 464 282V354" stroke="url(#band)" stroke-width="36" stroke-linecap="round"/>
+    <path d="M182 283C182 195 234 145 320 145S458 195 458 283" stroke="#74776d" stroke-width="2" opacity=".65"/>
+    <path d="M195 279C195 204 243 159 320 159S445 204 445 279" stroke="#10130f" stroke-width="8"/>
+    <path d="M176 278V358M464 278V358" stroke="url(#metal)" stroke-width="14"/>
+    <path d="M178 310V365M462 310V365" stroke="#bdc0b6" stroke-width="2"/>
+    <rect x="151" y="327" width="78" height="153" rx="37" fill="#171a15"/>
+    <rect x="163" y="319" width="91" height="159" rx="42" fill="url(#cup)" stroke="#4c5047" stroke-width="2"/>
+    <rect x="232" y="337" width="30" height="123" rx="15" fill="#171b15"/>
+    <path d="M189 337C174 341 173 359 173 389V412C173 438 179 452 192 457" stroke="#74776d" stroke-width="2" opacity=".6"/>
+    <rect x="411" y="327" width="78" height="153" rx="37" fill="#171a15"/>
+    <rect x="386" y="319" width="91" height="159" rx="42" fill="url(#cup2)" stroke="#5e6258" stroke-width="2"/>
+    <rect x="378" y="337" width="30" height="123" rx="15" fill="#171b15"/>
+    <path d="M436 334C457 337 466 353 466 383V413C466 444 458 458 443 463" stroke="#82867b" stroke-width="2" opacity=".55"/>
+    <rect x="426" y="438" width="24" height="4" rx="2" fill="#11150e"/>
+    <circle cx="456" cy="431" r="2.2" fill="#b6bca8"/>
+    <path d="M300 149H340" stroke="#b8bbae" stroke-width="2" opacity=".4"/>
+  </g>
+</svg>

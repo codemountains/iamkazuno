@@ -1,0 +1,4 @@
+interface:
+  display_name: "things メイン画像生成"
+  short_description: "things のメイン画像を背景透過の1280×1280px PNGで作成"
+  default_prompt: "$generate-things-main-image を使って、things のメイン画像を背景透過の1280×1280px PNGで作成してください。"

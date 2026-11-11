@@ -1,0 +1,57 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SiteHeader from '../../components/SiteHeader.astro';
+import SiteFooter from '../../components/SiteFooter.astro';
+import ItemCard from '../../components/ItemCard.astro';
+import { getContent } from '../../lib/content';
+
+const { things, categories, source } = await getContent();
+const sample = source === 'sample';
+const count = (id: string) => things.filter((thing) => thing.categories.some((category) => category.id === id)).length;
+---
+
+<BaseLayout noindex={sample}>
+  <div class="site-shell">
+    <SiteHeader />
+
+    <main id="main">
+      <section class="collection" id="collection" aria-label="持ち物一覧">
+        <div class="collection-toolbar">
+          <div class="filter-navigation" hidden data-filter-navigation>
+            <div class="filters" id="category-filters" role="group" aria-label="カテゴリで絞り込む" data-filters>
+              <button type="button" class="filter-button" data-filter="" data-filter-label="all" aria-pressed="true">all<span>{things.length}</span></button>
+              {categories.map((category) => (
+                <button type="button" class="filter-button" data-filter={category.id} data-filter-label={category.name} aria-pressed="false">{category.name}<span>{count(category.id)}</span></button>
+              ))}
+            </div>
+            <button type="button" class="filter-scroll-button filter-scroll-button--previous" aria-label="前のカテゴリを表示" aria-controls="category-filters" data-filter-scroll="previous" disabled>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m14 6-6 6 6 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </button>
+            <button type="button" class="filter-scroll-button filter-scroll-button--next" aria-label="次のカテゴリを表示" aria-controls="category-filters" data-filter-scroll="next" disabled>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m10 6 6 6-6 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </button>
+          </div>
+          <noscript><p class="no-script-note">すべてのアイテムを表示しています。</p></noscript>
+          <p class="results-label" role="status" aria-live="polite" aria-atomic="true" data-results-label><span data-result-count>{String(things.length).padStart(2, '0')}</span> things, well loved.</p>
+        </div>
+
+        <ul class="item-grid" data-item-grid>
+          {things.map((thing, index) => <ItemCard thing={thing} index={index} />)}
+        </ul>
+        <div class="empty-state" data-empty-state hidden={things.length !== 0}>
+          <span aria-hidden="true">↳</span>
+          <p>まだ、ここには何もありません。</p>
+          <p class="empty-state-note">お気に入りが見つかるまで、少しだけ。</p>
+        </div>
+      </section>
+
+    </main>
+
+    <SiteFooter />
+  </div>
+</BaseLayout>
+
+<script>
+  import { initFilters } from '../../scripts/filters';
+  initFilters();
+</script>

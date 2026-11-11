@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640" fill="none" role="img" aria-labelledby="title">
+  <title id="title">Technical Nylon Tote — sample product illustration</title>
+  <defs>
+    <linearGradient id="nylon" x1="190" y1="246" x2="444" y2="494" gradientUnits="userSpaceOnUse"><stop stop-color="#eeeae0"/><stop offset=".4" stop-color="#d9d6cd"/><stop offset="1" stop-color="#a8ada3"/></linearGradient>
+    <linearGradient id="webbing" x1="233" y1="128" x2="374" y2="347" gradientUnits="userSpaceOnUse"><stop stop-color="#dddcd2"/><stop offset=".55" stop-color="#c4c6bb"/><stop offset="1" stop-color="#9ea79b"/></linearGradient>
+    <linearGradient id="gusset" x1="425" y1="260" x2="465" y2="473" gradientUnits="userSpaceOnUse"><stop stop-color="#bec1b6"/><stop offset="1" stop-color="#929e90"/></linearGradient>
+    <pattern id="ripstop" width="19" height="19" patternUnits="userSpaceOnUse"><path d="M.5 0V19M0 .5H19" stroke="#727f70" stroke-opacity=".12" stroke-width=".7"/><path d="M4 0V19M8 0V19M12 0V19M16 0V19M0 4H19M0 8H19M0 12H19M0 16H19" stroke="#fffdf1" stroke-opacity=".13" stroke-width=".5"/></pattern>
+    <filter id="shadow" x="-50%" y="-100%" width="200%" height="300%"><feGaussianBlur stdDeviation="12"/></filter>
+  </defs>
+  <ellipse cx="320" cy="518" rx="137" ry="15" fill="#35402f" opacity=".15" filter="url(#shadow)"/>
+  <g transform="rotate(-4 320 320)">
+    <path d="M257 266V193C257 152 272 137 313 137C354 137 394 144 394 191V263" stroke="#a0a99b" stroke-width="22" stroke-linecap="round"/>
+    <path d="M253 259V193C253 154 273 141 312 141C353 141 389 150 389 191V256" stroke="#d3d7ca" stroke-width="2" stroke-dasharray="3 4"/>
+    <path d="M179 255C198 239 432 232 459 248L451 278L192 282Z" fill="#8c9888"/>
+    <path d="M192 253C251 247 383 244 447 249" stroke="#535f51" stroke-width="3" opacity=".45"/>
+    <path d="M178 254C240 264 396 259 460 248L448 475C447 499 423 507 323 509C230 511 197 501 194 480Z" fill="url(#nylon)" stroke="#a1aa9a" stroke-width="1.5"/>
+    <path d="M178 254C240 264 396 259 460 248L448 475C447 499 423 507 323 509C230 511 197 501 194 480Z" fill="url(#ripstop)"/>
+    <path d="M434 260L460 248L448 475L423 492L428 354Z" fill="url(#gusset)" opacity=".8"/>
+    <path d="M178 254C248 264 387 259 460 248L458 267C385 278 244 281 180 272Z" fill="#d5d6cb"/>
+    <path d="M183 269C249 278 390 274 454 263" stroke="#8f9a89" stroke-width="1.2" stroke-dasharray="3 4"/>
+    <path d="M225 341V192C225 153 239 127 278 127C317 127 367 142 367 187V338" stroke="#a0aa9a" stroke-width="25"/>
+    <path d="M225 337V192C225 153 239 128 278 128C317 128 367 142 367 187V334" stroke="url(#webbing)" stroke-width="21"/>
+    <path d="M218 336V192C218 150 239 121 278 121C320 121 374 140 374 187V334M232 336V192C232 157 243 135 278 135C314 135 360 148 360 187V334" stroke="#85947e" stroke-opacity=".6" stroke-width="1" stroke-dasharray="3 4"/>
+    <path d="M216 299H234V338H216ZM358 296H376V335H358Z" stroke="#82917a" stroke-opacity=".75" stroke-width="1.1"/>
+    <path d="M216 300L234 338M234 300L216 338M358 297L376 335M376 297L358 335" stroke="#82917a" stroke-opacity=".65" stroke-width="1.1"/>
+    <path d="M204 284L217 474C220 489 236 494 261 495M425 280L414 478" stroke="#879680" stroke-opacity=".45" stroke-width="1.2" stroke-dasharray="3 4"/>
+    <path d="M204 462L228 484C274 493 366 493 419 480L446 460" stroke="#87937f" stroke-opacity=".45" stroke-width="2"/>
+    <path d="M246 352C253 381 252 411 243 438M394 322C382 367 394 403 387 437" stroke="#faf8ed" stroke-opacity=".35" stroke-width="3" stroke-linecap="round"/>
+    <path d="M271 462C297 453 339 456 367 465" stroke="#a4ae9c" stroke-opacity=".5" stroke-width="2" stroke-linecap="round"/>
+  </g>
+</svg>

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640" fill="none" role="img" aria-labelledby="title">
+  <title id="title">Table Light — sample product illustration</title>
+  <defs>
+    <linearGradient id="shade" x1="187" y1="154" x2="449" y2="327" gradientUnits="userSpaceOnUse"><stop stop-color="#b4b9a1"/><stop offset=".37" stop-color="#8d9778"/><stop offset=".72" stop-color="#6b7759"/><stop offset="1" stop-color="#576448"/></linearGradient>
+    <linearGradient id="stem" x1="297" y1="316" x2="346" y2="465" gradientUnits="userSpaceOnUse"><stop stop-color="#bbc0a6"/><stop offset=".4" stop-color="#8c9778"/><stop offset="1" stop-color="#58664a"/></linearGradient>
+    <linearGradient id="base" x1="237" y1="449" x2="408" y2="494" gradientUnits="userSpaceOnUse"><stop stop-color="#a1ac8c"/><stop offset=".5" stop-color="#828e6e"/><stop offset="1" stop-color="#515f44"/></linearGradient>
+    <radialGradient id="inner"><stop stop-color="#fff4cf"/><stop offset="1" stop-color="#c6c8a7"/></radialGradient>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="12"/></filter>
+  </defs>
+  <ellipse cx="320" cy="510" rx="128" ry="15" fill="#34412b" opacity=".13" filter="url(#shadow)"/>
+  <path d="M364 484C416 477 398 522 459 518" stroke="#646b5a" stroke-width="4" stroke-linecap="round"/>
+  <ellipse cx="320" cy="489" rx="91" ry="17" fill="#4e5d40"/>
+  <path d="M229 480C229 459 270 446 320 446S411 459 411 480V489C411 502 229 502 229 489Z" fill="url(#base)"/>
+  <ellipse cx="320" cy="480" rx="91" ry="21" fill="url(#base)"/>
+  <ellipse cx="320" cy="475" rx="75" ry="13" stroke="#b7bfa5" stroke-opacity=".35"/>
+  <path d="M303 291H337L345 465C345 476 295 476 295 465Z" fill="url(#stem)"/>
+  <path d="M309 316L305 459" stroke="#d0d4bc" stroke-width="3" stroke-opacity=".5"/>
+  <ellipse cx="320" cy="307" rx="165" ry="28" fill="#4d5a3d"/>
+  <ellipse cx="320" cy="307" rx="153" ry="21" fill="url(#inner)"/>
+  <path d="M155 302C166 208 225 151 320 151S474 208 485 302C485 322 155 322 155 302Z" fill="url(#shade)"/>
+  <path d="M167 300C187 309 252 313 320 313S453 309 473 300" stroke="#b1ba99" stroke-width="2" stroke-opacity=".45"/>
+  <path d="M195 240C218 193 254 172 293 166" stroke="#d0d4bb" stroke-width="6" stroke-linecap="round" stroke-opacity=".35"/>
+  <path d="M367 320V395" stroke="#8c8d70" stroke-width="2"/>
+  <ellipse cx="367" cy="400" rx="4" ry="7" fill="#b5b194"/>
+  <ellipse cx="320" cy="152" rx="12" ry="3" fill="#8d987b"/>
+</svg>
