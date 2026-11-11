@@ -43,6 +43,7 @@ export function initFilters() {
       for (const item of items) item.hidden = !visibleItems.has(item);
       if (emptyState) emptyState.hidden = visible !== 0;
     }, { animate, pointerType });
+    document.dispatchEvent(new Event('picks:filter-change'));
   }
 
   for (const button of buttons) {
