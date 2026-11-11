@@ -14,6 +14,8 @@ if (site) {
 export default defineConfig({
   output: 'static',
   site,
+  // 主要なサイト内リンクだけを先読みする。通常のページ遷移・履歴復元は維持する。
+  prefetch: { prefetchAll: false, defaultStrategy: 'hover' },
   // Cloudflare normalizes public URLs; accept both forms during local development.
   trailingSlash: 'ignore',
   redirects: {

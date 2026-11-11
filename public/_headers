@@ -3,5 +3,15 @@
   Referrer-Policy: strict-origin-when-cross-origin
   X-Frame-Options: DENY
 
+# Reuse prefetched HTML without another round trip; revalidate after one minute.
+/
+  Cache-Control: public, max-age=60, must-revalidate
+
+/picks
+  Cache-Control: public, max-age=60, must-revalidate
+
+/picks/things/:id
+  Cache-Control: public, max-age=60, must-revalidate
+
 /_astro/*
   Cache-Control: public, max-age=31536000, immutable

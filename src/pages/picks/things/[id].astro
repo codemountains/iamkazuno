@@ -27,14 +27,14 @@ const description = `${thing.name}${thing.brand ? ` — ${thing.brand.name}` : '
     <SiteHeader />
     <main id="main" class="thing-detail">
       <div class="detail-topline">
-        <a class="collection-back" href={collectionPath} data-back-to-picks><span aria-hidden="true">←</span> Back to picks</a>
+        <a class="collection-back" href={collectionPath} data-back-to-picks data-astro-prefetch><span aria-hidden="true">←</span> Back to picks</a>
       </div>
       <article class="detail-grid" aria-labelledby="thing-title">
         <div class="detail-image-wrap"><ThingImage image={thing.image} name={thing.name} eager detail /></div>
         <div class="detail-copy">
           {thing.brand && <p class="detail-brand">{thing.brand.name}</p>}
           <h1 id="thing-title">{thing.name}</h1>
-          {thing.categories.length > 0 && <ul class="detail-categories" aria-label="カテゴリ">{thing.categories.map((category) => <li><a href={categoryPath(category.id)}>{category.name}</a></li>)}</ul>}
+          {thing.categories.length > 0 && <ul class="detail-categories" aria-label="カテゴリ">{thing.categories.map((category) => <li><a href={categoryPath(category.id)} data-astro-prefetch>{category.name}</a></li>)}</ul>}
           <div class="detail-description">
             {thing.descriptionHtml
               ? <div class="rich-text" set:html={thing.descriptionHtml} />
@@ -48,6 +48,10 @@ const description = `${thing.name}${thing.brand ? ` — ${thing.brand.name}` : '
 </BaseLayout>
 
 <script>
+  import { prefetch } from 'astro:prefetch';
   import { initDetailNavigation } from '../../../scripts/picks-navigation';
   initDetailNavigation();
+  // 復元先のカテゴリ付きURLが確定してから、その一覧だけを先読みする。
+  const backLink = document.querySelector<HTMLAnchorElement>('[data-back-to-picks]');
+  if (backLink) prefetch(backLink.href);
 </script>

@@ -9,7 +9,7 @@ const { thing, index } = Astro.props;
 
 <li class="item" data-item data-categories={JSON.stringify(thing.categories.map((category) => category.id))} data-category-keys={thing.categories.map((category) => encodeURIComponent(category.id)).join(' ')}>
   <article class="item-card" aria-labelledby={`item-${thing.id}`}>
-    <a class="item-card-link" href={thingPath(thing.id)} aria-labelledby={`item-${thing.id}`}>
+    <a class="item-card-link" href={thingPath(thing.id)} data-astro-prefetch="viewport" aria-labelledby={`item-${thing.id}`}>
       <div class="item-image-wrap">
         <span class="item-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
         <!-- 初期カテゴリの適用後、表示対象の先頭画像だけを eager にする。 -->
