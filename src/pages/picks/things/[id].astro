@@ -24,26 +24,28 @@ const description = `${thing.name}${thing.brand ? ` — ${thing.brand.name}` : '
 ---
 
 <BaseLayout title={`${thing.name} — /picks`} description={description} noindex={sample} preconnectImageCdn={preconnectImageCdn}>
-  <div class="site-shell">
+  <div class="site-shell site-shell--wide">
     <SiteHeader />
-    <main id="main" class="thing-detail">
-      <div class="detail-topline">
-        <a class="collection-back" href={collectionPath} data-back-to-picks data-astro-prefetch><span aria-hidden="true">←</span> Back to picks</a>
-      </div>
-      <article class="detail-grid" aria-labelledby="thing-title">
-        <div class="detail-image-wrap"><ThingImage image={thing.image} name={thing.name} eager detail /></div>
-        <div class="detail-copy">
-          {thing.brand && <p class="detail-brand">{thing.brand.name}</p>}
-          <h1 id="thing-title">{thing.name}</h1>
-          {thing.categories.length > 0 && <ul class="detail-categories" aria-label="カテゴリ">{thing.categories.map((category) => <li><a href={categoryPath(category.id)} data-astro-prefetch>{category.name}</a></li>)}</ul>}
-          <div class="detail-description">
-            {thing.descriptionHtml
-              ? <div class="rich-text" set:html={thing.descriptionHtml} />
-              : <p class="description-empty">このアイテムの説明は、まだありません。</p>}
-          </div>
+  </div>
+  <main id="main" class="site-shell thing-detail">
+    <div class="detail-topline">
+      <a class="collection-back" href={collectionPath} data-back-to-picks data-astro-prefetch><span aria-hidden="true">←</span> Back to picks</a>
+    </div>
+    <article class="detail-grid" aria-labelledby="thing-title">
+      <div class="detail-image-wrap"><ThingImage image={thing.image} name={thing.name} eager detail /></div>
+      <div class="detail-copy">
+        {thing.brand && <p class="detail-brand">{thing.brand.name}</p>}
+        <h1 id="thing-title">{thing.name}</h1>
+        {thing.categories.length > 0 && <ul class="detail-categories" aria-label="カテゴリ">{thing.categories.map((category) => <li><a href={categoryPath(category.id)} data-astro-prefetch>{category.name}</a></li>)}</ul>}
+        <div class="detail-description">
+          {thing.descriptionHtml
+            ? <div class="rich-text" set:html={thing.descriptionHtml} />
+            : <p class="description-empty">このアイテムの説明は、まだありません。</p>}
         </div>
-      </article>
-    </main>
+      </div>
+    </article>
+  </main>
+  <div class="site-shell site-shell--wide">
     <SiteFooter />
   </div>
 </BaseLayout>

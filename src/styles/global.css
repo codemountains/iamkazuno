@@ -230,8 +230,10 @@ svg { display: block; flex-shrink: 0; }
   .filter-button { padding-inline: 7px; }
 }
 
+/* 一覧と詳細のヘッダー・フッターは同じ幅を使う。 */
+.site-shell--wide { width: calc(100% - 64px); }
+.site-shell--collection { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
 /* 一覧は画面幅を使う。auto-fillで少数カテゴリにも空き列を残す。 */
-.site-shell--collection { width: calc(100% - 64px); padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
 .item-grid--adjustable {
   --collection-max-columns: 18;
   --collection-column-gap: 16px;
@@ -240,7 +242,7 @@ svg { display: block; flex-shrink: 0; }
   gap: 24px var(--collection-column-gap);
 }
 @media (max-width: 600px) {
-  .site-shell--collection { width: calc(100% - 32px); }
+  .site-shell--wide { width: calc(100% - 32px); }
   .item-grid--adjustable {
     grid-template-columns: repeat(var(--collection-mobile-columns, 3), minmax(0, 1fr));
     gap: clamp(6px, calc(28px - var(--collection-mobile-columns, 3) * 4px), 16px) clamp(6px, calc(18px - var(--collection-mobile-columns, 3) * 2px), 12px);
