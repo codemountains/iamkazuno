@@ -1,0 +1,4 @@
+interface:
+  display_name: "microCMS things 作成"
+  short_description: "商品画像URLからメイン画像とブランドを用意し、microCMSのthingsを原則下書きで作成"
+  default_prompt: "$create-microcms-things を使って、商品画像の URL から microCMS の things を作成してください。"
