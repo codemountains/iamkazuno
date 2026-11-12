@@ -22,6 +22,7 @@ const imageAttributes = {
   height: image?.height,
   alt: image?.alt || name,
   loading: eager ? 'eager' : 'lazy',
+  fetchpriority: detail && eager ? 'high' : undefined,
   decoding: 'async',
 } as const;
 ---

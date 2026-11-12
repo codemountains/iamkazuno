@@ -34,7 +34,7 @@ export function initFilters() {
     const selectedButton = buttons.find((button) => button.dataset.filter === selected);
     if (selectedButton) filterScroll.reveal(selectedButton);
     if (resultLabel) {
-      const name = buttons.find((button) => button.dataset.filter === selected)?.dataset.filterLabel ?? 'all';
+      const name = selectedButton?.dataset.filterLabel ?? 'all';
       resultLabel.textContent = selected === ''
         ? `${String(visible).padStart(2, '0')} things, well loved.`
         : `${name} — ${String(visible).padStart(2, '0')} things`;
@@ -54,6 +54,18 @@ export function initFilters() {
   }
   const restoreFromUrl = () => applyFilter(new URLSearchParams(window.location.search).get('category') ?? '', false);
   window.addEventListener('popstate', restoreFromUrl);
-  // 初回表示はURLのカテゴリを即時適用し、入場アニメーションを付けない。
-  applyFilter(new URLSearchParams(window.location.search).get('category') ?? '', false, false);
+  const requested = new URLSearchParams(window.location.search).get('category') ?? '';
+  const initialCategory = validCategories.has(requested) ? requested : '';
+  const preparedCategory = grid.dataset.initialFilter;
+  delete grid.dataset.initialFilter;
+  if (preparedCategory === initialCategory) {
+    // インライン処理の表示・件数を引き継ぎ、操作に必要な横位置だけ整える。
+    currentCategory = initialCategory;
+    const selectedButton = buttons.find((button) => button.dataset.filter === initialCategory);
+    if (selectedButton) filterScroll.reveal(selectedButton);
+    document.dispatchEvent(new Event('picks:filter-change'));
+  } else {
+    // インライン処理が未完了、または途中でURLが変わった場合は即時適用する。
+    applyFilter(initialCategory, false, false);
+  }
 }

@@ -19,10 +19,11 @@ export const getStaticPaths = (async () => {
 interface Props { thing: Thing; source: Content['source'] }
 const { thing, source } = Astro.props;
 const sample = source === 'sample';
+const preconnectImageCdn = thing.image?.url.startsWith('https://images.microcms-assets.io/') ?? false;
 const description = `${thing.name}${thing.brand ? ` — ${thing.brand.name}` : ''}。/picksのコレクション。`;
 ---
 
-<BaseLayout title={`${thing.name} — /picks`} description={description} noindex={sample}>
+<BaseLayout title={`${thing.name} — /picks`} description={description} noindex={sample} preconnectImageCdn={preconnectImageCdn}>
   <div class="site-shell">
     <SiteHeader />
     <main id="main" class="thing-detail">

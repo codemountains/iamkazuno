@@ -16,13 +16,15 @@ export function getThingImageSources(image: PickImage, detail = false): ThingIma
   }
   if (original.hostname !== 'images.microcms-assets.io' || /\.svgz?$/i.test(original.pathname)) return null;
 
-  const candidates = detail ? [480, 640, 960, 1280] : [160, 240, 320, 480, 640, 960];
+  const candidates = detail ? [480, 640, 960, 1280] : [80, 120, 160, 240, 320, 480, 640, 960];
   const widths = [...new Set(candidates.map((width) => Math.min(width, image.width)))];
+  // 一覧の転送量を抑え、詳細では細部を確認できる品質を維持する。
+  const quality = detail ? 85 : 80;
   const imageAt = (width: number, format: 'avif' | 'webp') => {
     const url = new URL(original);
     url.searchParams.set('w', String(width));
     url.searchParams.set('fm', format);
-    url.searchParams.set('q', '85');
+    url.searchParams.set('q', String(quality));
     // Do not multiply an already explicit output width a second time.
     url.searchParams.delete('dpr');
     return url.href;
