@@ -1,4 +1,4 @@
 interface:
   display_name: "picks OG画像生成"
   short_description: "microCMSの商品画像から斜めグリッドの1200×630px OG画像を生成"
-  default_prompt: "$generate-picks-og を使って、microCMSの商品画像から /picks の public/og.png を生成・差し替えてください。"
+  default_prompt: "$generate-picks-og を使って、microCMSの商品画像から /picks の public/og-picks.png を生成・差し替えてください。"
