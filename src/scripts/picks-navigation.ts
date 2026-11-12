@@ -5,6 +5,7 @@ interface ReturnPosition {
   detailPath: string;
   scrollY: number;
   itemTop: number;
+  restoreFocus?: boolean;
 }
 
 const departureKey = 'picks:detail-departure';
@@ -21,7 +22,13 @@ export function parseReturnPosition(value: unknown): ReturnPosition | null {
     const url = new URL(position.listUrl, 'https://picks.invalid');
     if (url.origin !== 'https://picks.invalid' || url.pathname !== collectionPath || url.hash
       || !/^\/picks\/things\/[^/?#]+$/.test(position.detailPath)) return null;
-    return { listUrl: `${url.pathname}${url.search}`, detailPath: position.detailPath, scrollY: position.scrollY, itemTop: position.itemTop };
+    return {
+      listUrl: `${url.pathname}${url.search}`,
+      detailPath: position.detailPath,
+      scrollY: position.scrollY,
+      itemTop: position.itemTop,
+      ...(typeof position.restoreFocus === 'boolean' ? { restoreFocus: position.restoreFocus } : {}),
+    };
   } catch {
     return null;
   }
@@ -80,7 +87,7 @@ function restorePosition(position: ReturnPosition) {
     const top = item ? window.scrollY + item.getBoundingClientRect().top - position.itemTop : position.scrollY;
     window.scrollTo({ top: Math.max(0, top), behavior: 'instant' });
   };
-  link?.focus({ preventScroll: true });
+  if (position.restoreFocus) link?.focus({ preventScroll: true });
   scroll();
 
   // フォント確定で行の高さが変わった場合だけ補正。操作開始後は引き戻さない。
@@ -147,6 +154,7 @@ export function initDetailNavigation() {
   link.addEventListener('click', (event) => {
     if (!isSameTabClick(event, link)) return;
     takePosition(returnKey);
-    if (position) savePosition(returnKey, position);
+    // キーボード・支援技術によるクリックだけ、戻った商品へフォーカスを移す。
+    if (position) savePosition(returnKey, { ...position, restoreFocus: event.detail === 0 });
   });
 }
