@@ -10,11 +10,11 @@ interface Props {
 }
 const { image, name, eager = false, detail = false } = Astro.props;
 const sources = image ? getThingImageSources(image, detail) : null;
-// sizes は画像枠から img 自身の左右 padding を除いた描画幅。
-// 一覧は通常14px、600px以下は10px。詳細は全画面幅で18px。
+// 一覧のlazy画像はautoで初回の実幅を使い、初期化・サイズ変更時にJSで描画幅を更新する。
+// 詳細は画像枠からimg自身の左右padding（18pxずつ）を除いた描画幅。
 const sizes = detail
   ? '(max-width: 600px) calc(100vw - 84px), (max-width: 760px) calc(100vw - 100px), (max-width: 850px) calc((100vw - 176px) / 2), (max-width: 896px) calc((100vw - 208px) / 2), (max-width: 1100px) 344px, 328px'
-  : '(max-width: 600px) calc((100vw - 104px) / 2), (max-width: 850px) calc((100vw - 188px) / 3), (max-width: 896px) calc((100vw - 280px) / 4), 154px';
+  : 'auto, 160px';
 const imageAttributes = {
   class: `item-image${detail ? ' detail-image' : ''}`,
   sizes,

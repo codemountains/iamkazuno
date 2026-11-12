@@ -123,6 +123,7 @@ export function initFilterMotion(grid: HTMLElement, items: HTMLElement[]) {
   window.addEventListener('resize', cancel, { passive: true });
   window.addEventListener('scroll', cancel, { passive: true });
   window.addEventListener('pagehide', cancel);
+  document.addEventListener('picks:resize', cancel);
 
   return { update };
 }

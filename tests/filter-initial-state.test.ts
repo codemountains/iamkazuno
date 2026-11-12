@@ -20,7 +20,12 @@ function load(category: string) {
   const items = [['mountain'], ['mountain'], ['ski'], ['ski', 'mountain'], ['ski'], ['ski'], ['ski'], [unusualCategory]].map((ids) => ({
     dataset: { categoryKeys: ids.map(encodeURIComponent).join(' ') },
     hidden: false,
-    image: { loading: 'lazy' },
+    image: {
+      loading: 'lazy', sizes: 'auto, 160px',
+      sources: [{ sizes: 'auto, 160px' }],
+      getBoundingClientRect() { return { width: 308 }; },
+      closest() { return { querySelectorAll: () => this.sources }; },
+    },
     querySelector() { return this.image; },
   }));
   const label = { textContent: '' };
@@ -38,6 +43,7 @@ function load(category: string) {
     window: { location: { search: `?category=${encodeURIComponent(category)}` } },
     categoryKeys: categories.slice(1).map(encodeURIComponent),
     URLSearchParams,
+    getComputedStyle: () => ({ paddingLeft: '14px', paddingRight: '14px' }),
   };
   runInNewContext(prepare!, context);
   const initialStyle = styles[0]?.textContent;
@@ -54,6 +60,11 @@ test('a category is ready before the external module and prioritizes only its fi
   assert.equal(state.buttons.find((button) => button.pressed)?.dataset.filter, 'ski');
   assert.equal(state.empty.hidden, true);
   assert.equal(state.styles[0].removed, true);
+  for (const item of state.items.filter((item) => item.image.loading === 'eager')) {
+    assert.equal(item.image.sizes, '280px');
+    assert.equal(item.image.sources[0].sizes, '280px');
+  }
+  assert.equal(state.items[0].image.sizes, 'auto, 160px');
 });
 
 test('all and unknown categories retain the complete collection', () => {
