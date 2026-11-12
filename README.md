@@ -121,6 +121,30 @@ microCMS画像を含む一覧・詳細ページでは、画像CDNへ `preconnect
 
 `wrangler.jsonc` は、Workerスクリプトを持たず `dist/` の静的ファイルだけを配信する構成です。Cloudflare adapterやサーバー実行環境は不要です。`iamkaz.uno` のCustom Domain設定を含めており、デプロイ時にこのドメインへ接続します。
 
+### GitHub Actionsから手動で公開する
+
+`.github/workflows/deploy.yml` の `Deploy` ワークフローを手動実行すると、選択したブランチのコードを型チェック・テストし、最新のmicroCMSデータでビルドして `https://iamkaz.uno` に公開します。同じ公開先へのデプロイは同時に1件だけ実行します。
+
+1. GitHubリポジトリの **Settings → Secrets and variables → Actions → New repository secret** から、以下の4項目を登録します。
+
+   | Secret名 | 設定する値 |
+   | --- | --- |
+   | `CLOUDFLARE_API_TOKEN` | デプロイ用のCloudflare APIトークン |
+   | `CLOUDFLARE_ACCOUNT_ID` | `iamkaz.uno` を管理しているCloudflareアカウントのID |
+   | `MICROCMS_SERVICE_DOMAIN` | microCMSのサービスID |
+   | `MICROCMS_API_KEY` | 3 APIのGET権限と、マネジメントAPIの「コンテンツの取得 (一覧・詳細)」権限を持つキー |
+
+2. Cloudflare APIトークンは **Edit Cloudflare Workers** テンプレートから作成し、対象アカウントと `iamkaz.uno` のゾーンに範囲を限定します。Custom Domainの設定に必要な **Workers Routes** の編集権限を含め、ドメインのゾーンがActiveになっていることを確認してください。
+3. ワークフローをデフォルトブランチへ反映します。GitHubの **Actions → Deploy → Run workflow** で、公開するブランチ（通常は `main`）を選択して実行します。
+4. 完了後、`https://iamkaz.uno`、`/picks`、商品詳細ページと画像を確認します。
+
+ビルドには `DATA_SOURCE=microcms` と `SITE_URL=https://iamkaz.uno` を設定しています。必要なSecretが未設定の場合は、設定名をログに表示して処理を終了します。microCMSの内容を更新した後も、同じワークフローを再実行すると公開内容に反映されます。
+
+- [GitHub Actionsの手動実行](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow)
+- [CloudflareのGitHub Actions設定とAPIトークン作成](https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/)
+
+### Workers Buildsを使う場合
+
 1. GitHubにこのリポジトリを配置し、Cloudflare Workers Buildsで接続します。
 2. 必要に応じて `wrangler.jsonc` の `name` を変更します。
 3. ビルドコマンドを `npm run build`、デプロイコマンドを `npx wrangler deploy` にします。
