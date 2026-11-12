@@ -46,7 +46,7 @@ SITE_URL=https://iamkaz.uno
 ```
 
 - `MICROCMS_SERVICE_DOMAIN`: サービスIDのみ。`https://` と `.microcms.io` は含めません。
-- `MICROCMS_API_KEY`: `things` / `brands` / `categories` のGET権限と、マネジメントAPIの「コンテンツの取得 (一覧・詳細)」権限を持つキー。書き込み権限は不要です。
+- `MICROCMS_API_KEY`: `things` / `brands` / `categories` のコンテンツAPIのGET権限を持つキー。公開用キーでは「下書きコンテンツ全取得」「公開終了コンテンツ全取得」を無効にします。
 - `SITE_URL`: 本番サイトのURL。canonicalとOGP画像の絶対URLに使います。未設定時は `https://iamkaz.uno` を使用します。別の公開先を使う場合に上書きできます。
 - APIキーはビルド時だけ使用し、生成済みHTMLやブラウザ用JavaScriptには含めません。`.env` はGit対象外です。
 
@@ -84,10 +84,10 @@ MCPから取得した既存の3つの **リスト形式API** に合わせてい�
 
 `id` はmicroCMSの標準コンテンツIDを使用し、詳細ページのURLにも使います。3つのAPIを `getAllContents()` で全件取得するため、APIの既定件数に切り詰められません。アイテムとカテゴリの表示順はAPIの取得順を維持します。
 
-`things` はビルド時にマネジメントAPIで公開状態も全件確認し、ステータスが `PUBLISH`（公開中）のみのアイテムを表示します。`DRAFT`（下書き）、`CLOSED`（公開終了）、`PUBLISH_AND_DRAFT`（公開中かつ下書き中）は一覧・件数・詳細ページ生成・旧URLリダイレクトの対象外です。下書きに戻したアイテムに過去の `publishedAt` が残っていても除外します。「公開中かつ下書き中」も除外するのは、下書き全取得権限のあるキーでは公開版ではなく下書き版が返るためです。公開状態の取得失敗や不正な応答では、下書きの混入を防ぐためビルドを中止します。
+ビルド時の取得は、`things` / `brands` / `categories` のコンテンツAPIに統一しています。`draftKey` を指定せず、APIが返した内容で一覧・件数・詳細ページ・旧URLリダイレクトを生成します。「下書きコンテンツ全取得」「公開終了コンテンツ全取得」を無効にしたキーでは、公開中のコンテンツと「公開中かつ下書き中」の公開版が取得対象になります。下書きや公開終了への変更は、再ビルド時に反映されます。
 
 - [コンテンツのステータス](https://document.microcms.io/manual/content-status)
-- [マネジメントAPIのコンテンツ一覧](https://document.microcms.io/management-api/get-list-contents-management)
+- [APIキーの権限設定](https://document.microcms.io/content-api/x-microcms-api-key)
 
 カテゴリフィルターは `all` と、`categories` APIから取得したカテゴリで構成します。コード内に固定カテゴリを追加しません。1つのアイテムに複数のカテゴリを設定でき、いずれのカテゴリからも絞り込めます。サンプルも実APIと同じフィールド構造で管理しています。
 
@@ -132,7 +132,7 @@ microCMS画像を含む一覧・詳細ページでは、画像CDNへ `preconnect
    | `CLOUDFLARE_API_TOKEN` | デプロイ用のCloudflare APIトークン |
    | `CLOUDFLARE_ACCOUNT_ID` | `iamkaz.uno` を管理しているCloudflareアカウントのID |
    | `MICROCMS_SERVICE_DOMAIN` | microCMSのサービスID |
-   | `MICROCMS_API_KEY` | 3 APIのGET権限と、マネジメントAPIの「コンテンツの取得 (一覧・詳細)」権限を持つキー |
+   | `MICROCMS_API_KEY` | 3 APIのコンテンツAPIのGET権限を持ち、「下書きコンテンツ全取得」「公開終了コンテンツ全取得」を無効にしたキー |
 
 2. Cloudflare APIトークンは **Edit Cloudflare Workers** テンプレートから作成し、対象アカウントと `iamkaz.uno` のゾーンに範囲を限定します。Custom Domainの設定に必要な **Workers Routes** の編集権限を含め、ドメインのゾーンがActiveになっていることを確認してください。
 3. ワークフローをデフォルトブランチへ反映します。GitHubの **Actions → Deploy → Run workflow** で、公開するブランチ（通常は `main`）を選択して実行します。
@@ -180,7 +180,6 @@ Workers Buildsで本番ブランチのDeploy Hookを作り、microCMSの `things
 - `public/images/samples/`: オリジナルのサンプルSVG
 - `src/lib/content.ts`: サンプル / microCMSの切り替えと取得
 - `src/lib/content-validation.ts`: 接続情報とCMSコンテンツの検証
-- `src/lib/content-publication.ts`: thingsの公開状態の取得と、下書きを含まない公開中IDの判定
 - `src/lib/rich-text.ts`: 説明文のHTMLをサニタイズ
 - `src/scripts/filters.ts`: カテゴリ絞り込み、URL共有、ブラウザの戻る・進む
 - `src/scripts/filter-motion.ts`: PCの短距離の再配置とフェード、タッチ操作時の短いフェード

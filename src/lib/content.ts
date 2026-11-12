@@ -3,7 +3,6 @@ import { createClient } from 'microcms-js-sdk';
 import { sampleBrands, sampleCategories, sampleThings } from '../data/sample';
 import type { Content, ContentEnvironment } from '../types/content';
 import { resolveContentConfiguration, validateBrands, validateCategories, validateThings } from './content-validation';
-import { getPublishedThingIds } from './content-publication';
 
 // Astro's build-time replacement requires explicit references to private env keys.
 export async function getContent(env: ContentEnvironment = {
@@ -46,6 +45,5 @@ export async function getContent(env: ContentEnvironment = {
 
   const brands = validateBrands(rawBrands);
   const categories = validateCategories(rawCategories);
-  const publishedIds = await getPublishedThingIds(config);
-  return { brands, categories, things: validateThings(rawThings, brands, categories, { publishedIds }), source: 'microcms' };
+  return { brands, categories, things: validateThings(rawThings, brands, categories), source: 'microcms' };
 }
