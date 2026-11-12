@@ -29,6 +29,9 @@ const categoryKeys = categories.map((category) => encodeURIComponent(category.id
               && (saved - collectionSize.min) % collectionSize.step === 0) size = saved;
           } catch { /* ストレージが使えない場合も既定サイズで表示する。 */ }
           document.documentElement.style.setProperty('--collection-item-size', `${size}px`);
+          const progress = (size - collectionSize.min) / (collectionSize.max - collectionSize.min);
+          const columns = Math.round(progress <= 0.5 ? 6 - progress * 6 : 5 - progress * 4);
+          document.documentElement.style.setProperty('--collection-mobile-columns', String(columns));
         })();
       </script>
       <script define:vars={{ categoryKeys }} data-filter-prepare>

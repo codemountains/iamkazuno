@@ -3,7 +3,7 @@ export const collectionSize = {
   max: 280,
   step: 8,
   initial: 160,
-  mobileInitial: 136,
+  mobileInitial: 184,
   storageKey: 'picks:image-size',
 } as const;
 
@@ -15,8 +15,8 @@ export function parseCollectionSize(value: unknown): number {
     ? size : collectionSize.initial;
 }
 
-// auto-fill の空きトラックも含め、絞り込み後も同じカード幅を保つ。
-export function collectionCardWidth(availableWidth: number, minimum: number, gap: number): number {
-  const columns = Math.max(1, Math.floor((availableWidth + gap) / (minimum + gap)));
-  return Math.max(0, (availableWidth - gap * (columns - 1)) / columns);
+// モバイルはスライダーの左端6列・中央3列・右端1列。保存値とPCの範囲は共通。
+export function mobileCollectionColumns(size: number): number {
+  const progress = (size - collectionSize.min) / (collectionSize.max - collectionSize.min);
+  return Math.round(progress <= 0.5 ? 6 - progress * 6 : 5 - progress * 4);
 }
