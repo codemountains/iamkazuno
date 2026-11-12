@@ -6,7 +6,23 @@ import Wordmark from './Wordmark.astro';
     <Wordmark small />
     <a href="#main" class="back-to-top">Back to top <span aria-hidden="true">↑</span></a>
   </div>
-  <a href="/" class="footer-home-link" data-astro-prefetch aria-label="iamkaz.uno トップページに戻る">
-    <span aria-hidden="true">←</span> iamkaz.uno
-  </a>
+  <div class="footer-links">
+    <a href="/" class="footer-home-link" data-astro-prefetch aria-label="iamkaz.uno トップページに戻る">
+      <span aria-hidden="true">←</span> iamkaz.uno
+    </a>
+    <a
+      href="https://www.instagram.com/drop_in_com/"
+      class="footer-social-link"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Instagram @drop_in_com（新しいタブで開く）"
+      title="Instagram @drop_in_com"
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+        <rect x="3" y="3" width="18" height="18" rx="5" />
+        <circle cx="12" cy="12" r="4" />
+        <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+      </svg>
+    </a>
+  </div>
 </footer>
