@@ -22,30 +22,46 @@ test('AVIF and WebP offer matching widths, including small cards, without densit
   const avif = candidates(sources.avifSrcset);
   const webp = candidates(sources.webpSrcset);
   assert.deepEqual(avif.map(({ width }) => width), webp.map(({ width }) => width));
-  assert.ok(avif.some(({ width }) => width === 160));
-  assert.ok(avif.some(({ width }) => width === 240));
+  assert.deepEqual(avif.map(({ width }) => width), [80, 120, 160, 240, 320, 480, 640, 960]);
   for (const [format, variants] of [['avif', avif], ['webp', webp]] as const) {
     for (const { url, width } of variants) {
       assert.equal(Number(url.searchParams.get('w')), width);
       assert.equal(url.searchParams.get('fm'), format);
-      assert.equal(url.searchParams.get('q'), '85');
+      assert.equal(url.searchParams.get('q'), '80');
       assert.equal(url.searchParams.has('dpr'), false);
     }
   }
   assert.equal(new URL(sources.src).searchParams.get('fm'), 'webp');
 });
 
+test('listing images use quality 80 while detail images retain quality 85 across all candidates', () => {
+  for (const detail of [false, true]) {
+    const sources = getThingImageSources({ ...image, url: `${image.url}?q=10` }, detail);
+    assert.ok(sources);
+    const quality = detail ? '85' : '80';
+    const urls = [new URL(sources.src), ...candidates(sources.avifSrcset).map(({ url }) => url), ...candidates(sources.webpSrcset).map(({ url }) => url)];
+    assert.ok(urls.every((url) => url.searchParams.get('q') === quality));
+    if (detail) {
+      for (const srcset of [sources.avifSrcset, sources.webpSrcset]) {
+        assert.deepEqual(candidates(srcset).map(({ width }) => width), [480, 640, 960, 1280]);
+      }
+    }
+  }
+});
+
 test('small originals remain available at their full width without duplicate or upscaled candidates', () => {
-  for (const width of [80, 160, 200, 320, 1254]) {
+  for (const width of [40, 79, 80, 100, 119, 120, 121, 160, 200, 320, 1254]) {
     for (const detail of [false, true]) {
       const sources = getThingImageSources({ ...image, width }, detail);
       assert.ok(sources);
-      const variants = candidates(sources.avifSrcset);
-      const widths = variants.map((candidate) => candidate.width);
-      assert.ok(widths.length > 0);
-      assert.equal(widths.length, new Set(widths).size);
-      assert.ok(widths.every((candidateWidth) => candidateWidth <= width));
-      assert.equal(widths.at(-1), Math.min(width, detail ? 1280 : 960));
+      for (const srcset of [sources.avifSrcset, sources.webpSrcset]) {
+        const variants = candidates(srcset);
+        const widths = variants.map((candidate) => candidate.width);
+        assert.ok(widths.length > 0);
+        assert.equal(widths.length, new Set(widths).size);
+        assert.ok(widths.every((candidateWidth) => candidateWidth <= width));
+        assert.equal(widths.at(-1), Math.min(width, detail ? 1280 : 960));
+      }
       assert.ok(Number(new URL(sources.src).searchParams.get('w')) <= width);
     }
   }

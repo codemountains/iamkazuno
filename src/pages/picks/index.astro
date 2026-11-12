@@ -9,12 +9,13 @@ import { collectionSize } from '../../lib/collection-size';
 
 const { things, categories, source } = await getContent();
 const sample = source === 'sample';
+const preconnectImageCdn = things.some((thing) => thing.image?.url.startsWith('https://images.microcms-assets.io/'));
 const count = (id: string) => things.filter((thing) => thing.categories.some((category) => category.id === id)).length;
 // URIエンコードしたキーなら、空白を含むIDもCSSの属性トークンで安全に照合できる。
 const categoryKeys = categories.map((category) => encodeURIComponent(category.id));
 ---
 
-<BaseLayout noindex={sample}>
+<BaseLayout noindex={sample} preconnectImageCdn={preconnectImageCdn}>
   <div class="site-shell site-shell--collection">
     <SiteHeader />
 
@@ -76,25 +77,21 @@ const categoryKeys = categories.map((category) => encodeURIComponent(category.id
         <script is:inline data-filter-apply>
           (() => {
             // 外部の操作用moduleを待たず、初回の絞り込み・件数・画像優先度を確定する。
+            const grid = document.querySelector('[data-item-grid]');
+            if (!grid) return;
             const buttons = Array.from(document.querySelectorAll('[data-filter]'));
             const requested = new URLSearchParams(window.location.search).get('category') || '';
             const selected = buttons.find((button) => button.dataset.filter === requested) || buttons[0];
             const category = selected?.dataset.filter || '';
             const key = encodeURIComponent(category);
+            const eagerImages = [];
             let visible = 0;
             for (const item of document.querySelectorAll('[data-item]')) {
               item.hidden = category !== '' && !item.dataset.categoryKeys.split(' ').includes(key);
               if (item.hidden) continue;
               if (visible++ < 4) {
                 const image = item.querySelector('img');
-                if (image) {
-                  // eager画像ではsizes=autoが無効になるため、取得前に実描画幅を渡す。
-                  const style = getComputedStyle(image);
-                  const size = `${Math.max(1, Math.ceil(image.getBoundingClientRect().width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)))}px`;
-                  for (const source of image.closest('picture')?.querySelectorAll('source') ?? []) source.sizes = size;
-                  image.sizes = size;
-                  image.loading = 'eager';
-                }
+                if (image) eagerImages.push(image);
               }
             }
             for (const button of buttons) button.setAttribute('aria-pressed', String(button === selected));
@@ -105,6 +102,19 @@ const categoryKeys = categories.map((category) => encodeURIComponent(category.id
             const empty = document.querySelector('[data-empty-state]');
             if (empty) empty.hidden = visible !== 0;
             document.getElementById('picks-initial-filter')?.remove();
+            // 表示状態をまとめて確定してから、同じ幅のグリッド画像を1枚だけ計測する。
+            const firstImage = eagerImages[0];
+            if (firstImage) {
+              const style = getComputedStyle(firstImage);
+              const size = `${Math.max(1, Math.ceil(firstImage.getBoundingClientRect().width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)))}px`;
+              for (const image of eagerImages) {
+                // eager画像ではsizes=autoが無効になるため、取得前に実描画幅を渡す。
+                for (const source of image.closest('picture')?.querySelectorAll('source') ?? []) source.sizes = size;
+                image.sizes = size;
+              }
+              for (const image of eagerImages) image.loading = 'eager';
+            }
+            grid.dataset.initialFilter = category;
           })();
         </script>
       </section>
@@ -120,6 +130,7 @@ const categoryKeys = categories.map((category) => encodeURIComponent(category.id
   import { initFilters } from '../../scripts/filters';
   import { initItemInteractions } from '../../scripts/item-interactions';
   import { initCollectionNavigation } from '../../scripts/picks-navigation';
+  import { initCollectionPrefetch } from '../../scripts/collection-prefetch';
   import { initCollectionSize } from '../../scripts/collection-size';
   import { initSizeControl } from '../../scripts/size-control';
   initCollectionSize();
@@ -127,4 +138,5 @@ const categoryKeys = categories.map((category) => encodeURIComponent(category.id
   initItemInteractions();
   initCollectionNavigation();
   initSizeControl();
+  initCollectionPrefetch();
 </script>

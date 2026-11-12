@@ -12,52 +12,165 @@ export function initCollectionSize() {
   const images = Array.from(grid.querySelectorAll<HTMLImageElement>('img'));
   const pictures = Array.from(grid.querySelectorAll<HTMLImageElement | HTMLSourceElement>('img, source'));
   const items = Array.from(grid.querySelectorAll<HTMLElement>('[data-item]'));
+  const gridStyle = getComputedStyle(grid);
+  const columnGap = parseFloat(gridStyle.getPropertyValue('--collection-column-gap'));
+  const maxColumns = parseInt(gridStyle.getPropertyValue('--collection-max-columns'), 10);
+  let gridWidth = grid.getBoundingClientRect().width;
+  let gridWidthDirty = false;
   let size = parseCollectionSize(root.style.getPropertyValue('--collection-item-size').replace('px', ''));
+  let layoutInitialized = false;
+  let mobileLayout = mobile.matches;
+  let pendingSize: number | undefined;
+  let frame: number | undefined;
+  let imageSizesPending = false;
+  let lastImageSizes: string | undefined;
+  let unsaved = false;
+
+  function layoutColumns(value: number) {
+    if (mobile.matches) return mobileCollectionColumns(value);
+    // 幅が未確定なら省略せず、従来どおりサイズ変更として扱う。
+    if (!(gridWidth > 0 && columnGap >= 0 && maxColumns > 0)) return value;
+    return Math.max(1, Math.min(maxColumns, Math.floor((gridWidth + columnGap) / (value + columnGap))));
+  }
 
   function updateImageSizes() {
-    const image = images.find((image) => image.getBoundingClientRect().width > 0);
-    if (!image) return;
-    const style = getComputedStyle(image);
-    // 非表示カテゴリの画像にも設定し、次に表示されたときの候補を正しく選ばせる。
-    const padding = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
-    const sizes = `${Math.max(1, Math.ceil(image.getBoundingClientRect().width - padding))}px`;
-    for (const picture of pictures) {
-      if (picture.sizes !== sizes) picture.sizes = sizes;
+    for (const image of images) {
+      const width = image.getBoundingClientRect().width;
+      if (width <= 0) continue;
+      const style = getComputedStyle(image);
+      const padding = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+      const sizes = `${Math.max(1, Math.ceil(width - padding))}px`;
+      // 同じ配信幅なら、非表示画像を含む全要素の確認も省く。
+      if (sizes === lastImageSizes) return;
+      for (const picture of pictures) {
+        if (picture.sizes !== sizes) picture.sizes = sizes;
+      }
+      lastImageSizes = sizes;
+      return;
     }
   }
 
-  function apply(value: string | number, save: boolean) {
+  function apply(value: number, preservePosition: boolean) {
+    // 旧値も最新の幅で評価し、ウィンドウ変更前の列数との比較を避ける。
+    const previousColumns = layoutColumns(size);
     size = parseCollectionSize(value);
-    // リサイズはwindow.resizeを起こさないため、絞り込みの残像を先に解除する。
-    document.dispatchEvent(new Event('picks:resize'));
-    const anchor = save ? items.find((item) => !item.hidden && item.getBoundingClientRect().bottom > 0) : undefined;
-    const anchorTop = anchor?.getBoundingClientRect().top;
-    root.style.setProperty('--collection-item-size', `${size}px`);
     const columns = mobileCollectionColumns(size);
-    root.style.setProperty('--collection-mobile-columns', String(columns));
+    const layoutChanged = !layoutInitialized || previousColumns !== layoutColumns(size) || mobileLayout !== mobile.matches;
+    let anchor: HTMLElement | undefined;
+    let anchorTop = 0;
+    if (layoutChanged) {
+      // リサイズはwindow.resizeを起こさないため、位置計測より先に残像を解除する。
+      document.dispatchEvent(new Event('picks:resize'));
+      if (preservePosition) {
+        for (const item of items) {
+          if (item.hidden) continue;
+          const rect = item.getBoundingClientRect();
+          if (rect.bottom <= 0) continue;
+          anchor = item;
+          anchorTop = rect.top;
+          break;
+        }
+      }
+    }
+    if (root.style.getPropertyValue('--collection-item-size') !== `${size}px`) {
+      root.style.setProperty('--collection-item-size', `${size}px`);
+    }
+    if (root.style.getPropertyValue('--collection-mobile-columns') !== String(columns)) {
+      root.style.setProperty('--collection-mobile-columns', String(columns));
+    }
     slider.value = String(size);
     slider.style.setProperty('--size-progress', `${(size - collectionSize.min) / (collectionSize.max - collectionSize.min) * 100}%`);
     slider.setAttribute('aria-valuetext', mobile.matches ? `横に${columns}列` : `${size}ピクセル`);
-    if (save) {
-      try { sessionStorage.setItem(collectionSize.storageKey, String(size)); } catch { /* 保存不可でも調整できる。 */ }
-    }
+    // 同じ幅・列数ならカード幅も同じ。PCの18列上限中も計測と位置補正を省く。
+    if (!layoutChanged) return;
+    layoutInitialized = true;
+    mobileLayout = mobile.matches;
+    imageSizesPending = false;
     updateImageSizes();
-    if (anchor && anchorTop !== undefined) {
+    if (anchor) {
       // 並び直しで見ていた道具を見失わないよう、画面内の縦位置を保つ。
       window.scrollTo({ top: Math.max(0, window.scrollY + anchor.getBoundingClientRect().top - anchorTop), behavior: 'instant' });
     }
   }
 
+  function flush(preservePosition = true) {
+    if (frame !== undefined) cancelAnimationFrame(frame);
+    frame = undefined;
+    if (gridWidthDirty) {
+      const nextWidth = grid.getBoundingClientRect().width;
+      imageSizesPending ||= gridWidth !== nextWidth;
+      gridWidth = nextWidth;
+      gridWidthDirty = false;
+    }
+    const value = pendingSize;
+    pendingSize = undefined;
+    if (value !== undefined) apply(value, preservePosition);
+    if (imageSizesPending) {
+      imageSizesPending = false;
+      updateImageSizes();
+    }
+  }
+
+  function schedule() {
+    if (frame !== undefined) return;
+    frame = requestAnimationFrame(() => {
+      frame = undefined;
+      flush();
+    });
+  }
+
+  function saveSize() {
+    try {
+      sessionStorage.setItem(collectionSize.storageKey, String(size));
+      unsaved = false;
+    } catch { /* 保存不可でも調整できる。 */ }
+  }
+
+  function commit() {
+    flush();
+    if (unsaved) saveSize();
+  }
+
   // 戻り位置を計測するinitCollectionNavigation()より先にレイアウトを確定する。
   apply(size, false);
-  slider.addEventListener('input', () => apply(slider.value, true));
-  mobile.addEventListener('change', () => apply(size, false));
-  new ResizeObserver(updateImageSizes).observe(grid);
+  slider.addEventListener('input', () => {
+    pendingSize = parseCollectionSize(slider.value);
+    unsaved = true;
+    schedule();
+  });
+  slider.addEventListener('change', () => {
+    pendingSize = parseCollectionSize(slider.value);
+    unsaved ||= pendingSize !== size;
+    commit();
+  });
+  slider.addEventListener('blur', commit);
+  window.addEventListener('pagehide', commit);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') commit();
+  });
+  mobile.addEventListener('change', () => {
+    // 画面幅が変わっても、直前のinputを以前の値で上書きしない。
+    gridWidthDirty = true;
+    pendingSize ??= size;
+    flush(false);
+  });
+  // ResizeObserver通知より先に入力のrAFが走る場合だけ、最新幅を取り直す。
+  window.addEventListener('resize', () => { gridWidthDirty = true; }, { passive: true });
+  new ResizeObserver(([entry]) => {
+    if (entry) {
+      gridWidth = entry.contentRect.width;
+      gridWidthDirty = false;
+    }
+    imageSizesPending = true;
+    schedule();
+  }).observe(grid);
   // bfcacheではその履歴のDOMとスクロール位置を保ち、配信幅だけ再確認する。
   window.addEventListener('pageshow', (event) => {
     if (event.persisted) {
-      try { sessionStorage.setItem(collectionSize.storageKey, String(size)); } catch { /* 保存できなくても閲覧可能。 */ }
+      gridWidthDirty = true;
+      saveSize();
     }
-    updateImageSizes();
+    imageSizesPending = true;
+    schedule();
   });
 }
