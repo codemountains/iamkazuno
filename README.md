@@ -30,6 +30,16 @@ npm run dev
 | `npm run preview` | ビルド結果をローカルで表示 |
 | `npm run deploy` | ビルド後、Cloudflareへ公開（ログイン・アカウントが必要） |
 
+### 成果物の軽量化
+
+`npm run build` は静的ページを生成した後、次の処理を自動実行します。
+
+- テーマと一覧の初期化に使うインラインJavaScriptを圧縮します。HTML内の実行位置と属性を保ち、描画前のテーマ・カテゴリ・サイズ適用を維持します。ソースの可読性や開発サーバーの出力は変えません。
+- `public/og-picks.png` を品質90・4:4:4のJPEGに変換し、成果物には `og-picks.jpg` だけを含めます。OGメタタグはビルド時にJPEG、開発時に元のPNGを参照します。Cloudflareでは旧PNG URLもJPEGへ301転送します。`public/og-home.png` は画素を変えずPNGを再圧縮します。OG画像を更新するときは、従来どおり `public/` の元PNGを差し替えてください。
+- `public/images/samples/` のSVGは、生成HTMLから参照されているものだけを残します。microCMSのページで使わないサンプル画像は配信せず、サンプルモードや説明文で必要な画像は維持します。
+- フォントは `src/styles/fonts.css` でDM Sans Latin variableとDM Mono Latin 400のWOFF2だけを読み込みます。Latin拡張の専用ファイルと旧WOFF形式は含めません。日本語などは既存のシステムフォントへフォールバックします。
+- 旧 `/things/[id]` 用のリダイレクトHTMLは生成せず、Cloudflareの `public/_redirects` で301転送します。`astro dev` では設定した転送が使えますが、`astro preview` では旧URLの転送を再現しません。転送確認にはWranglerのローカル実行またはCloudflare上の環境を使用します。
+
 ## microCMSを後から接続する
 
 ```sh
@@ -155,7 +165,7 @@ Worker名は `iamkazuno` です。既存のWorker名が `picks` の場合は、�
 4. **ビルド環境** に `DATA_SOURCE=microcms`、`MICROCMS_SERVICE_DOMAIN`、`MICROCMS_API_KEY` を設定します。`SITE_URL` は既定で `https://iamkaz.uno` です。APIキーはSecretとして保存してください。静的生成のため、Worker実行時の `wrangler secret put` だけではビルドに渡りません。
 5. `iamkaz.uno` を管理しているCloudflareアカウントでデプロイします。Wranglerの `routes` に設定したCustom Domainを使い、CloudflareがDNSレコードと証明書を管理します。
 
-`assets.html_handling` は `drop-trailing-slash` です。`/picks/` へのアクセスも `/picks` へ正規化されます。旧詳細ページはCloudflareの `public/_redirects` で301転送し、Astroの `redirects` でも開発サーバーと静的HTML用の転送を定義しています。
+`assets.html_handling` は `drop-trailing-slash` です。`/picks/` へのアクセスも `/picks` へ正規化されます。旧詳細ページはCloudflareの `public/_redirects` で301転送し、Astroの `redirects` でも開発サーバー用の転送を定義しています。`build.redirects: false` により、転送専用の静的HTMLは生成しません。
 
 - [Custom Domains](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/)
 - [HTML handling](https://developers.cloudflare.com/workers/static-assets/routing/advanced/html-handling/)

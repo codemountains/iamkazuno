@@ -1,6 +1,5 @@
 ---
-import '@fontsource-variable/dm-sans/wght.css';
-import '@fontsource/dm-mono/latin-400.css';
+import '../styles/fonts.css';
 import '../styles/global.css';
 import ThemeInit from '../components/ThemeInit.astro';
 
@@ -19,7 +18,7 @@ const {
   description = 'Things I use and love.',
   noindex = false,
   siteName = '/picks',
-  image = '/og-picks.png',
+  image = import.meta.env.PROD ? '/og-picks.jpg' : '/og-picks.png',
   imageAlt = '/picks — Things I use and love.',
   preconnectImageCdn = false,
 } = Astro.props;
