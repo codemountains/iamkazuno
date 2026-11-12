@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "picks",
+  "name": "iamkazuno",
   "compatibility_date": "2026-11-10",
   "routes": [
     { "pattern": "iamkaz.uno", "custom_domain": true }
