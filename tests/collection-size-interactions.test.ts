@@ -19,7 +19,7 @@ class Style {
   getPropertyValue(name: string) { return this.values.get(name) ?? ''; }
 }
 
-function setup(t: TestContext, options: { mobile?: boolean; blockedStorage?: boolean; width?: number; initial?: number } = {}) {
+function setup(t: TestContext, options: { mobile?: boolean; blockedStorage?: boolean; width?: number; initial?: number; scrollY?: number } = {}) {
   const mobile = Object.assign(new Target(), { matches: options.mobile ?? false });
   const initial = options.initial ?? (mobile.matches ? collectionSize.mobileInitial : collectionSize.initial);
   const root = { style: new Style() };
@@ -43,26 +43,34 @@ function setup(t: TestContext, options: { mobile?: boolean; blockedStorage?: boo
   };
   const cancelAnimationFrame = (id: number) => { frames.delete(id); };
   const window = Object.assign(new Target(), {
-    scrollY: 250,
+    scrollY: 0,
     matchMedia: () => mobile,
     requestAnimationFrame,
     cancelAnimationFrame,
     scrollTo({ top }: { top: number }) { this.scrollY = top; scrolls.push(top); },
   });
   let containerWidth = options.width ?? (mobile.matches ? 360 : 960);
-  const imageWidth = () => {
-    if (mobile.matches) return containerWidth / Number(root.style.getPropertyValue('--collection-mobile-columns'));
+  const layoutColumns = () => {
+    if (mobile.matches) return Number(root.style.getPropertyValue('--collection-mobile-columns'));
     // auto-fillは空き列も維持し、残り幅を列へ均等に配る。
     const minimum = Number.parseFloat(root.style.getPropertyValue('--collection-item-size'));
     let columns = 1;
     while (columns < 18 && (columns + 1) * minimum + columns * 16 <= containerWidth) columns++;
-    return (containerWidth - (columns - 1) * 16) / columns;
+    return columns;
   };
-  const items = [false, true].map((hidden, index) => ({
-    hidden,
+  const imageWidth = () => {
+    const columns = layoutColumns();
+    return (containerWidth - (mobile.matches ? 0 : (columns - 1) * 16)) / columns;
+  };
+  // 先頭行の位置はサイズに依存せず、後続行だけが列数とカード幅に応じて移動する。
+  // 既定では3行目の途中までスクロールしておき、位置補正を実際に必要とする。
+  window.scrollY = options.scrollY ?? 200 + 2 * (imageWidth() + 24) + 20;
+  const items: Array<{ hidden: boolean; getBoundingClientRect(): { top: number; bottom: number; width: number } }> = Array.from({ length: 40 }, (_, index) => ({
+    hidden: index === 39,
     getBoundingClientRect() {
       stats.itemReads++;
-      const top = 300 + index * 300 + (imageWidth() - initial) * 2 - window.scrollY;
+      const visibleIndex = items.slice(0, index).filter((item) => !item.hidden).length;
+      const top = 200 + Math.floor(visibleIndex / layoutColumns()) * (imageWidth() + 24) - window.scrollY;
       return { top, bottom: top + imageWidth(), width: imageWidth() };
     },
   }));
@@ -161,6 +169,7 @@ function setup(t: TestContext, options: { mobile?: boolean; blockedStorage?: boo
   return {
     root, slider, mobile, window, document, items, images, sources, stats, stored, saves, scrolls, frames,
     flushFrame, clearStats, notifyResize,
+    visibleItem() { return items.find((item) => !item.hidden && item.getBoundingClientRect().bottom > 0)!; },
     setContainerWidth(width: number) { containerWidth = width; },
     input(value: number) { slider.value = String(value); slider.emit('input'); },
     resize(width = containerWidth) {
@@ -209,12 +218,132 @@ test('mobile inputs within the same column count update the control without meas
   assert.equal(h.slider.value, '192');
   assert.notEqual(h.slider.style.getPropertyValue('--size-progress'), progress);
   assert.equal(h.slider.attributes.get('aria-valuetext'), '横に3列');
+  assert.equal(h.root.style.getPropertyValue('--collection-item-size'), '184px');
   assert.equal(h.stats.itemReads + h.stats.imageReads + h.stats.styleReads, 0);
   assert.equal(h.stats.resizeEvents, 0);
   assert.equal(h.stats.sizeWrites, 0);
   assert.equal(h.scrolls.length, 0);
   h.slider.emit('change');
+  assert.equal(h.root.style.getPropertyValue('--collection-item-size'), '192px');
   assert.deepEqual(h.saves, ['192']);
+});
+
+for (const scrollY of [0, 230]) {
+  test(`mobile column changes near the first visible card avoid post-write geometry reads at scroll ${scrollY}`, (t) => {
+    const h = setup(t, { mobile: true, scrollY });
+    // 絞り込みで先頭の商品が非表示でも、最初の表示カードは先頭行に残る。
+    h.items[0].hidden = true;
+    const first = h.items[1];
+    const before = first.getBoundingClientRect().top;
+    h.clearStats();
+    h.input(216);
+    h.flushFrame();
+    assert.equal(h.root.style.getPropertyValue('--collection-mobile-columns'), '2');
+    assert.equal(h.stats.itemReads, 1);
+    assert.equal(h.stats.imageReads + h.stats.styleReads + h.stats.sizeWrites, 0);
+    assert.equal(h.scrolls.length, 0);
+    assert.equal(first.getBoundingClientRect().top, before);
+    assert.equal(h.window.scrollY, scrollY);
+  });
+}
+
+test('mobile drag preserves the viewed card while deferring all image candidates until the final value', (t) => {
+  const h = setup(t, { mobile: true });
+  const initialSizes = h.images[0].sizes;
+  for (const value of [216, 264, 232]) {
+    const anchor = h.visibleItem();
+    const before = anchor.getBoundingClientRect().top;
+    h.input(value);
+    h.flushFrame();
+    assert.ok(Math.abs(anchor.getBoundingClientRect().top - before) < 0.001);
+    h.notifyResize();
+    h.flushFrame();
+    assert.equal(h.root.style.getPropertyValue('--collection-item-size'), '184px');
+    assert.equal(h.stats.imageReads + h.stats.styleReads + h.stats.sizeWrites, 0);
+    for (const picture of [...h.images, ...h.sources]) assert.equal(picture.sizes, initialSizes);
+  }
+  assert.equal(h.scrolls.length, 3);
+  assert.equal(h.saves.length, 0);
+  h.slider.emit('change');
+  assert.equal(h.root.style.getPropertyValue('--collection-item-size'), '232px');
+  assert.equal(h.stats.imageReads, 1);
+  assert.equal(h.stats.sizeWrites, h.images.length + h.sources.length);
+  for (const picture of [...h.images, ...h.sources]) assert.equal(picture.sizes, '152px');
+  assert.deepEqual(h.saves, ['232']);
+});
+
+test('mobile resize and pageshow notifications do not update image candidates before commit', (t) => {
+  const h = setup(t, { mobile: true, scrollY: 0 });
+  h.input(216);
+  h.flushFrame();
+  h.setContainerWidth(420);
+  h.window.emit('resize');
+  h.input(232);
+  h.flushFrame();
+  h.resize();
+  h.window.emit('pageshow', { persisted: false });
+  h.flushFrame();
+  assert.equal(h.stats.imageReads + h.stats.styleReads + h.stats.sizeWrites, 0);
+  assert.equal(h.root.style.getPropertyValue('--collection-item-size'), '184px');
+  h.slider.emit('change');
+  assert.equal(h.stats.imageReads, 1);
+  for (const picture of [...h.images, ...h.sources]) assert.equal(picture.sizes, '182px');
+});
+
+for (const reason of ['change', 'blur', 'pagehide', 'hidden', 'pointercancel', 'lostpointercapture'] as const) {
+  test(`mobile ${reason} commits the latest pending value and image candidates once`, (t) => {
+    const h = setup(t, { mobile: true });
+    h.input(216);
+    h.flushFrame();
+    h.input(264);
+    assert.equal(h.stats.imageReads, 0);
+    if (reason === 'pagehide') h.window.emit(reason);
+    else if (reason === 'hidden') {
+      h.document.visibilityState = 'hidden';
+      h.document.emit('visibilitychange');
+    } else h.slider.emit(reason);
+    assert.equal(h.root.style.getPropertyValue('--collection-item-size'), '264px');
+    assert.equal(h.root.style.getPropertyValue('--collection-mobile-columns'), '1');
+    assert.equal(h.slider.attributes.get('aria-valuetext'), '横に1列');
+    assert.equal(h.stats.imageReads, 1);
+    assert.equal(h.stats.sizeWrites, h.images.length + h.sources.length);
+    for (const picture of [...h.images, ...h.sources]) assert.equal(picture.sizes, '332px');
+    assert.deepEqual(h.saves, ['264']);
+    assert.equal(h.frames.size, 0);
+    h.window.emit('pagehide');
+    h.flushFrame();
+    assert.equal(h.stats.imageReads, 1);
+    assert.deepEqual(h.saves, ['264']);
+  });
+}
+
+test('BFCache restores the current layout mode without relying on a media change event', (t) => {
+  const h = setup(t, { mobile: true });
+  h.input(232);
+  h.window.emit('pagehide');
+  const scrollY = h.window.scrollY;
+  h.setContainerWidth(960);
+  h.mobile.matches = false;
+  h.clearStats();
+  h.window.emit('pageshow', { persisted: true });
+  h.flushFrame();
+  assert.equal(h.slider.attributes.get('aria-valuetext'), '232ピクセル');
+  assert.equal(h.root.style.getPropertyValue('--collection-item-size'), '232px');
+  for (const picture of [...h.images, ...h.sources]) assert.equal(picture.sizes, '282px');
+  assert.equal(h.window.scrollY, scrollY);
+  assert.equal(h.scrolls.length, 0);
+});
+
+test('failed mobile storage does not keep images deferred after the interaction ends', (t) => {
+  const h = setup(t, { mobile: true, blockedStorage: true });
+  h.input(232);
+  h.flushFrame();
+  assert.equal(h.stats.imageReads, 0);
+  assert.doesNotThrow(() => h.slider.emit('change'));
+  for (const picture of [...h.images, ...h.sources]) assert.equal(picture.sizes, '152px');
+  h.resize(420);
+  for (const picture of [...h.images, ...h.sources]) assert.equal(picture.sizes, '182px');
+  assert.equal(h.root.style.getPropertyValue('--collection-item-size'), '232px');
 });
 
 for (const { width, lastCappedSize, cappedImageSize, nextImageSize } of [
@@ -236,12 +365,13 @@ for (const { width, lastCappedSize, cappedImageSize, nextImageSize } of [
     h.slider.emit('change');
     assert.deepEqual(h.saves, [String(lastCappedSize)]);
 
-    const before = h.items[0].getBoundingClientRect().top;
+    const anchor = h.visibleItem();
+    const before = anchor.getBoundingClientRect().top;
     h.input(lastCappedSize + 8);
     h.flushFrame();
     assert.equal(h.stats.resizeEvents, 1);
     assert.equal(h.scrolls.length, 1);
-    assert.equal(h.items[0].getBoundingClientRect().top, before);
+    assert.ok(Math.abs(anchor.getBoundingClientRect().top - before) < 0.001);
     for (const picture of [...h.images, ...h.sources]) assert.equal(picture.sizes, nextImageSize);
   });
 }
@@ -259,13 +389,14 @@ test('ResizeObserver width changes do not leave a stale desktop column baseline'
   const h = setup(t, { width: 1000 });
   h.resize(1500);
   h.clearStats();
-  const before = h.items[0].getBoundingClientRect().top;
+  const anchor = h.visibleItem();
+  const before = anchor.getBoundingClientRect().top;
   // 以前の幅では5列、リサイズ後は8列。280pxへの変更は8→5列になる。
   h.input(280);
   h.flushFrame();
   assert.equal(h.stats.gridReads, 0);
   assert.equal(h.stats.resizeEvents, 1);
-  assert.equal(h.items[0].getBoundingClientRect().top, before);
+  assert.ok(Math.abs(anchor.getBoundingClientRect().top - before) < 0.001);
   for (const picture of [...h.images, ...h.sources]) assert.equal(picture.sizes, '260px');
 });
 
@@ -273,13 +404,14 @@ test('an input before the resize observer uses the current grid width', (t) => {
   const h = setup(t, { width: 1000 });
   h.setContainerWidth(1500);
   h.window.emit('resize');
-  const before = h.items[0].getBoundingClientRect().top;
+  const anchor = h.visibleItem();
+  const before = anchor.getBoundingClientRect().top;
   // 古い幅なら160pxと176pxは同じ5列。現在の幅では8→7列なので省略できない。
   h.input(176);
   h.flushFrame();
   assert.equal(h.stats.gridReads, 1);
   assert.equal(h.stats.resizeEvents, 1);
-  assert.equal(h.items[0].getBoundingClientRect().top, before);
+  assert.ok(Math.abs(anchor.getBoundingClientRect().top - before) < 0.001);
   for (const picture of [...h.images, ...h.sources]) assert.equal(picture.sizes, '173px');
 });
 
@@ -314,11 +446,13 @@ test('BFCache restoration refreshes a changed desktop width before the next slid
 
 test('layout changes preserve the visible item position and update both visible and hidden image candidates', (t) => {
   const h = setup(t);
-  const before = h.items[0].getBoundingClientRect().top;
+  const anchor = h.visibleItem();
+  const before = anchor.getBoundingClientRect().top;
+  const beforeScrollY = h.window.scrollY;
   h.input(232);
   h.flushFrame();
-  assert.equal(h.items[0].getBoundingClientRect().top, before);
-  assert.ok(h.window.scrollY > 250);
+  assert.ok(Math.abs(anchor.getBoundingClientRect().top - before) < 0.001);
+  assert.ok(h.window.scrollY > beforeScrollY);
   for (const picture of [...h.images, ...h.sources]) assert.equal(picture.sizes, '282px');
   h.clearStats();
   h.resize();

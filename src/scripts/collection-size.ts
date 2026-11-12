@@ -24,6 +24,7 @@ export function initCollectionSize() {
   let frame: number | undefined;
   let imageSizesPending = false;
   let lastImageSizes: string | undefined;
+  let adjusting = false;
   let unsaved = false;
 
   function layoutColumns(value: number) {
@@ -50,6 +51,12 @@ export function initCollectionSize() {
     }
   }
 
+  function syncItemSize() {
+    if (root.style.getPropertyValue('--collection-item-size') !== `${size}px`) {
+      root.style.setProperty('--collection-item-size', `${size}px`);
+    }
+  }
+
   function apply(value: number, preservePosition: boolean) {
     // 旧値も最新の幅で評価し、ウィンドウ変更前の列数との比較を避ける。
     const previousColumns = layoutColumns(size);
@@ -62,19 +69,25 @@ export function initCollectionSize() {
       // リサイズはwindow.resizeを起こさないため、位置計測より先に残像を解除する。
       document.dispatchEvent(new Event('picks:resize'));
       if (preservePosition) {
+        let firstVisibleItem = true;
         for (const item of items) {
           if (item.hidden) continue;
           const rect = item.getBoundingClientRect();
-          if (rect.bottom <= 0) continue;
-          anchor = item;
-          anchorTop = rect.top;
+          if (rect.bottom <= 0) {
+            firstVisibleItem = false;
+            continue;
+          }
+          // 先頭カードの上端は列数で動かない。更新後の同期計測を省く。
+          if (!firstVisibleItem) {
+            anchor = item;
+            anchorTop = rect.top;
+          }
           break;
         }
       }
     }
-    if (root.style.getPropertyValue('--collection-item-size') !== `${size}px`) {
-      root.style.setProperty('--collection-item-size', `${size}px`);
-    }
+    // モバイルの描画に使うのは列数だけ。未使用の継承変数で全体を再評価させない。
+    if (!mobile.matches) syncItemSize();
     if (root.style.getPropertyValue('--collection-mobile-columns') !== String(columns)) {
       root.style.setProperty('--collection-mobile-columns', String(columns));
     }
@@ -85,8 +98,7 @@ export function initCollectionSize() {
     if (!layoutChanged) return;
     layoutInitialized = true;
     mobileLayout = mobile.matches;
-    imageSizesPending = false;
-    updateImageSizes();
+    imageSizesPending = true;
     if (anchor) {
       // 並び直しで見ていた道具を見失わないよう、画面内の縦位置を保つ。
       window.scrollTo({ top: Math.max(0, window.scrollY + anchor.getBoundingClientRect().top - anchorTop), behavior: 'instant' });
@@ -105,7 +117,9 @@ export function initCollectionSize() {
     const value = pendingSize;
     pendingSize = undefined;
     if (value !== undefined) apply(value, preservePosition);
-    if (imageSizesPending) {
+    // モバイル操作中は計測も画像候補の更新も確定まで保留する。
+    // 列数変更で発火するResizeObserverからも同じ保留を維持する。
+    if (imageSizesPending && !(mobile.matches && adjusting)) {
       imageSizesPending = false;
       updateImageSizes();
     }
@@ -127,14 +141,18 @@ export function initCollectionSize() {
   }
 
   function commit() {
+    adjusting = false;
     flush();
+    syncItemSize();
     if (unsaved) saveSize();
   }
 
   // 戻り位置を計測するinitCollectionNavigation()より先にレイアウトを確定する。
-  apply(size, false);
+  pendingSize = size;
+  flush(false);
   slider.addEventListener('input', () => {
     pendingSize = parseCollectionSize(slider.value);
+    adjusting = true;
     unsaved = true;
     schedule();
   });
@@ -144,6 +162,8 @@ export function initCollectionSize() {
     commit();
   });
   slider.addEventListener('blur', commit);
+  slider.addEventListener('pointercancel', commit);
+  slider.addEventListener('lostpointercapture', commit);
   window.addEventListener('pagehide', commit);
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') commit();
@@ -164,13 +184,16 @@ export function initCollectionSize() {
     imageSizesPending = true;
     schedule();
   }).observe(grid);
-  // bfcacheではその履歴のDOMとスクロール位置を保ち、配信幅だけ再確認する。
+  // bfcacheでは履歴のサイズとスクロール位置を保ち、表示モードと配信幅を再確認する。
   window.addEventListener('pageshow', (event) => {
     if (event.persisted) {
       gridWidthDirty = true;
+      // 履歴の保存中に表示モードが変わった場合も、このDOMの値を適用する。
+      pendingSize ??= size;
       saveSize();
     }
     imageSizesPending = true;
-    schedule();
+    if (event.persisted) flush(false);
+    else schedule();
   });
 }
