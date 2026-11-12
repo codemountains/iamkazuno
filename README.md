@@ -136,13 +136,15 @@ Worker名は `iamkazuno` です。既存のWorker名が `picks` の場合は、�
    | `MICROCMS_SERVICE_DOMAIN` | microCMSのサービスID |
    | `MICROCMS_API_KEY` | 3 APIのコンテンツAPIのGET権限を持ち、「下書きコンテンツ全取得」「公開終了コンテンツ全取得」を無効にしたキー |
 
-2. Cloudflare APIトークンは **Edit Cloudflare Workers** テンプレートから作成し、対象アカウントと `iamkaz.uno` のゾーンに範囲を限定します。Custom Domainの設定に必要な **Workers Routes** の編集権限を含め、ドメインのゾーンがActiveになっていることを確認してください。
-3. ワークフローをデフォルトブランチへ反映します。GitHubの **Actions → Deploy → Run workflow** で、公開するブランチ（通常は `main`）を選択して実行します。
-4. 完了後、`https://iamkaz.uno`、`/picks`、商品詳細ページと画像を確認します。
+2. 同じ画面の **Variables → New repository variable** から、`SITE_URL` を値 `https://iamkaz.uno` で登録します。ワークフローは `${{ vars.SITE_URL }}` をビルド時の環境変数に渡します。
+3. Cloudflare APIトークンは **Edit Cloudflare Workers** テンプレートから作成し、対象アカウントと `iamkaz.uno` のゾーンに範囲を限定します。Custom Domainの設定に必要な **Workers Routes** の編集権限を含め、ドメインのゾーンがActiveになっていることを確認してください。
+4. ワークフローをデフォルトブランチへ反映します。GitHubの **Actions → Deploy → Run workflow** で、公開するブランチ（通常は `main`）を選択して実行します。
+5. 完了後、`https://iamkaz.uno`、`/picks`、商品詳細ページと画像を確認します。
 
-ビルドには `DATA_SOURCE=microcms` と `SITE_URL=https://iamkaz.uno` を設定しています。必要なSecretが未設定の場合は、設定名をログに表示して処理を終了します。microCMSの内容を更新した後も、同じワークフローを再実行すると公開内容に反映されます。
+ビルドには `DATA_SOURCE=microcms` と、リポジトリ変数の `SITE_URL` を設定しています。必要なSecretが未設定の場合は、設定名をログに表示して処理を終了します。microCMSの内容を更新した後も、同じワークフローを再実行すると公開内容に反映されます。
 
 - [GitHub Actionsの手動実行](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow)
+- [GitHub ActionsのVariables設定](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-variables)
 - [CloudflareのGitHub Actions設定とAPIトークン作成](https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/)
 
 ### Workers Buildsを使う場合

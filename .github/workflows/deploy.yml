@@ -41,7 +41,7 @@ jobs:
           DATA_SOURCE: microcms
           MICROCMS_SERVICE_DOMAIN: ${{ secrets.MICROCMS_SERVICE_DOMAIN }}
           MICROCMS_API_KEY: ${{ secrets.MICROCMS_API_KEY }}
-          SITE_URL: https://iamkaz.uno
+          SITE_URL: ${{ vars.SITE_URL }}
         run: npm run build
       - name: Deploy to Cloudflare Workers
         env:
