@@ -16,7 +16,7 @@ interface Props {
 
 const {
   title = '/picks — Things I use and love.',
-  description = '毎日を少しだけ心地よくしてくれる、お気に入りの道具たち。Things I use and love.',
+  description = 'Things I use and love.',
   noindex = false,
   siteName = '/picks',
   image = '/og-picks.png',
@@ -53,7 +53,7 @@ const shareImage = Astro.site && image ? new URL(image, Astro.site) : undefined;
     <title>{title}</title>
   </head>
   <body>
-    <a class="skip-link" href="#main">コンテンツへスキップ</a>
+    <a class="skip-link" href="#main">Skip to content</a>
     <slot />
   </body>
 </html>

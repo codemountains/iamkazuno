@@ -106,14 +106,14 @@ test('all optional fields may be absent, empty or null without blocking publicat
   const empty = { id: 'missing-fields' };
   const explicit = { id: 'null-fields', name: ' ', description: null, main_image: null, ref_brand: null, ref_categories: null };
   for (const thing of validateThings([empty, explicit], [], [])) {
-    assert.equal(thing.name, '名前のないアイテム');
+    assert.equal(thing.name, 'Unnamed item');
     assert.equal(thing.brand, null);
     assert.equal(thing.image, null);
     assert.equal(thing.descriptionHtml, '');
     assert.deepEqual(thing.categories, []);
   }
-  assert.deepEqual(validateBrands([{ id: 'brand' }]), [{ id: 'brand', name: '名前のないブランド' }]);
-  assert.deepEqual(validateCategories([{ id: 'category', name: null }]), [{ id: 'category', name: '名前のないカテゴリ' }]);
+  assert.deepEqual(validateBrands([{ id: 'brand' }]), [{ id: 'brand', name: 'Unnamed brand' }]);
+  assert.deepEqual(validateCategories([{ id: 'category', name: null }]), [{ id: 'category', name: 'Unnamed category' }]);
 });
 
 test('missing or unpublished references are omitted without adding synthetic categories', () => {

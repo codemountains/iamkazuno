@@ -110,11 +110,11 @@ function namedContents(input: unknown, endpoint: 'brands' | 'categories', fallba
 }
 
 export function validateBrands(input: unknown): Brand[] {
-  return namedContents(input, 'brands', '名前のないブランド');
+  return namedContents(input, 'brands', 'Unnamed brand');
 }
 
 export function validateCategories(input: unknown): Category[] {
-  return namedContents(input, 'categories', '名前のないカテゴリ');
+  return namedContents(input, 'categories', 'Unnamed category');
 }
 
 function referenceId(value: unknown, path: string): string | null {
@@ -152,7 +152,7 @@ export function validateThings(
 
     return {
       id,
-      name: optionalText(data.name, `${path}.name`) || '名前のないアイテム',
+      name: optionalText(data.name, `${path}.name`) || 'Unnamed item',
       brand: brandId ? knownBrands.get(brandId) ?? null : null,
       image: data.main_image == null ? null : image(data.main_image, `${path}.main_image`, options.allowLocalImages ?? false),
       descriptionHtml: sanitizeDescription(optionalText(data.description, `${path}.description`)),

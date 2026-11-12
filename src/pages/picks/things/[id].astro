@@ -40,7 +40,7 @@ const description = `${thing.name}${thing.brand ? ` — ${thing.brand.name}` : '
         <div class="detail-description">
           {thing.descriptionHtml
             ? <div class="rich-text" set:html={thing.descriptionHtml} />
-            : <p class="description-empty">このアイテムの説明は、まだありません。</p>}
+            : <p class="description-empty">No description yet.</p>}
         </div>
       </div>
     </article>

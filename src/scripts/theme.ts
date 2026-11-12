@@ -7,7 +7,7 @@ export function initThemePicker() {
 
     for (const toggle of toggles) {
       toggle.setAttribute('aria-checked', String(theme === 'dark'));
-      toggle.title = theme === 'dark' ? 'ライトモードに切り替える' : 'ダークモードに切り替える';
+      toggle.title = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
       toggle.disabled = false;
       toggle.hidden = false;
     }

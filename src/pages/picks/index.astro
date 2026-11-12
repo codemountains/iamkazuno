@@ -62,7 +62,7 @@ const categoryKeys = categories.map((category) => encodeURIComponent(category.id
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m10 6 6 6-6 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" /></svg>
             </button>
           </div>
-          <noscript><p class="no-script-note">すべてのアイテムを表示しています。</p></noscript>
+          <noscript><p class="no-script-note">Showing all items.</p></noscript>
           <p class="results-label" role="status" aria-live="polite" aria-atomic="true" data-results-label><span data-result-count>{String(things.length).padStart(2, '0')}</span> things, well loved.</p>
         </div>
 
@@ -71,8 +71,7 @@ const categoryKeys = categories.map((category) => encodeURIComponent(category.id
         </ul>
         <div class="empty-state" data-empty-state hidden={things.length !== 0}>
           <span aria-hidden="true">↳</span>
-          <p>まだ、ここには何もありません。</p>
-          <p class="empty-state-note">お気に入りが見つかるまで、少しだけ。</p>
+          <p>No items yet.</p>
         </div>
         <script is:inline data-filter-apply>
           (() => {

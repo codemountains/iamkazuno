@@ -117,7 +117,6 @@ svg { display: block; flex-shrink: 0; }
 .empty-state { padding: 64px 20px; text-align: center; background: var(--card); border-radius: 5px; }
 .empty-state > span { display: inline-block; color: var(--accent); font-size: 36px; }
 .empty-state > p { font-size: 14px; }
-.empty-state .empty-state-note { font-size: 12px; color: var(--muted); }
 .collection { padding-bottom: 53px; }
 
 .site-footer { border-top: 1px solid var(--line); padding: 28px 0 32px; }
