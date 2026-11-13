@@ -14,7 +14,7 @@ const sources = image ? getThingImageSources(image, detail) : null;
 // 一覧は画像の有効化前とサイズ変更時にJSで実幅を渡し、no-JS時はautoを使う。
 // 詳細は画像枠からimg自身の左右padding（18pxずつ）を除いた描画幅。
 const sizes = detail
-  ? '(max-width: 600px) calc(100vw - 84px), (max-width: 760px) calc(100vw - 100px), (max-width: 850px) calc((100vw - 176px) / 2), (max-width: 896px) calc((100vw - 208px) / 2), (max-width: 1100px) 344px, 328px'
+  ? '(max-width: 600px) calc(100vw - 84px), (max-width: 760px) calc(100vw - 100px), (max-width: 850px) calc(55vw - 97.6px), (max-width: 1096px) calc(55vw - 115.2px), 487.6px'
   : 'auto, 160px';
 const imageAttributes = {
   class: `item-image${detail ? ' detail-image' : ''}`,

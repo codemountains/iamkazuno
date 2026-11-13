@@ -6,7 +6,7 @@ import SiteHeader from '../../../components/SiteHeader.astro';
 import SiteFooter from '../../../components/SiteFooter.astro';
 import ThingImage from '../../../components/ThingImage.astro';
 import { getContent } from '../../../lib/content';
-import { categoryPath, collectionPath } from '../../../lib/paths';
+import { collectionPath } from '../../../lib/paths';
 
 export const getStaticPaths = (async () => {
   const content = await getContent();
@@ -32,17 +32,17 @@ const description = `${thing.name}${thing.brand ? ` — ${thing.brand.name}` : '
       <a class="collection-back" href={collectionPath} data-back-to-picks data-astro-prefetch><span aria-hidden="true">←</span> Back to picks</a>
     </div>
     <article class="detail-grid" aria-labelledby="thing-title">
-      <div class="detail-image-wrap"><ThingImage image={thing.image} name={thing.name} eager detail /></div>
-      <div class="detail-copy">
+      <header class="detail-heading">
         {thing.brand && <p class="detail-brand">{thing.brand.name}</p>}
         <h1 id="thing-title">{thing.name}</h1>
-        {thing.categories.length > 0 && <ul class="detail-categories" aria-label="カテゴリ">{thing.categories.map((category) => <li><a href={categoryPath(category.id)} data-astro-prefetch>{category.name}</a></li>)}</ul>}
-        <div class="detail-description">
-          {thing.descriptionHtml
-            ? <div class="rich-text" set:html={thing.descriptionHtml} />
-            : <p class="description-empty">No description yet.</p>}
+      </header>
+      <div class="detail-image-wrap"><ThingImage image={thing.image} name={thing.name} eager detail /></div>
+      {(thing.descriptionHtml || thing.categories.length > 0) && (
+        <div class="detail-copy">
+          {thing.descriptionHtml && <div class="detail-description"><div class="rich-text" set:html={thing.descriptionHtml} /></div>}
+          {thing.categories.length > 0 && <ul class="detail-categories" aria-label="カテゴリ">{thing.categories.map((category) => <li>{category.name}</li>)}</ul>}
         </div>
-      </div>
+      )}
     </article>
   </main>
   <div class="site-shell site-shell--wide">

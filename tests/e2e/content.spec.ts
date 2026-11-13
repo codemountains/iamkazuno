@@ -19,7 +19,8 @@ test('detail pages remain available when the brand or description is missing', a
 
   await page.goto('/picks/things/sample-no-description');
   await expect(page.getByRole('heading', { name: '説明未設定のサンプル', exact: true })).toBeVisible();
-  await expect(page.getByText('No description yet.', { exact: true })).toBeVisible();
+  await expect(page.locator('.detail-description')).toHaveCount(0);
+  await expect(page.getByText('No description yet.', { exact: true })).toHaveCount(0);
 });
 
 test('the uncategorized item at the end of the collection is reachable', async ({ page }) => {

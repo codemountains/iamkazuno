@@ -60,10 +60,15 @@ test('home links to the collection and item details with loaded images and descr
   await expectImageLoaded(page.locator('.detail-image-wrap img'));
   await expect(page.getByText('いつもの登山道から、まだ歩いたことのない稜線へ。', { exact: true })).toBeVisible();
 
-  await page.getByRole('list', { name: 'カテゴリ', exact: true }).getByRole('link', { name: 'mountain', exact: true }).click();
-  await expect(page).toHaveURL('/picks?category=mountain');
+  const categories = page.getByRole('list', { name: 'カテゴリ', exact: true });
+  await expect(categories).toHaveText('mountain');
+  await expect(categories.getByRole('link')).toHaveCount(0);
+  await expect(categories.getByRole('button')).toHaveCount(0);
+
+  await page.getByRole('link', { name: 'Back to picks' }).click();
+  await expect(page).toHaveURL('/picks');
   await expectCollectionReady(page);
-  await expect(page.locator('[data-filter="mountain"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('[data-filter=""]')).toHaveAttribute('aria-pressed', 'true');
 });
 
 test('returning after a detail reload restores the category and item position', async ({ page }) => {
