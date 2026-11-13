@@ -2,7 +2,7 @@
 
 **Things I use and love.**
 
-トップページに `iamkaz.uno` を表示し、`/picks` でお気に入りの持ち物を紹介する、Astro + TypeScript + microCMS の静的サイトです。microCMSの `things` / `brands` / `categories` APIに対応しています。接続情報がなくても、8点のローカルサンプルとオリジナルSVGイラストですぐに動作します。
+トップページに `iamkaz.uno` を表示し、`/picks` でお気に入りの持ち物を紹介する、Astro + TypeScript + microCMS の静的サイトです。microCMSの `things` / `brands` / `categories` APIに対応しています。接続情報がなくても、100点のローカルサンプルとオリジナルSVGイラストですぐに動作します。
 
 `/picks` の一覧では写真・アイテム名・ブランドを表示し、クリックすると `/picks/things/[id]` の詳細ページへ移動します。説明文は詳細ページに表示します。コレクションのヘッダーに `/picks.` とサブタイトルを配置しています。
 
@@ -26,9 +26,33 @@ npm run dev
 | `npm run dev` | 開発サーバー |
 | `npm run check` | Astro / TypeScript の型チェック |
 | `npm test` | 接続設定・コンテンツ検証・リッチテキスト処理のテスト |
+| `npm run test:e2e` | サンプルの本番ビルドを生成し、PC・モバイルのブラウザテストを実行 |
+| `npm run test:e2e:ui` | PlaywrightのUIでE2Eテストを実行・調査 |
 | `npm run build` | `dist/` へ静的ファイルを生成 |
 | `npm run preview` | ビルド結果をローカルで表示 |
 | `npm run deploy` | ビルド後、Cloudflareへ公開（ログイン・アカウントが必要） |
+
+### E2Eテスト
+
+初回は依存関係とChromiumをインストールしてから実行します。
+
+```sh
+npm ci
+npx playwright install chromium
+npm run test:e2e
+```
+
+Playwrightが `DATA_SOURCE=sample` で本番ビルドを生成し、`http://127.0.0.1:4322` に `astro preview` を起動します。microCMSの接続情報はテスト用プロセスで両方空に設定するため、ローカルの `.env` やCMSの更新に影響されません。ポート4322はテスト専用で、既存サーバーは再利用しません。`dist/` はサンプルの成果物で上書きされるため、本番公開時は通常の公開手順でmicroCMSからビルドし直してください。
+
+ChromiumのPC（1280×800）とモバイルエミュレーション（390×844・タッチ対応）で、主要なページ遷移、カテゴリ・URL・履歴の同期、詳細からのスクロール位置復元、画像サイズ、テーマの保存、キーボード操作、JavaScript無効時の閲覧、任意フィールド未入力時の表示を検証します。モバイルエミュレーションは実機Safariの検証ではありません。Cloudflare固有のリダイレクト・配信ヘッダーは `astro preview` の検証対象外です。
+
+```sh
+npm run test:e2e -- --project=mobile-chromium
+npm run test:e2e:ui
+npx playwright show-report
+```
+
+テストは `tests/e2e/` にあり、既存の `npm test` とは独立しています。失敗時のスクリーンショットとトレースは `test-results/`、HTMLレポートは `playwright-report/` に保存します。GitHub Actionsの `Check` でも型チェック・既存テストに続けて実行し、レポートを7日間保存します。Linuxでの初回セットアップは `npx playwright install --with-deps chromium` を使用してください。
 
 ### 成果物の軽量化
 
@@ -101,7 +125,7 @@ MCPから取得した既存の3つの **リスト形式API** に合わせてい�
 
 カテゴリフィルターは `all` と、`categories` APIから取得したカテゴリで構成します。コード内に固定カテゴリを追加しません。1つのアイテムに複数のカテゴリを設定でき、いずれのカテゴリからも絞り込めます。サンプルも実APIと同じフィールド構造で管理しています。
 
-サンプルは `mountain`（ブーツ・バックパック・腕時計）、`ski`（スキー板・ゴーグル）、`myog`（トートバッグ・スタッフサック）、`other`（カメラ）の8点です。`all` は全件表示用のフィルターで、カテゴリデータには含めません。
+サンプルは100点です。元の8点（ブーツ・バックパック・腕時計・スキー板・ゴーグル・トートバッグ・スタッフサック・カメラ）に、既存SVGを再利用した87点の連番バリエーションと、複数カテゴリ・画像なし・ブランドなし・説明なし・カテゴリなしの5点を加えています。追加分は商品名でサンプルと分かるようにしています。カテゴリ別には `mountain` 26点、`ski` 25点、`myog` 26点、`other` 23点で、複数カテゴリの商品は各カテゴリに含まれます。長い一覧のスクロール、絞り込み、詳細ページからの位置復元を本番に近い件数で確認できます。`all` は全100点の表示用フィルターで、カテゴリデータには含めません。
 
 ### 未入力・参照先がない場合
 

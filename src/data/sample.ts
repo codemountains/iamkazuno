@@ -14,7 +14,7 @@ export const sampleCategories: MicroCMSNamedContent[] = [
 
 const [mountain, ski, myog, other] = sampleCategories;
 
-export const sampleThings: MicroCMSThing[] = [
+const sampleTemplates: MicroCMSThing[] = [
   {
     id: 'mountain-boots',
     name: 'ブーツ',
@@ -118,5 +118,61 @@ export const sampleThings: MicroCMSThing[] = [
     },
     description: '<p>何でもない景色を、ひとつ持ち帰る。</p><p>街角の光や、山道で見つけた葉っぱ。<strong>足を止めた瞬間</strong>を記録するための小さなカメラ。</p>',
     ref_categories: [other],
+  },
+];
+
+// 既存8件のURLを保ち、90件以上ある本番と同程度の一覧・スクロールを再現する。
+// 各カテゴリを均等に増やし、画像は既存のローカルSVGを再利用する。
+const templatesByCategory = [
+  sampleTemplates.slice(0, 3),
+  sampleTemplates.slice(3, 5),
+  sampleTemplates.slice(5, 7),
+  sampleTemplates.slice(7, 8),
+];
+
+const sampleVariations: MicroCMSThing[] = Array.from({ length: 87 }, (_, index) => {
+  const templates = templatesByCategory[index % templatesByCategory.length];
+  const template = templates[Math.floor(index / templatesByCategory.length) % templates.length];
+  const number = String(index + 1).padStart(3, '0');
+  return {
+    ...template,
+    id: `sample-${number}`,
+    name: `${template.name}（サンプル ${number}）`,
+  };
+});
+
+export const sampleThings: MicroCMSThing[] = [
+  ...sampleTemplates,
+  ...sampleVariations,
+  // 任意フィールドや複数カテゴリの表示も、実際の画面で確認できるようにする。
+  {
+    ...sampleTemplates[1],
+    id: 'sample-multi-category',
+    name: '複数カテゴリのサンプル',
+    ref_categories: [mountain, myog],
+  },
+  {
+    ...sampleTemplates[3],
+    id: 'sample-no-image',
+    name: '画像未設定のサンプル',
+    main_image: null,
+  },
+  {
+    ...sampleTemplates[5],
+    id: 'sample-no-brand',
+    name: 'ブランド未設定のサンプル',
+    ref_brand: null,
+  },
+  {
+    ...sampleTemplates[7],
+    id: 'sample-no-description',
+    name: '説明未設定のサンプル',
+    description: null,
+  },
+  {
+    ...sampleTemplates[6],
+    id: 'sample-uncategorized',
+    name: 'カテゴリ未設定のサンプル',
+    ref_categories: [],
   },
 ];

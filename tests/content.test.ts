@@ -26,7 +26,7 @@ test('explicit sample mode works with complete credentials without contacting th
   const fetchMock = t.mock.method(globalThis, 'fetch', () => { throw new Error('Sample mode must not fetch'); });
   const content = await getContent({ ...credentials, DATA_SOURCE: 'sample' });
   assert.equal(content.source, 'sample');
-  assert.equal(content.things.length, 8);
+  assert.equal(content.things.length, 100);
   assert.equal(fetchMock.mock.callCount(), 0);
 });
 
@@ -36,25 +36,32 @@ test('service domain must be an ID, not a URL or arbitrary host', () => {
   }
 });
 
-test('sample fixtures use the actual CMS schema and the requested collection categories', async () => {
+test('sample fixtures provide 100 unique local items with the actual CMS schema', async () => {
   const content = await getContent({});
   assert.equal(content.source, 'sample');
-  assert.equal(content.things.length, 8);
+  assert.equal(content.things.length, 100);
+  assert.equal(new Set(content.things.map((thing) => thing.id)).size, 100);
+  assert.equal(new Set(content.things.map((thing) => thing.name)).size, 100);
   assert.deepEqual(content.categories, categories);
   assert.deepEqual(content.brands, brands);
-  assert.ok(content.things.every((thing) => thing.image?.url.startsWith('/images/samples/')));
-  assert.ok(content.things.every((thing) => thing.brand?.id === 'sample-objects'));
+  assert.ok(content.things.every((thing) => thing.image === null || thing.image.url.startsWith('/images/samples/')));
+  assert.ok(content.things.every((thing) => thing.brand === null || thing.brand.id === 'sample-objects'));
   assert.ok(content.things.some((thing) => thing.descriptionHtml.includes('<strong>')));
   assert.deepEqual(content.categories.map((category) => category.id), ['mountain', 'ski', 'myog', 'other']);
-  assert.deepEqual(Object.fromEntries(content.categories.map((category) => [
-    category.id,
-    content.things.filter((thing) => thing.categories.some((reference) => reference.id === category.id)).map((thing) => thing.name),
-  ])), {
-    mountain: ['ブーツ', 'バックパック', '腕時計'],
-    ski: ['スキー板', 'ゴーグル'],
-    myog: ['トートバッグ', 'スタッフサック'],
-    other: ['カメラ'],
-  });
+  assert.deepEqual(content.things.slice(0, 8).map((thing) => thing.id), [
+    'mountain-boots', 'mountain-backpack', 'mountain-watch', 'ski-skis',
+    'ski-goggles', 'myog-tote', 'myog-stuff-sack', 'other-camera',
+  ]);
+  for (const category of categories) {
+    assert.ok(content.things.filter((thing) => thing.categories.some((reference) => reference.id === category.id)).length >= 20,
+      `${category.id} must have enough items to exercise scrolling after filtering`);
+  }
+  const find = (id: string) => content.things.find((thing) => thing.id === id)!;
+  assert.deepEqual(find('sample-multi-category').categories.map((category) => category.id), ['mountain', 'myog']);
+  assert.equal(find('sample-no-image').image, null);
+  assert.equal(find('sample-no-brand').brand, null);
+  assert.equal(find('sample-no-description').descriptionHtml, '');
+  assert.deepEqual(find('sample-uncategorized').categories, []);
 });
 
 function cmsThing() {
