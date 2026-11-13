@@ -1,7 +1,7 @@
 import { test as base } from '@playwright/test';
 import { test, expect, expectCollectionReady } from './fixtures';
 
-// 各ページを独立して開き、WebKitで文書置換と先読みが競合するのを避ける。
+// 通常ページと404のそれぞれで、配信ヘッダーと表示を独立して確認する。
 for (const path of ['/', '/picks', '/picks/things/mountain-boots', '/missing-security-test-page']) {
   test(`CSP is enforced on ${path}`, async ({ page }) => {
     const response = await page.goto(path);

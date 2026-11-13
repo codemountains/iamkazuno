@@ -18,6 +18,7 @@ export function initCollectionPrefetch(): void {
   const active = new Set<AbortController>();
   let running = false;
   let pageActive = true;
+  let pendingNavigation: AbortSignal | undefined;
 
   const slowConnection = () => Boolean(connection?.saveData || /2g/.test(connection?.effectiveType ?? ''));
   const isVisible = (anchor: HTMLAnchorElement) => {
@@ -98,6 +99,12 @@ export function initCollectionPrefetch(): void {
     queued.clear();
   }
 
+  function leavePage(): void {
+    pageActive = false;
+    stop();
+    for (const controller of active) controller.abort();
+  }
+
   // 初期の画像取得を優先し、画面内に留まったカードを少しずつ先読みする。
   window.addEventListener('load', start, { once: true });
   window.addEventListener('online', drain);
@@ -106,12 +113,26 @@ export function initCollectionPrefetch(): void {
     if (document.visibilityState === 'hidden') stop();
     else start();
   });
+  // WebKitはpagehideより前の文書置換中にも新しいfetchを拒否する。
+  // 遷移開始時に止め、取消し時だけ同じ文書の先読みを再開する。
+  window.navigation?.addEventListener('navigate', (event) => {
+    if (event.defaultPrevented || event.destination.sameDocument || event.downloadRequest !== null) return;
+    pendingNavigation = event.signal;
+    leavePage();
+    event.signal.addEventListener('abort', () => {
+      // 前の遷移の取消しで、新しい遷移中やpagehide後に再開しない。
+      if (pendingNavigation !== event.signal) return;
+      pendingNavigation = undefined;
+      pageActive = true;
+      start();
+    }, { once: true });
+  });
   window.addEventListener('pagehide', () => {
-    pageActive = false;
-    stop();
-    for (const controller of active) controller.abort();
+    pendingNavigation = undefined;
+    leavePage();
   });
   window.addEventListener('pageshow', () => {
+    pendingNavigation = undefined;
     pageActive = true;
     start();
   });

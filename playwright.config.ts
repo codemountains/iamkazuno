@@ -21,8 +21,8 @@ export default defineConfig({
   projects: [
     { name: 'desktop-chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 800 } } },
     { name: 'mobile-chromium', use: { ...devices['Pixel 7'], viewport: { width: 390, height: 844 } } },
-    // Safari系の画像デコードとCSPの適用も継続検証する。
-    { name: 'mobile-webkit', testMatch: ['images.spec.ts', 'security.spec.ts'], use: { ...devices['iPhone 16'] } },
+    // Safari系の画像デコード・先読みの中断・CSPの適用も継続検証する。
+    { name: 'mobile-webkit', testMatch: ['images.spec.ts', 'prefetch.spec.ts', 'security.spec.ts'], use: { ...devices['iPhone 16'] } },
   ],
   webServer: {
     // 開発用.envや起動済みサーバーによらず、同じ静的成果物を検証する。
