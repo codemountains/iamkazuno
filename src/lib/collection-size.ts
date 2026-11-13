@@ -2,8 +2,7 @@ export const collectionSize = {
   min: 88,
   max: 280,
   step: 8,
-  initial: 160,
-  mobileInitial: 184,
+  initial: 240,
   storageKey: 'picks:image-size',
 } as const;
 

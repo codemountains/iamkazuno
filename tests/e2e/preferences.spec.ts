@@ -61,9 +61,8 @@ test('image size controls the actual grid and persists through detail navigation
   const slider = page.getByRole('slider', { name: '画像サイズ' });
   const grid = page.locator('[data-item-grid]');
   const firstCard = grid.locator('[data-item]').first();
-  const initialSize = isMobile ? '184' : '160';
-  await expect(slider).toHaveValue(initialSize);
-  if (isMobile) await expect.poll(() => columnCount(grid)).toBe(3);
+  await expect(slider).toHaveValue('240');
+  if (isMobile) await expect.poll(() => columnCount(grid)).toBe(2);
   const initialWidth = await firstCard.evaluate((element) => element.getBoundingClientRect().width);
   const initialColumns = await columnCount(grid);
 
@@ -73,6 +72,8 @@ test('image size controls the actual grid and persists through detail navigation
   await expect.poll(() => firstCard.evaluate((element) => element.getBoundingClientRect().width)).toBeLessThan(initialWidth);
   if (isMobile) await expect.poll(() => columnCount(grid)).toBe(6);
   else await expect.poll(() => columnCount(grid)).toBeGreaterThan(initialColumns);
+  const smallWidth = await firstCard.evaluate((element) => element.getBoundingClientRect().width);
+  const smallColumns = await columnCount(grid);
 
   if (isMobile) {
     const bounds = await slider.boundingBox();
@@ -97,9 +98,9 @@ test('image size controls the actual grid and persists through detail navigation
   }
 
   await expect(slider).toHaveValue('280');
-  await expect.poll(() => firstCard.evaluate((element) => element.getBoundingClientRect().width)).toBeGreaterThan(initialWidth);
+  await expect.poll(() => firstCard.evaluate((element) => element.getBoundingClientRect().width)).toBeGreaterThan(smallWidth);
   if (isMobile) await expect.poll(() => columnCount(grid)).toBe(1);
-  else await expect.poll(() => columnCount(grid)).toBeLessThan(initialColumns);
+  else await expect.poll(() => columnCount(grid)).toBeLessThan(smallColumns);
   const largeColumns = await columnCount(grid);
 
   await page.getByRole('link', { name: 'ブーツ', exact: true }).click();
@@ -114,13 +115,16 @@ test('image size controls the actual grid and persists through detail navigation
   await expect.poll(() => columnCount(grid)).toBe(largeColumns);
 });
 
-test('image size control becomes usable after scrolling and stays visible for keyboard input', async ({ page }) => {
+test('image size control becomes usable after scrolling and stays visible for keyboard input', async ({ page, browserName, isMobile }) => {
   await page.goto('/picks');
   await expectCollectionReady(page);
 
   const control = page.locator('[data-size-control]');
   const slider = page.getByRole('slider', { name: '画像サイズ' });
-  await page.mouse.wheel(0, 600);
+  const scroll = (top: number) => browserName === 'webkit' && isMobile
+    ? page.evaluate((distance) => window.scrollBy({ top: distance, behavior: 'instant' }), top)
+    : page.mouse.wheel(0, top);
+  await scroll(600);
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
   await expect(control).toHaveAttribute('data-scroll-hidden', '');
   await expect(control).not.toHaveAttribute('data-scroll-hidden');
@@ -130,7 +134,7 @@ test('image size control becomes usable after scrolling and stays visible for ke
   await expect(slider).toBeFocused();
   await expect(slider).toHaveValue('88');
   const beforeScroll = await page.evaluate(() => window.scrollY);
-  await page.mouse.wheel(0, 300);
+  await scroll(300);
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(beforeScroll);
   await expect(control).not.toHaveAttribute('data-scroll-hidden');
   await expect(control).toHaveCSS('opacity', '1');

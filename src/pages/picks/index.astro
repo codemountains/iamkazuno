@@ -24,7 +24,7 @@ const categoryKeys = categories.map((category) => encodeURIComponent(category.id
       <script define:vars={{ collectionSize }} data-size-prepare>
         (() => {
           // カードの初回描画と、詳細からの位置復元より先にサイズを適用する。
-          let size = window.matchMedia('(max-width: 600px)').matches ? collectionSize.mobileInitial : collectionSize.initial;
+          let size = collectionSize.initial;
           try {
             const saved = Number(sessionStorage.getItem(collectionSize.storageKey));
             if (Number.isInteger(saved) && saved >= collectionSize.min && saved <= collectionSize.max

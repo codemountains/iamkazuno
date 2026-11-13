@@ -227,14 +227,14 @@ svg { display: block; flex-shrink: 0; }
   --collection-max-columns: 18;
   --collection-column-gap: 16px;
   /* 列間を除いた18等分を下限にする。列数判定用のJSも同じ値を使う。 */
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, max(var(--collection-item-size, var(--collection-default-size, 160px)), calc((100% - (var(--collection-max-columns) - 1) * var(--collection-column-gap)) / var(--collection-max-columns)))), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, max(var(--collection-item-size, var(--collection-default-size, 240px)), calc((100% - (var(--collection-max-columns) - 1) * var(--collection-column-gap)) / var(--collection-max-columns)))), 1fr));
   gap: 24px var(--collection-column-gap);
 }
 @media (max-width: 600px) {
   .site-shell--wide { width: calc(100% - 32px); }
   .item-grid--adjustable {
-    grid-template-columns: repeat(var(--collection-mobile-columns, 3), minmax(0, 1fr));
-    gap: clamp(6px, calc(28px - var(--collection-mobile-columns, 3) * 4px), 16px) clamp(6px, calc(18px - var(--collection-mobile-columns, 3) * 2px), 12px);
+    grid-template-columns: repeat(var(--collection-mobile-columns, 2), minmax(0, 1fr));
+    gap: clamp(6px, calc(28px - var(--collection-mobile-columns, 2) * 4px), 16px) clamp(6px, calc(18px - var(--collection-mobile-columns, 2) * 2px), 12px);
   }
   .filters { scroll-padding-inline: 0; }
   .filter-button { flex: 1 0 auto; min-width: 44px; justify-content: center; padding-inline: 8px; }

@@ -10,14 +10,14 @@ test('stored sizes accept only supported range steps, including both endpoints',
     assert.equal(parseCollectionSize(String(value)), value);
   }
   for (const value of [null, undefined, {}, [], true, '', 'nope', 0, 80, 89, 127.9, 288, Infinity, NaN]) {
-    assert.equal(parseCollectionSize(value), 160);
+    assert.equal(parseCollectionSize(value), 240);
   }
 });
 
-test('mobile offers six to one columns, with three at the center and by default', () => {
+test('mobile offers six to one columns, with three at the center and two by default', () => {
   assert.equal(mobileCollectionColumns(collectionSize.min), 6);
   assert.equal(mobileCollectionColumns((collectionSize.min + collectionSize.max) / 2), 3);
-  assert.equal(mobileCollectionColumns(collectionSize.mobileInitial), 3);
+  assert.equal(mobileCollectionColumns(collectionSize.initial), 2);
   assert.equal(mobileCollectionColumns(collectionSize.max), 1);
   const columns = [];
   for (let size = collectionSize.min; size <= collectionSize.max; size += collectionSize.step) {
@@ -53,11 +53,11 @@ test('saved size is restored before first paint and navigation restoration', () 
   assert.ok(page.indexOf('  initCollectionSize();') < page.indexOf('  initCollectionNavigation();'));
 });
 
-test('missing, invalid or blocked storage retains responsive defaults', () => {
+test('missing, invalid or blocked storage retains the shared default size', () => {
   for (const stored of [null, '', '88px', '89', '900', 'NaN']) {
-    assert.equal(initialLayout(stored)['--collection-item-size'], '160px');
-    assert.equal(initialLayout(stored, true)['--collection-item-size'], '184px');
-    assert.equal(initialLayout(stored, true)['--collection-mobile-columns'], '3');
+    assert.equal(initialLayout(stored)['--collection-item-size'], '240px');
+    assert.equal(initialLayout(stored, true)['--collection-item-size'], '240px');
+    assert.equal(initialLayout(stored, true)['--collection-mobile-columns'], '2');
   }
-  assert.equal(initialLayout('280', true, true)['--collection-mobile-columns'], '3');
+  assert.equal(initialLayout('280', true, true)['--collection-mobile-columns'], '2');
 });

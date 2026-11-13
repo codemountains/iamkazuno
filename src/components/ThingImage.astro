@@ -15,7 +15,7 @@ const sources = image ? getThingImageSources(image, detail) : null;
 // 詳細は画像枠からimg自身の左右padding（18pxずつ）を除いた描画幅。
 const sizes = detail
   ? '(max-width: 600px) calc(100vw - 84px), (max-width: 760px) calc(100vw - 100px), (max-width: 850px) calc(55vw - 97.6px), (max-width: 1096px) calc(55vw - 115.2px), 487.6px'
-  : 'auto, 160px';
+  : 'auto, 240px';
 const imageAttributes = {
   class: `item-image${detail ? ' detail-image' : ''}`,
   sizes,

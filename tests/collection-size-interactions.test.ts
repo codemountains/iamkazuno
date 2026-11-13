@@ -21,7 +21,8 @@ class Style {
 
 function setup(t: TestContext, options: { mobile?: boolean; blockedStorage?: boolean; width?: number; initial?: number; scrollY?: number } = {}) {
   const mobile = Object.assign(new Target(), { matches: options.mobile ?? false });
-  const initial = options.initial ?? (mobile.matches ? collectionSize.mobileInitial : collectionSize.initial);
+  // 操作テストの列数遷移は、製品の初期設定から独立した開始サイズで固定する。
+  const initial = options.initial ?? (mobile.matches ? 184 : 160);
   const root = { style: new Style() };
   root.style.setProperty('--collection-item-size', `${initial}px`);
   root.style.setProperty('--collection-mobile-columns', String(mobileCollectionColumns(initial)));
