@@ -4,6 +4,7 @@ import SiteHeader from '../../components/SiteHeader.astro';
 import SiteFooter from '../../components/SiteFooter.astro';
 import ItemCard from '../../components/ItemCard.astro';
 import CollectionSizeControl from '../../components/CollectionSizeControl.astro';
+import CollectionImages from '../../components/CollectionImages.astro';
 import { getContent } from '../../lib/content';
 import { collectionSize } from '../../lib/collection-size';
 
@@ -67,6 +68,7 @@ const categoryKeys = categories.map((category) => encodeURIComponent(category.id
         </div>
 
         <ul class="item-grid item-grid--adjustable" data-item-grid>
+          <CollectionImages />
           {things.map((thing, index) => <ItemCard thing={thing} index={index} />)}
         </ul>
         <div class="empty-state" data-empty-state hidden={things.length !== 0}>
@@ -75,7 +77,7 @@ const categoryKeys = categories.map((category) => encodeURIComponent(category.id
         </div>
         <script is:inline data-filter-apply>
           (() => {
-            // 外部の操作用moduleを待たず、初回の絞り込み・件数・画像優先度を確定する。
+            // 外部の操作用moduleを待たず、初回の絞り込み・件数を確定する。
             const grid = document.querySelector('[data-item-grid]');
             if (!grid) return;
             const buttons = Array.from(document.querySelectorAll('[data-filter]'));
@@ -83,15 +85,11 @@ const categoryKeys = categories.map((category) => encodeURIComponent(category.id
             const selected = buttons.find((button) => button.dataset.filter === requested) || buttons[0];
             const category = selected?.dataset.filter || '';
             const key = encodeURIComponent(category);
-            const eagerImages = [];
             let visible = 0;
             for (const item of document.querySelectorAll('[data-item]')) {
               item.hidden = category !== '' && !item.dataset.categoryKeys.split(' ').includes(key);
               if (item.hidden) continue;
-              if (visible++ < 4) {
-                const image = item.querySelector('img');
-                if (image) eagerImages.push(image);
-              }
+              visible++;
             }
             for (const button of buttons) button.setAttribute('aria-pressed', String(button === selected));
             const label = document.querySelector('[data-results-label]');
@@ -101,18 +99,6 @@ const categoryKeys = categories.map((category) => encodeURIComponent(category.id
             const empty = document.querySelector('[data-empty-state]');
             if (empty) empty.hidden = visible !== 0;
             document.getElementById('picks-initial-filter')?.remove();
-            // 表示状態をまとめて確定してから、同じ幅のグリッド画像を1枚だけ計測する。
-            const firstImage = eagerImages[0];
-            if (firstImage) {
-              const style = getComputedStyle(firstImage);
-              const size = `${Math.max(1, Math.ceil(firstImage.getBoundingClientRect().width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)))}px`;
-              for (const image of eagerImages) {
-                // eager画像ではsizes=autoが無効になるため、取得前に実描画幅を渡す。
-                for (const source of image.closest('picture')?.querySelectorAll('source') ?? []) source.sizes = size;
-                image.sizes = size;
-              }
-              for (const image of eagerImages) image.loading = 'eager';
-            }
             grid.dataset.initialFilter = category;
           })();
         </script>

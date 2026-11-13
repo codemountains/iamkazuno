@@ -22,7 +22,7 @@ test('AVIF and WebP offer matching widths, including small cards, without densit
   const avif = candidates(sources.avifSrcset);
   const webp = candidates(sources.webpSrcset);
   assert.deepEqual(avif.map(({ width }) => width), webp.map(({ width }) => width));
-  assert.deepEqual(avif.map(({ width }) => width), [80, 120, 160, 240, 320, 480, 640, 960]);
+  assert.deepEqual(avif.map(({ width }) => width), [80, 120, 160, 240, 320, 400, 480, 640, 960]);
   for (const [format, variants] of [['avif', avif], ['webp', webp]] as const) {
     for (const { url, width } of variants) {
       assert.equal(Number(url.searchParams.get('w')), width);

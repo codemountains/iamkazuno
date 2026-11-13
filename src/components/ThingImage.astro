@@ -7,10 +7,11 @@ interface Props {
   name: string;
   eager?: boolean;
   detail?: boolean;
+  deferred?: boolean;
 }
-const { image, name, eager = false, detail = false } = Astro.props;
+const { image, name, eager = false, detail = false, deferred = false } = Astro.props;
 const sources = image ? getThingImageSources(image, detail) : null;
-// 一覧のlazy画像はautoで初回の実幅を使い、初期化・サイズ変更時にJSで描画幅を更新する。
+// 一覧は画像の有効化前とサイズ変更時にJSで実幅を渡し、no-JS時はautoを使う。
 // 詳細は画像枠からimg自身の左右padding（18pxずつ）を除いた描画幅。
 const sizes = detail
   ? '(max-width: 600px) calc(100vw - 84px), (max-width: 760px) calc(100vw - 100px), (max-width: 850px) calc((100vw - 176px) / 2), (max-width: 896px) calc((100vw - 208px) / 2), (max-width: 1100px) 344px, 328px'
@@ -27,7 +28,25 @@ const imageAttributes = {
 } as const;
 ---
 {image ? (
-  sources ? (
+  deferred ? (
+    <picture class="thing-picture" data-deferred-picture>
+      {sources && <source type="image/avif" data-image-srcset={sources.avifSrcset} sizes={sizes} />}
+      <img
+        {...imageAttributes}
+        data-collection-image
+        src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
+        data-image-src={sources?.src ?? image.url}
+        data-image-srcset={sources?.webpSrcset}
+      />
+    </picture>
+    <noscript>
+      <style is:inline>[data-deferred-picture] { display: none !important; }</style>
+      <picture class="thing-picture">
+        {sources && <source type="image/avif" srcset={sources.avifSrcset} sizes={sizes} />}
+        <img {...imageAttributes} src={sources?.src ?? image.url} srcset={sources?.webpSrcset} />
+      </picture>
+    </noscript>
+  ) : sources ? (
     <picture class="thing-picture">
       <source type="image/avif" srcset={sources.avifSrcset} sizes={sizes} />
       <img {...imageAttributes} src={sources.src} srcset={sources.webpSrcset} />

@@ -44,16 +44,10 @@ function setup(t: TestContext, category = 'ski', options: { inline?: boolean; ne
   }));
   const items = [['mountain'], ['ski'], ['mountain', 'ski'], [unusualCategory]].map((ids) => {
     let hidden = false;
-    const image = {
-      loading: 'lazy', sizes: 'auto, 160px',
-      getBoundingClientRect: () => ({ width: 188 }),
-      closest: () => ({ querySelectorAll: () => [{ sizes: 'auto, 160px' }] }),
-    };
     return {
       dataset: { categories: JSON.stringify(ids), categoryKeys: ids.map(encodeURIComponent).join(' ') },
       get hidden() { return hidden; },
       set hidden(value: boolean) { writes.items++; hidden = value; },
-      querySelector: () => image,
     };
   });
   let labelText = '';
@@ -113,13 +107,12 @@ function setup(t: TestContext, category = 'ski', options: { inline?: boolean; ne
     },
   });
   Object.defineProperty(window, 'location', { get: () => currentUrl });
-  const getComputedStyle = () => ({ paddingLeft: '14px', paddingRight: '14px' });
   if (options.inline !== false) {
-    runInNewContext(inlineApply!, { document, window, URLSearchParams, getComputedStyle });
+    runInNewContext(inlineApply!, { document, window, URLSearchParams });
   }
   if (options.nextCategory !== undefined) setCategory(options.nextCategory);
   const globals = {
-    document, window, getComputedStyle,
+    document, window,
     ResizeObserver: class { observe() {} },
   };
   for (const [key, value] of Object.entries(globals)) {

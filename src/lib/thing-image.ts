@@ -16,7 +16,7 @@ export function getThingImageSources(image: PickImage, detail = false): ThingIma
   }
   if (original.hostname !== 'images.microcms-assets.io' || /\.svgz?$/i.test(original.pathname)) return null;
 
-  const candidates = detail ? [480, 640, 960, 1280] : [80, 120, 160, 240, 320, 480, 640, 960];
+  const candidates = detail ? [480, 640, 960, 1280] : [80, 120, 160, 240, 320, 400, 480, 640, 960];
   const widths = [...new Set(candidates.map((width) => Math.min(width, image.width)))];
   // 一覧の転送量を抑え、詳細では細部を確認できる品質を維持する。
   const quality = detail ? 85 : 80;
