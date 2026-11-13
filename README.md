@@ -1,8 +1,9 @@
 # iamkaz.uno
 
-お気に入りの持ち物を紹介する個人サイトです。
+Kazuno の個人サイト `iamkaz.uno` です。
 
-[公開サイト](https://iamkaz.uno) · [持ち物のコレクション](https://iamkaz.uno/picks)
+- [TOP](https://iamkaz.uno): トップページ
+- [/picks](https://iamkaz.uno/picks): 持ち物のコレクション
 
 ## 開発・運用
 
