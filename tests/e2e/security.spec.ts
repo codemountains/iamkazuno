@@ -1,8 +1,9 @@
 import { test as base } from '@playwright/test';
 import { test, expect, expectCollectionReady } from './fixtures';
 
-test('CSP is enforced on the home, collection, detail, and not-found pages', async ({ page }) => {
-  for (const path of ['/', '/picks', '/picks/things/mountain-boots', '/missing-security-test-page']) {
+// 各ページを独立して開き、WebKitで文書置換と先読みが競合するのを避ける。
+for (const path of ['/', '/picks', '/picks/things/mountain-boots', '/missing-security-test-page']) {
+  test(`CSP is enforced on ${path}`, async ({ page }) => {
     const response = await page.goto(path);
     expect(response?.status()).toBe(path.startsWith('/missing-') ? 404 : 200);
     const headers = response!.headers();
@@ -18,8 +19,8 @@ test('CSP is enforced on the home, collection, detail, and not-found pages', asy
     expect(headers['content-security-policy-report-only']).toBeUndefined();
     await expect(page.locator('main')).toBeVisible();
     if (path === '/picks') await expectCollectionReady(page);
-  }
-});
+  });
+}
 
 // 意図的な違反を起こすため、通常操作用の「CSP違反なし」fixtureを使用しない。
 base('CSP blocks unapproved inline scripts, modules, event handlers, and external scripts', async ({ page }) => {
