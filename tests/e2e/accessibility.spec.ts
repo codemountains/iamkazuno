@@ -34,6 +34,35 @@ test('keyboard users can skip the header, filter, open a detail, and return focu
   await expect(boots).toBeInViewport();
 });
 
+for (const [name, path] of [
+  ['collection', '/picks'],
+  ['detail', '/picks/things/mountain-boots'],
+] as const) {
+  test(`Back to top returns from the ${name} without outlining the header`, async ({ page, isMobile }) => {
+    const viewport = page.viewportSize()!;
+    await page.setViewportSize({ ...viewport, height: 550 });
+    await page.goto(path);
+
+    const backToTop = page.getByRole('link', { name: 'Back to top', exact: true });
+    const header = page.getByRole('banner');
+    await backToTop.scrollIntoViewIfNeeded();
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+    if (isMobile) await backToTop.tap();
+    else await backToTop.click();
+    await expect(page).toHaveURL(`${path}#top`);
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+    await expect(header).toHaveCSS('outline-style', 'none');
+
+    await backToTop.scrollIntoViewIfNeeded();
+    await backToTop.focus();
+    await page.keyboard.press('Enter');
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+    await expect(header).toHaveCSS('outline-style', 'none');
+    await page.keyboard.press('Tab');
+    await expect(header.getByRole('link', { name: '/picks ホーム' })).toBeFocused();
+  });
+}
+
 test.describe('without JavaScript', () => {
   test.use({ javaScriptEnabled: false });
 
