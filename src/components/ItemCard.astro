@@ -12,8 +12,8 @@ const { thing, index } = Astro.props;
     <a class="item-card-link" href={thingPath(thing.id)} data-picks-prefetch aria-labelledby={`item-${thing.id}`}>
       <div class="item-image-wrap">
         <span class="item-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
-        <!-- 初期カテゴリの適用後、表示対象の先頭画像だけを eager にする。 -->
-        <ThingImage image={thing.image} name={thing.name} />
+        <!-- 初期画像と画面付近の画像だけをインライン処理で有効化する。 -->
+        <ThingImage image={thing.image} name={thing.name} deferred />
         {thing.categories.length > 0 && <span class="item-category">{thing.categories.map((category) => category.name).join(' / ')}</span>}
       </div>
       <div class="item-copy">

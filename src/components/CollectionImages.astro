@@ -1,0 +1,103 @@
+<script is:inline data-collection-images>
+  (() => {
+    const grid = document.currentScript?.parentElement;
+    if (!grid?.matches('[data-item-grid]')) return;
+
+    const margin = 240;
+    const pending = new Set();
+    const observed = new WeakSet();
+    let frame;
+    let adjusting = false;
+
+    function categoryKey() {
+      const requested = new URLSearchParams(location.search).get('category') || '';
+      const valid = Array.from(document.querySelectorAll('[data-filter]')).some((button) => button.dataset.filter === requested);
+      return valid ? encodeURIComponent(requested) : '';
+    }
+
+    function matchesCategory(image, key) {
+      const item = image.closest('[data-item]');
+      return item && !item.hidden && (!key || item.dataset.categoryKeys.split(' ').includes(key));
+    }
+
+    function loadImages(images, priority = false, nearbyOnly = true) {
+      if (adjusting) return;
+      const key = categoryKey();
+      // 交差通知の後にカテゴリや位置が変わることもあるため、読み込み直前に再確認する。
+      const ready = images.filter((image) => {
+        if (!image.dataset.imageSrc || !matchesCategory(image, key)) return false;
+        const rect = image.getBoundingClientRect();
+        return rect.width > 0 && (!nearbyOnly || (rect.bottom > -margin && rect.top < innerHeight + margin));
+      });
+      if (!ready.length) return;
+
+      // 同じグリッドの描画幅を共有し、srcsetを有効化する前に配信サイズを確定する。
+      const first = ready[0];
+      const style = getComputedStyle(first);
+      const sizes = `${Math.max(1, Math.ceil(first.getBoundingClientRect().width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)))}px`;
+      for (const image of ready) {
+        image.sizes = sizes;
+        image.loading = 'eager';
+        image.fetchPriority = priority ? 'high' : 'auto';
+        const sources = image.closest('picture')?.querySelectorAll('source') ?? [];
+        for (const source of sources) source.sizes = sizes;
+        // AVIFを先に有効化し、fallbackのWebPを余分に取得しない。
+        for (const source of sources) {
+          if (source.dataset.imageSrcset) source.srcset = source.dataset.imageSrcset;
+          delete source.dataset.imageSrcset;
+        }
+        if (image.dataset.imageSrcset) image.srcset = image.dataset.imageSrcset;
+        image.src = image.dataset.imageSrc;
+        delete image.dataset.imageSrcset;
+        delete image.dataset.imageSrc;
+        pending.delete(image);
+        observer?.unobserve(image);
+      }
+    }
+
+    const observer = typeof IntersectionObserver === 'undefined' ? null : new IntersectionObserver((entries) => {
+      loadImages(entries.filter((entry) => entry.isIntersecting).map((entry) => entry.target));
+    }, { rootMargin: `${margin}px 0px` });
+
+    function discover() {
+      const key = categoryKey();
+      // HTMLの解析中から先頭4カードを優先し、全件の解析や外部moduleを待たない。
+      const firstCards = Array.from(grid.querySelectorAll('[data-item]'))
+        .filter((item) => !key || item.dataset.categoryKeys.split(' ').includes(key)).slice(0, 4);
+      loadImages(firstCards.map((item) => item.querySelector('[data-collection-image]')).filter(Boolean), true, false);
+      for (const image of grid.querySelectorAll('[data-collection-image][data-image-src]')) {
+        pending.add(image);
+        if (observer && !observed.has(image)) {
+          observed.add(image);
+          observer.observe(image);
+        }
+      }
+      if (!observer) loadImages(Array.from(pending), false, false);
+    }
+
+    function refresh() {
+      if (frame !== undefined) return;
+      frame = requestAnimationFrame(() => {
+        frame = undefined;
+        loadImages(Array.from(pending), false, Boolean(observer));
+      });
+    }
+
+    const parser = new MutationObserver(discover);
+    parser.observe(grid, { childList: true, subtree: true });
+    document.addEventListener('DOMContentLoaded', () => {
+      parser.disconnect();
+      discover();
+      refresh();
+    }, { once: true });
+    document.addEventListener('picks:filter-change', refresh);
+    document.addEventListener('picks:resize', refresh);
+    document.addEventListener('picks:size-start', () => { adjusting = true; });
+    document.addEventListener('picks:size-end', () => {
+      adjusting = false;
+      refresh();
+    });
+    window.addEventListener('resize', refresh, { passive: true });
+    window.addEventListener('pageshow', refresh);
+  })();
+</script>

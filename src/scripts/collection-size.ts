@@ -141,10 +141,12 @@ export function initCollectionSize() {
   }
 
   function commit() {
+    const wasAdjusting = adjusting;
     adjusting = false;
     flush();
     syncItemSize();
     if (unsaved) saveSize();
+    if (wasAdjusting) document.dispatchEvent(new Event('picks:size-end'));
   }
 
   // 戻り位置を計測するinitCollectionNavigation()より先にレイアウトを確定する。
@@ -152,6 +154,7 @@ export function initCollectionSize() {
   flush(false);
   slider.addEventListener('input', () => {
     pendingSize = parseCollectionSize(slider.value);
+    if (!adjusting) document.dispatchEvent(new Event('picks:size-start'));
     adjusting = true;
     unsaved = true;
     schedule();
