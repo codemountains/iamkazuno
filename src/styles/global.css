@@ -250,6 +250,10 @@ svg { display: block; flex-shrink: 0; }
   .filter-button { flex: 1; min-width: 0; justify-content: center; padding-inline: 2px; }
   .filter-count, .filter-scroll-button { display: none; }
 }
+@media (max-width: 320px) {
+  .filters { overflow-x: auto; }
+  .filter-button { flex: 0 0 auto; padding-inline: 9px; }
+}
 /* 残像クローンも同じ実幅で判定。名前は視覚的に隠し、リンクの読み上げ名は維持する。 */
 @container (width < 128px) {
   .item-copy {
