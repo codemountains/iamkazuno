@@ -34,17 +34,17 @@ npm run dev
 
 ### E2Eテスト
 
-初回は依存関係とChromiumをインストールしてから実行します。
+初回は依存関係とChromium・WebKitをインストールしてから実行します。
 
 ```sh
 npm ci
-npx playwright install chromium
+npx playwright install chromium webkit
 npm run test:e2e
 ```
 
 Playwrightが `DATA_SOURCE=sample` で本番ビルドを生成し、`http://127.0.0.1:4322` に `astro preview` を起動します。microCMSの接続情報はテスト用プロセスで両方空に設定するため、ローカルの `.env` やCMSの更新に影響されません。ポート4322はテスト専用で、既存サーバーは再利用しません。`dist/` はサンプルの成果物で上書きされるため、本番公開時は通常の公開手順でmicroCMSからビルドし直してください。
 
-ChromiumのPC（1280×800）とモバイルエミュレーション（390×844・タッチ対応）で、主要なページ遷移、カテゴリ・URL・履歴の同期、詳細からのスクロール位置復元、画像サイズ、テーマの保存、キーボード操作、JavaScript無効時の閲覧、任意フィールド未入力時の表示を検証します。モバイルエミュレーションは実機Safariの検証ではありません。Cloudflare固有のリダイレクト・配信ヘッダーは `astro preview` の検証対象外です。
+ChromiumのPC（1280×800）とモバイルエミュレーション（390×844・タッチ対応）で、主要なページ遷移、カテゴリ・URL・履歴の同期、詳細からのスクロール位置復元、画像サイズ、テーマの保存、キーボード操作、JavaScript無効時の閲覧、任意フィールド未入力時の表示を検証します。画像のテストはWebKitのiPhone 16エミュレーションでも実行し、リロード後のサイズ操作中の読み込みと、仮画像のデコード・透明性を確認します。エミュレーションは実機Safariの検証ではありません。Cloudflare固有のリダイレクト・配信ヘッダーは `astro preview` の検証対象外です。
 
 ```sh
 npm run test:e2e -- --project=mobile-chromium
@@ -52,7 +52,7 @@ npm run test:e2e:ui
 npx playwright show-report
 ```
 
-テストは `tests/e2e/` にあり、既存の `npm test` とは独立しています。失敗時のスクリーンショットとトレースは `test-results/`、HTMLレポートは `playwright-report/` に保存します。GitHub Actionsの `Check` でも型チェック・既存テストに続けて実行し、レポートを7日間保存します。Linuxでの初回セットアップは `npx playwright install --with-deps chromium` を使用してください。
+テストは `tests/e2e/` にあり、既存の `npm test` とは独立しています。失敗時のスクリーンショットとトレースは `test-results/`、HTMLレポートは `playwright-report/` に保存します。GitHub Actionsの `Check` でも型チェック・既存テストに続けて実行し、レポートを7日間保存します。Linuxでの初回セットアップは `npx playwright install --with-deps chromium webkit` を使用してください。
 
 ### 成果物の軽量化
 
@@ -145,7 +145,7 @@ microCMS画像を含む一覧・詳細ページでは、画像CDNへ `preconnect
 
 一覧には80 / 120 / 160 / 240 / 320 / 400 / 480 / 640 / 960px、詳細には480 / 640 / 960 / 1280pxの画像候補を用意します。80 / 120pxの候補で小さいカードの転送量を抑え、400pxの候補で320pxを少し超える画像を必要とする画面での過大配信を減らします。元画像より大きい候補は元の幅に揃えて重複を除去し、`sizes` は画像内の余白を除いた描画幅を指定します。ブラウザが画面幅と画素密度に応じて候補を選ぶため、画像APIの `dpr` は併用しません。
 
-カテゴリ付きURLでは、カードのHTMLを読み込む前に対象外を隠し、初期表示の絞り込み・件数をインラインのJavaScriptで確定します。画像のURLと候補は最初はデータ属性に保持し、HTMLの解析中から表示対象の先頭4カード内の画像を `eager` / `fetchpriority="high"` で取得します。残りは `IntersectionObserver` で画面の上下240px以内へ来た時点で有効化し、ブラウザ標準の遅延読み込みによる遠方画像の一斉取得を抑えます。同じタイミングで読み込む画像の `sizes` は、代表画像の余白を除いた実幅で揃えてからURLを有効化します。サイズスライダーの操作中は新たな画像の有効化も保留し、確定後の幅で取得します。
+カテゴリ付きURLでは、カードのHTMLを読み込む前に対象外を隠し、初期表示の絞り込み・件数をインラインのJavaScriptで確定します。画像のURLと候補は最初はデータ属性に保持し、HTMLの解析中から表示対象の先頭4カード内の画像を `eager` / `fetchpriority="high"` で取得します。残りは `IntersectionObserver` で画面の上下240px以内へ来た時点で有効化し、ブラウザ標準の遅延読み込みによる遠方画像の一斉取得を抑えます。同じタイミングで読み込む画像の `sizes` は、代表画像の余白を除いた実幅で揃えてからURLを有効化します。サイズスライダーの操作中に画面付近へ現れた画像も、その時点の `sizes` で取得します。モバイルでは操作確定まで配信幅を維持し、確定時に全画像を最終サイズへ揃えます。取得前の仮画像にはSafariでもデコードできる透明な1px GIFを使います。
 
 画像処理は外部の操作用JavaScriptを待たずに動作し、カテゴリ変更・画面サイズ変更・履歴復帰後にも表示位置を再確認します。`IntersectionObserver` 非対応時は表示対象の全画像を読み込みます。JavaScript無効時は `noscript` の画像で全件表示を維持します。カテゴリ操作用のJavaScriptは、URLのカテゴリが一致すれば初期状態を引き継ぎ、絞り込みや件数を再適用しません。
 
@@ -214,7 +214,7 @@ Workers Buildsで本番ブランチのDeploy Hookを作り、microCMSの `things
 - `src/pages/picks/things/[id].astro`: アイテムの詳細ページを静的生成
 - `src/components/ItemCard.astro`: 詳細ページへ移動するアイテムカードと画像配信
 - `src/components/ThingImage.astro`: AVIF / WebPの切り替えと描画幅に応じた画像候補の指定
-- `src/components/CollectionImages.astro`: 初期画像の優先読み込み・画面付近の画像取得・操作中の取得保留
+- `src/components/CollectionImages.astro`: 初期画像の優先読み込み・サイズ操作中を含む画面付近の画像取得
 - `src/lib/thing-image.ts`: microCMS画像APIのURL生成と元画像幅を超えない候補の作成
 - `src/styles/global.css`: 色、余白、フォント、レスポンシブ表示
 - `src/data/sample.ts`: 実APIと同じ構造のサンプルアイテム・ブランド・カテゴリ

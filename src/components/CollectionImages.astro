@@ -21,7 +21,6 @@
     }
 
     function loadImages(images, priority = false, nearbyOnly = true) {
-      if (adjusting) return;
       const key = categoryKey();
       // 交差通知の後にカテゴリや位置が変わることもあるため、読み込み直前に再確認する。
       const ready = images.filter((image) => {
@@ -31,10 +30,14 @@
       });
       if (!ready.length) return;
 
-      // 同じグリッドの描画幅を共有し、srcsetを有効化する前に配信サイズを確定する。
+      // 操作中に現れた画像も取得し、モバイルでは確定まで既存の配信幅を共有する。
+      // 操作していないときは実幅を測り、srcsetの有効化前に配信サイズを確定する。
       const first = ready[0];
-      const style = getComputedStyle(first);
-      const sizes = `${Math.max(1, Math.ceil(first.getBoundingClientRect().width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)))}px`;
+      let sizes = first.sizes;
+      if (!adjusting || !/^\d+px$/.test(sizes)) {
+        const style = getComputedStyle(first);
+        sizes = `${Math.max(1, Math.ceil(first.getBoundingClientRect().width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)))}px`;
+      }
       for (const image of ready) {
         image.sizes = sizes;
         image.loading = 'eager';

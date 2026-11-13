@@ -11,6 +11,25 @@ async function expectImageLoaded(image: Locator) {
   )).toBe(true);
 }
 
+async function expectTransparentPlaceholder(image: Locator) {
+  // 画面外のlazy画像でも、実際のsrcをブラウザでデコードして検証する。
+  const placeholder = await image.evaluate(async (element: HTMLImageElement) => {
+    const decoded = new Image();
+    decoded.src = element.src;
+    await decoded.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 1;
+    const context = canvas.getContext('2d')!;
+    context.drawImage(decoded, 0, 0);
+    return {
+      width: decoded.naturalWidth,
+      height: decoded.naturalHeight,
+      alpha: context.getImageData(0, 0, 1, 1).data[3],
+    };
+  });
+  expect(placeholder).toEqual({ width: 1, height: 1, alpha: 0 });
+}
+
 test('distant images stay deferred until scrolling near them', async ({ page }) => {
   await page.goto('/picks');
   await expectCollectionReady(page);
@@ -21,6 +40,7 @@ test('distant images stay deferred until scrolling near them', async ({ page }) 
   await expect(distantImage).not.toBeInViewport();
   await expect(distantImage).toHaveAttribute('data-image-src', '/images/samples/sample.svg');
   await expect(distantImage).toHaveAttribute('src', /^data:image\/gif/);
+  await expectTransparentPlaceholder(distantImage);
   await distantImage.scrollIntoViewIfNeeded();
   await expectImageLoaded(distantImage);
 });
@@ -75,27 +95,29 @@ test('images remain available when IntersectionObserver is unsupported', async (
   await expectImageLoaded(images.last());
 });
 
-test('mobile size adjustments defer new images until the final size is committed', async ({ page, isMobile }) => {
-  test.skip(!isMobile, 'Mobile column changes defer image selection until the gesture ends.');
-  await page.addInitScript(() => sessionStorage.setItem('picks:image-size', '232'));
+test('size adjustments after reload load newly visible images before the gesture ends', async ({ page, isMobile }) => {
   await page.goto('/picks');
+  await page.evaluate(() => sessionStorage.setItem('picks:image-size', '232'));
+  await page.reload();
   await expectCollectionReady(page);
   await page.evaluate(() => document.fonts.ready);
   const grid = page.locator('[data-item-grid]');
   const images = page.locator('[data-collection-image]');
   const slider = page.getByRole('slider', { name: '画像サイズ' });
   const columnCount = () => grid.evaluate((element) => getComputedStyle(element).gridTemplateColumns.split(' ').length);
-  await expect.poll(columnCount).toBe(2);
+  const initialColumns = await columnCount();
+  if (isMobile) expect(initialColumns).toBe(2);
   await expectImageLoaded(images.first());
   const initialSizes = await images.first().getAttribute('sizes');
   expect(initialSizes).toMatch(/^\d+px$/);
 
-  // 2列では画面外、6列では画面内になる未取得画像を追跡する。
+  // 保存された大きいサイズでは画面外、小さくすると画面内になる未取得画像を追跡する。
   const deferredIndex = await images.evaluateAll((elements) => elements.findIndex((image) =>
     image.hasAttribute('data-image-src') && image.getBoundingClientRect().top > innerHeight + 240,
   ));
   expect(deferredIndex).toBeGreaterThan(0);
   const newlyVisibleImage = images.nth(deferredIndex);
+  await expectTransparentPlaceholder(newlyVisibleImage);
   const inputSize = (value: number, commit = false) => slider.evaluate(async (element: HTMLInputElement, input) => {
     element.value = String(input.value);
     element.dispatchEvent(new Event('input', { bubbles: true }));
@@ -105,25 +127,36 @@ test('mobile size adjustments defer new images until the final size is committed
   }, { value, commit });
 
   await inputSize(88);
-  await expect.poll(columnCount).toBe(6);
+  await expect.poll(columnCount).toBeGreaterThan(initialColumns);
+  if (isMobile) await expect.poll(columnCount).toBe(6);
   await expect(newlyVisibleImage).toBeInViewport();
-  await expect(newlyVisibleImage).toHaveAttribute('data-image-src', '/images/samples/sample.svg');
+  // changeを送る前に本画像が表示される。指を離すまで空白にしない。
+  await expectImageLoaded(newlyVisibleImage);
+  if (isMobile) {
+    // モバイルでは取得を続けつつ、既存画像の候補切り替えは確定まで保留する。
+    await expect(images.first()).toHaveAttribute('sizes', initialSizes!);
+    await expect(newlyVisibleImage).toHaveAttribute('sizes', initialSizes!);
+  }
 
   await inputSize(232, true);
-  await expect.poll(columnCount).toBe(2);
+  await expect.poll(columnCount).toBe(initialColumns);
   await expect.poll(() => images.evaluateAll((elements, expectedSizes) => elements
     .filter((image) => !image.hasAttribute('data-image-src'))
     .every((image) => image.getAttribute('sizes') === expectedSizes), initialSizes,
   )).toBe(true);
-  await expect(newlyVisibleImage).toHaveAttribute('data-image-src', '/images/samples/sample.svg');
+  await expect(newlyVisibleImage).not.toHaveAttribute('data-image-src');
 
-  // 6列で確定した場合は、途中で保留した画像を最終サイズで取得する。
+  // 小さいサイズで確定した場合は、途中で取得した画像も最終サイズへ揃える。
   await inputSize(88, true);
-  await expect.poll(columnCount).toBe(6);
+  await expect.poll(columnCount).toBeGreaterThan(initialColumns);
   await expectImageLoaded(newlyVisibleImage);
   const finalSizes = await images.first().getAttribute('sizes');
   expect(finalSizes).not.toBe(initialSizes);
   await expect(newlyVisibleImage).toHaveAttribute('sizes', finalSizes!);
+  await expect.poll(() => images.evaluateAll((elements, expectedSizes) => elements
+    .filter((image) => !image.hasAttribute('data-image-src'))
+    .every((image) => image.getAttribute('sizes') === expectedSizes), finalSizes,
+  )).toBe(true);
 });
 
 test('returning from a distant detail page restores a loaded collection image', async ({ page }) => {
