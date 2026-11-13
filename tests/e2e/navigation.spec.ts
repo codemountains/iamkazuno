@@ -45,7 +45,7 @@ async function expectRestoredItem(page: Page, detailPath: string, itemTop: numbe
   }).toBeLessThanOrEqual(4);
 }
 
-test('トップから一覧と詳細へ移動でき、商品画像と説明を表示する', async ({ page }) => {
+test('home links to the collection and item details with loaded images and descriptions', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1, name: 'iamkaz.uno' })).toBeVisible();
   await page.getByRole('link', { name: '/picks', exact: true }).click();
@@ -66,7 +66,7 @@ test('トップから一覧と詳細へ移動でき、商品画像と説明を�
   await expect(page.locator('[data-filter="mountain"]')).toHaveAttribute('aria-pressed', 'true');
 });
 
-test('詳細を再読み込みしてから戻ってもカテゴリと商品の画面内位置を復元する', async ({ page }) => {
+test('returning after a detail reload restores the category and item position', async ({ page }) => {
   const { detailPath, itemTop } = await openScrolledDetail(page);
   await page.reload();
   const backLink = page.getByRole('link', { name: 'Back to picks' });
@@ -75,7 +75,7 @@ test('詳細を再読み込みしてから戻ってもカテゴリと商品の�
   await expectRestoredItem(page, detailPath, itemTop);
 });
 
-test('一覧と詳細をブラウザの戻る・進むで移動しても閲覧状態を維持する', async ({ page }) => {
+test('browser back and forward preserve the collection state across detail visits', async ({ page }) => {
   const { detailPath, itemTop } = await openScrolledDetail(page);
   await page.goBack();
   await expectRestoredItem(page, detailPath, itemTop);
@@ -87,7 +87,7 @@ test('一覧と詳細をブラウザの戻る・進むで移動しても閲覧�
   await expectRestoredItem(page, detailPath, itemTop);
 });
 
-test('詳細URLを直接開いた場合は全件一覧の先頭へ戻る', async ({ page }) => {
+test('a direct detail visit returns to the top of the full collection', async ({ page }) => {
   await page.goto('/picks/things/mountain-boots');
   const backLink = page.getByRole('link', { name: 'Back to picks' });
   await expect(backLink).toHaveAttribute('href', '/picks');

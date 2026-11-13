@@ -22,7 +22,7 @@ async function expectCategory(page: Page, category = '') {
     : `${count} things, well loved.`);
 }
 
-test('カテゴリ操作で商品・選択状態・件数・URLが同期する', async ({ page, isMobile }) => {
+test('category changes keep items, selection, counts, and the URL in sync', async ({ page, isMobile }) => {
   await page.goto('/picks');
   await expectCollectionReady(page);
   await expectCategory(page);
@@ -41,7 +41,7 @@ test('カテゴリ操作で商品・選択状態・件数・URLが同期する',
   await expectCategory(page);
 });
 
-test('カテゴリ付きURLを直接開いて再読み込みしても絞り込みを維持する', async ({ page }) => {
+test('a category URL applies its filter on direct visits and reloads', async ({ page }) => {
   await page.goto('/picks?category=ski');
   await expectCollectionReady(page);
   await expectCategory(page, 'ski');
@@ -52,7 +52,7 @@ test('カテゴリ付きURLを直接開いて再読み込みしても絞り込�
   await expectCategory(page, 'ski');
 });
 
-test('不明なカテゴリは全件表示になりallを選ぶとURLも全件へ戻る', async ({ page }) => {
+test('an unknown category shows all items and selecting all clears the category URL', async ({ page }) => {
   await page.goto('/picks?category=unknown-category');
   await expectCollectionReady(page);
   await expectCategory(page);
@@ -62,7 +62,7 @@ test('不明なカテゴリは全件表示になりallを選ぶとURLも全件�
   await expectCategory(page);
 });
 
-test('ブラウザの戻る・進むでカテゴリと表示結果を復元する', async ({ page }) => {
+test('browser back and forward restore the selected category and visible items', async ({ page }) => {
   await page.goto('/picks');
   await expectCollectionReady(page);
   const filters = page.getByRole('group', { name: 'カテゴリで絞り込む' });

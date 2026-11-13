@@ -49,7 +49,7 @@ test.describe('without JavaScript', () => {
     await expect(page).toHaveURL(/\/picks\/things\/mountain-boots\/?$/);
     await expect(page.getByRole('heading', { name: 'ブーツ', exact: true })).toBeVisible();
     await expect(page.getByText('いつもの登山道から、まだ歩いたことのない稜線へ。', { exact: true })).toBeVisible();
-    await expect(page.getByRole('img', { name: '靴紐と厚いソールを備えた登山用ブーツのイラスト' })).toBeVisible();
+    await expect(page.getByRole('img', { name: 'サンプル画像' })).toBeVisible();
     await page.getByRole('link', { name: 'Back to picks', exact: true }).click();
     await expect(page).toHaveURL(/\/picks\/?$/);
     await expect(page.locator('[data-item]:visible')).toHaveCount(sampleThings.length);

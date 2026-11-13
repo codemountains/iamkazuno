@@ -2,7 +2,7 @@
 
 **Things I use and love.**
 
-トップページに `iamkaz.uno` を表示し、`/picks` でお気に入りの持ち物を紹介する、Astro + TypeScript + microCMS の静的サイトです。microCMSの `things` / `brands` / `categories` APIに対応しています。接続情報がなくても、100点のローカルサンプルとオリジナルSVGイラストですぐに動作します。
+トップページに `iamkaz.uno` を表示し、`/picks` でお気に入りの持ち物を紹介する、Astro + TypeScript + microCMS の静的サイトです。microCMSの `things` / `brands` / `categories` APIに対応しています。接続情報がなくても、100点のローカルサンプルと共通のSVG画像1枚ですぐに動作します。
 
 `/picks` の一覧では写真・アイテム名・ブランドを表示し、クリックすると `/picks/things/[id]` の詳細ページへ移動します。説明文は詳細ページに表示します。コレクションのヘッダーに `/picks.` とサブタイトルを配置しています。
 
@@ -15,7 +15,7 @@ npm ci
 npm run dev
 ```
 
-表示先: トップは <http://localhost:4321/>、コレクションは <http://localhost:4321/picks>。初回は `.env` の作成も不要です。サンプルの商品名・説明・イラストは架空で、実際の所有物やレビューを表すものではありません。
+表示先: トップは <http://localhost:4321/>、コレクションは <http://localhost:4321/picks>。初回は `.env` の作成も不要です。サンプルの商品名・説明は架空で、実際の所有物やレビューを表すものではありません。
 
 公開URLはトップが `https://iamkaz.uno`、コレクションが `https://iamkaz.uno/picks` です。Astroのbaseはルートのまま、ページルートで `/picks` 配下を構成しています。ページURLは末尾スラッシュなしに統一し、Cloudflareでは旧 `/things/[id]` から `/picks/things/[id]` に301リダイレクトします。
 
@@ -60,7 +60,7 @@ npx playwright show-report
 
 - テーマと一覧の初期化に使うインラインJavaScriptを圧縮します。HTML内の実行位置と属性を保ち、描画前のテーマ・カテゴリ・サイズ適用を維持します。ソースの可読性や開発サーバーの出力は変えません。
 - `public/og-picks.png` を品質90・4:4:4のJPEGに変換し、成果物には `og-picks.jpg` だけを含めます。OGメタタグはビルド時にJPEG、開発時に元のPNGを参照します。Cloudflareでは旧PNG URLもJPEGへ301転送します。`public/og-home.png` は画素を変えずPNGを再圧縮します。OG画像を更新するときは、従来どおり `public/` の元PNGを差し替えてください。
-- `public/images/samples/` のSVGは、生成HTMLから参照されているものだけを残します。microCMSのページで使わないサンプル画像は配信せず、サンプルモードや説明文で必要な画像は維持します。
+- `public/images/samples/sample.svg` は、生成HTMLから参照されている場合だけ成果物に残します。microCMSのページで使わないサンプル画像は配信せず、サンプルモードや説明文で必要な場合は維持します。
 - フォントは `src/styles/fonts.css` でDM Sans Latin variableとDM Mono Latin 400のWOFF2だけを読み込みます。Latin拡張の専用ファイルと旧WOFF形式は含めません。日本語などは既存のシステムフォントへフォールバックします。
 - 旧 `/things/[id]` 用のリダイレクトHTMLは生成せず、Cloudflareの `public/_redirects` で301転送します。`astro dev` では設定した転送が使えますが、`astro preview` では旧URLの転送を再現しません。転送確認にはWranglerのローカル実行またはCloudflare上の環境を使用します。
 
@@ -125,7 +125,7 @@ MCPから取得した既存の3つの **リスト形式API** に合わせてい�
 
 カテゴリフィルターは `all` と、`categories` APIから取得したカテゴリで構成します。コード内に固定カテゴリを追加しません。1つのアイテムに複数のカテゴリを設定でき、いずれのカテゴリからも絞り込めます。サンプルも実APIと同じフィールド構造で管理しています。
 
-サンプルは100点です。元の8点（ブーツ・バックパック・腕時計・スキー板・ゴーグル・トートバッグ・スタッフサック・カメラ）に、既存SVGを再利用した87点の連番バリエーションと、複数カテゴリ・画像なし・ブランドなし・説明なし・カテゴリなしの5点を加えています。追加分は商品名でサンプルと分かるようにしています。カテゴリ別には `mountain` 26点、`ski` 25点、`myog` 26点、`other` 23点で、複数カテゴリの商品は各カテゴリに含まれます。長い一覧のスクロール、絞り込み、詳細ページからの位置復元を本番に近い件数で確認できます。`all` は全100点の表示用フィルターで、カテゴリデータには含めません。
+サンプルは100点です。元の8点（ブーツ・バックパック・腕時計・スキー板・ゴーグル・トートバッグ・スタッフサック・カメラ）に、87点の連番バリエーションと、複数カテゴリ・画像なし・ブランドなし・説明なし・カテゴリなしの5点を加えています。追加分は商品名でサンプルと分かるようにしています。画像を設定したサンプルはすべて `public/images/samples/sample.svg` の1枚を共用し、画像なしのサンプルはプレースホルダーを表示します。カテゴリ別には `mountain` 26点、`ski` 25点、`myog` 26点、`other` 23点で、複数カテゴリの商品は各カテゴリに含まれます。長い一覧のスクロール、絞り込み、詳細ページからの位置復元を本番に近い件数で確認できます。`all` は全100点の表示用フィルターで、カテゴリデータには含めません。
 
 ### 未入力・参照先がない場合
 
@@ -215,7 +215,7 @@ Workers Buildsで本番ブランチのDeploy Hookを作り、microCMSの `things
 - `src/lib/thing-image.ts`: microCMS画像APIのURL生成と元画像幅を超えない候補の作成
 - `src/styles/global.css`: 色、余白、フォント、レスポンシブ表示
 - `src/data/sample.ts`: 実APIと同じ構造のサンプルアイテム・ブランド・カテゴリ
-- `public/images/samples/`: オリジナルのサンプルSVG
+- `public/images/samples/sample.svg`: サンプル商品が共用する汎用SVG画像
 - `src/lib/content.ts`: サンプル / microCMSの切り替えと取得
 - `src/lib/content-validation.ts`: 接続情報とCMSコンテンツの検証
 - `src/lib/rich-text.ts`: 説明文のHTMLをサニタイズ

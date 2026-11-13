@@ -44,7 +44,7 @@ test('sample fixtures provide 100 unique local items with the actual CMS schema'
   assert.equal(new Set(content.things.map((thing) => thing.name)).size, 100);
   assert.deepEqual(content.categories, categories);
   assert.deepEqual(content.brands, brands);
-  assert.ok(content.things.every((thing) => thing.image === null || thing.image.url.startsWith('/images/samples/')));
+  assert.ok(content.things.every((thing) => thing.image === null || thing.image.url === '/images/samples/sample.svg'));
   assert.ok(content.things.every((thing) => thing.brand === null || thing.brand.id === 'sample-objects'));
   assert.ok(content.things.some((thing) => thing.descriptionHtml.includes('<strong>')));
   assert.deepEqual(content.categories.map((category) => category.id), ['mountain', 'ski', 'myog', 'other']);

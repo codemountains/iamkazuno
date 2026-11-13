@@ -1,6 +1,6 @@
 import { test, expect, expectCollectionReady } from './fixtures';
 
-test('画像未設定の商品も一覧から開けて詳細にプレースホルダーを表示する', async ({ page }) => {
+test('items without images open from the collection and show a placeholder on the detail page', async ({ page }) => {
   await page.goto('/picks?category=ski');
   await expectCollectionReady(page);
   const item = page.getByRole('link', { name: '画像未設定のサンプル', exact: true });
@@ -12,7 +12,7 @@ test('画像未設定の商品も一覧から開けて詳細にプレースホ�
   await expect(page.getByText('No image yet', { exact: true })).toBeVisible();
 });
 
-test('任意のブランドや説明が未入力でも詳細を表示できる', async ({ page }) => {
+test('detail pages remain available when the brand or description is missing', async ({ page }) => {
   await page.goto('/picks/things/sample-no-brand');
   await expect(page.getByRole('heading', { name: 'ブランド未設定のサンプル', exact: true })).toBeVisible();
   await expect(page.locator('.detail-brand')).toHaveCount(0);
@@ -22,7 +22,7 @@ test('任意のブランドや説明が未入力でも詳細を表示できる',
   await expect(page.getByText('No description yet.', { exact: true })).toBeVisible();
 });
 
-test('一覧末尾のカテゴリなし商品にも到達できる', async ({ page }) => {
+test('the uncategorized item at the end of the collection is reachable', async ({ page }) => {
   await page.goto('/picks');
   await expectCollectionReady(page);
   const lastItem = page.locator('[data-item]').last().getByRole('link', { name: 'カテゴリ未設定のサンプル', exact: true });

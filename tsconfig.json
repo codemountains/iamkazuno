@@ -4,5 +4,5 @@
     "types": ["node", "astro/client"]
   },
   "include": [".astro/types.d.ts", "**/*"],
-  "exclude": ["dist"]
+  "exclude": ["dist", "playwright-report", "test-results"]
 }
