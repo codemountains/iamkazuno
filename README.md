@@ -2,8 +2,8 @@
 
 Kazuno の個人サイト `iamkaz.uno` です。
 
-- [TOP](https://iamkaz.uno): トップページ
-- [/picks](https://iamkaz.uno/picks): 持ち物のコレクション
+- [iamkaz.uno](https://iamkaz.uno) : トップページ
+- [iamkaz.uno/picks](https://iamkaz.uno/picks) : 持ち物のコレクション
 
 ## 開発・運用
 
