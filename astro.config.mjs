@@ -2,6 +2,7 @@ import { defineConfig } from 'astro/config';
 import { loadEnv } from 'vite';
 import minifyInlineScripts from './build/minify-inline-scripts.mjs';
 import optimizeStaticAssets from './build/optimize-static-assets.mjs';
+import contentSecurityPolicy from './build/content-security-policy.mjs';
 
 const env = loadEnv(process.env.NODE_ENV ?? 'development', process.cwd(), '');
 const site = process.env.SITE_URL || env.SITE_URL || 'https://iamkaz.uno';
@@ -16,7 +17,7 @@ if (site) {
 export default defineConfig({
   output: 'static',
   site,
-  integrations: [minifyInlineScripts(), optimizeStaticAssets()],
+  integrations: [minifyInlineScripts(), optimizeStaticAssets(), contentSecurityPolicy()],
   // Cloudflareの_redirectsで転送するため、旧URLごとのHTMLは出力しない。
   build: { redirects: false },
   // 主要なサイト内リンクだけを先読みする。通常のページ遷移・履歴復元は維持する。

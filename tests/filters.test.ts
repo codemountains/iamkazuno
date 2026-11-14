@@ -80,6 +80,7 @@ function setup(t: TestContext, category = 'ski', options: { inline?: boolean; ne
   const grid = { dataset: {} as Record<string, string>, querySelectorAll: () => items };
   const documentTarget = new Target();
   const document = Object.assign(documentTarget, {
+    documentElement: { dataset: {} as Record<string, string> },
     fonts: { ready: Promise.resolve() },
     querySelector(selector: string) {
       if (selector === '[data-filters]') return controls;

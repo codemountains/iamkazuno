@@ -46,6 +46,7 @@ function setup(t: TestContext, options: {
   effectiveType?: string;
   hrefs?: string[];
   automaticAbort?: boolean;
+  navigation?: boolean;
 } = {}) {
   const anchors = (options.hrefs ?? ['one', 'two', 'three', 'four', 'five'].map((id) => `/picks/things/${id}`))
     .map((href) => new Anchor(new URL(href, 'https://example.test/picks').href));
@@ -63,7 +64,12 @@ function setup(t: TestContext, options: {
       return grid;
     },
   });
-  const window = Object.assign(new Target(), { innerWidth: 1280, innerHeight: 800 });
+  const navigation = new Target();
+  const window = Object.assign(new Target(), {
+    innerWidth: 1280,
+    innerHeight: 800,
+    navigation: options.navigation === false ? undefined : navigation,
+  });
   const connection = Object.assign(new Target(), {
     saveData: options.saveData ?? false,
     effectiveType: options.effectiveType ?? '4g',
@@ -153,6 +159,16 @@ function setup(t: TestContext, options: {
     visibility(hidden: boolean) {
       document.visibilityState = hidden ? 'hidden' : 'visible';
       document.emit('visibilitychange');
+    },
+    navigate(options: { sameDocument?: boolean; downloadRequest?: string; defaultPrevented?: boolean } = {}) {
+      const controller = new AbortController();
+      navigation.emit('navigate', {
+        signal: controller.signal,
+        destination: { sameDocument: options.sameDocument ?? false },
+        downloadRequest: options.downloadRequest ?? null,
+        defaultPrevented: options.defaultPrevented ?? false,
+      });
+      return controller;
     },
   };
 }
@@ -295,8 +311,8 @@ test('hidden tabs clear pending work and resume observation when shown', async (
   assert.equal(h.requests.length, 3);
 });
 
-test('pagehide aborts requests and BFCache restoration respects slots until abort completion', async (t) => {
-  const h = setup(t, { automaticAbort: false });
+test('without the Navigation API, pagehide aborts requests and BFCache restoration respects occupied slots', async (t) => {
+  const h = setup(t, { automaticAbort: false, navigation: false });
   h.intersect();
   h.advance(300);
   h.window.emit('pagehide', { persisted: true });
@@ -315,6 +331,91 @@ test('pagehide aborts requests and BFCache restoration respects slots until abor
   assert.equal(h.requests.length, 4);
   assert.equal(h.requests[3].url, h.anchors[1].href);
   assert.equal(h.requests.filter((request) => !request.options.signal?.aborted).length, 2);
+});
+
+test('document navigation aborts prefetch and stops refilling slots before pagehide', async (t) => {
+  const h = setup(t);
+  h.intersect([0, 1, 2]);
+  h.advance(300);
+  h.intersect([3, 4]);
+  assert.equal(h.requests.length, 2);
+  assert.equal(h.timers.size, 2);
+
+  h.navigate();
+  assert.ok(h.requests.every((request) => request.options.signal?.aborted));
+  assert.equal(h.timers.size, 0);
+  assert.equal(h.observed.size, 0);
+  await settle();
+  h.advance(1000);
+  h.visibility(true);
+  h.visibility(false);
+  h.window.emit('online');
+  assert.equal(h.requests.length, 2);
+  assert.equal(h.observed.size, 0);
+});
+
+test('canceling document navigation resumes prefetch for the current page', async (t) => {
+  const h = setup(t);
+  h.intersect();
+  h.advance(300);
+  const pending = h.navigate();
+  await settle();
+  pending.abort();
+  assert.equal(h.observed.size, h.anchors.length);
+  h.intersect();
+  h.advance(300);
+  assert.equal(h.requests.length, 4);
+  assert.deepEqual(h.requests.slice(2).map((request) => request.url), h.anchors.slice(0, 2).map((anchor) => anchor.href));
+});
+
+for (const navigation of [
+  { sameDocument: true },
+  { downloadRequest: 'image.png' },
+  { defaultPrevented: true },
+]) {
+  test(`non-departing navigation keeps prefetch running: ${JSON.stringify(navigation)}`, (t) => {
+    const h = setup(t);
+    h.intersect();
+    h.advance(300);
+    h.navigate(navigation);
+    assert.ok(h.requests.every((request) => !request.options.signal?.aborted));
+    assert.equal(h.observed.size, h.anchors.length - 2);
+  });
+}
+
+test('canceling an older navigation cannot resume prefetch during a newer navigation', async (t) => {
+  const h = setup(t);
+  h.intersect();
+  h.advance(300);
+  const first = h.navigate();
+  const second = h.navigate();
+  first.abort();
+  await settle();
+  assert.equal(h.observed.size, 0);
+  assert.equal(h.requests.length, 2);
+
+  second.abort();
+  assert.equal(h.observed.size, h.anchors.length);
+  h.intersect();
+  h.advance(300);
+  assert.equal(h.requests.length, 4);
+});
+
+test('pagehide keeps prefetch stopped when a navigation signal aborts, until pageshow', async (t) => {
+  const h = setup(t);
+  h.intersect();
+  h.advance(300);
+  const pending = h.navigate();
+  h.window.emit('pagehide', { persisted: true });
+  pending.abort();
+  await settle();
+  assert.equal(h.observed.size, 0);
+
+  h.window.emit('pageshow', { persisted: true });
+  assert.equal(h.observed.size, h.anchors.length);
+  h.intersect();
+  h.advance(300);
+  assert.equal(h.requests.length, 4);
 });
 
 test('pressing a cloned card cannot bypass the real-grid candidates', (t) => {

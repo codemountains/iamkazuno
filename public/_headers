@@ -1,3 +1,4 @@
+# CSP is generated in build/content-security-policy.mjs after HTML minification.
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
