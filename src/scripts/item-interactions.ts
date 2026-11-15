@@ -1,5 +1,4 @@
-export function initItemInteractions() {
-  const grid = document.querySelector<HTMLElement>('[data-item-grid]');
+export function initItemInteractions(grid: HTMLElement | null = document.querySelector<HTMLElement>('[data-item-grid]')) {
   if (!grid) return;
 
   let pressed: { link: HTMLAnchorElement; pointerId: number; x: number; y: number } | null = null;

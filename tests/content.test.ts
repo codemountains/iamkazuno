@@ -62,6 +62,10 @@ test('sample fixtures provide 100 unique local items with the actual CMS schema'
   assert.equal(find('sample-no-brand').brand, null);
   assert.equal(find('sample-no-description').descriptionHtml, '');
   assert.deepEqual(find('sample-uncategorized').categories, []);
+  assert.equal(find('mountain-boots').morePickIds.length, 9);
+  assert.deepEqual(find('mountain-backpack').morePickIds, ['mountain-watch']);
+  assert.ok(content.things.filter((thing) => !['mountain-boots', 'mountain-backpack'].includes(thing.id))
+    .every((thing) => thing.morePickIds.length === 0));
 });
 
 function cmsThing() {
@@ -111,13 +115,14 @@ test('things map main_image and resolve current brand and category names from th
 
 test('all optional fields may be absent, empty or null without blocking publication', () => {
   const empty = { id: 'missing-fields' };
-  const explicit = { id: 'null-fields', name: ' ', description: null, main_image: null, ref_brand: null, ref_categories: null };
+  const explicit = { id: 'null-fields', name: ' ', description: null, main_image: null, ref_brand: null, ref_categories: null, more_picks: null };
   for (const thing of validateThings([empty, explicit], [], [])) {
     assert.equal(thing.name, 'Unnamed item');
     assert.equal(thing.brand, null);
     assert.equal(thing.image, null);
     assert.equal(thing.descriptionHtml, '');
     assert.deepEqual(thing.categories, []);
+    assert.deepEqual(thing.morePickIds, []);
   }
   assert.deepEqual(validateBrands([{ id: 'brand' }]), [{ id: 'brand', name: 'Unnamed brand' }]);
   assert.deepEqual(validateCategories([{ id: 'category', name: null }]), [{ id: 'category', name: 'Unnamed category' }]);
@@ -147,6 +152,8 @@ test('present malformed values still fail rather than silently displaying broken
   assert.throws(() => validateThings([{ ...thing, description: {} }], brands, categories), /description/);
   assert.throws(() => validateThings([{ ...thing, ref_categories: {} }], brands, categories), /複数コンテンツ参照/);
   assert.throws(() => validateThings([{ ...thing, ref_brand: {} }], brands, categories), /ref_brand.id/);
+  assert.throws(() => validateThings([{ ...thing, more_picks: {} }], brands, categories), /more_picks.*複数コンテンツ参照/);
+  assert.throws(() => validateThings([{ ...thing, more_picks: [{}] }], brands, categories), /more_picks\[0\].id/);
 });
 
 test('API ordering is preserved and duplicate content IDs are rejected', () => {
@@ -173,7 +180,7 @@ test('CMS retrieval uses only the three Content API endpoints and retrieves more
   const thingRequests = requests.filter((url) => url.pathname === '/api/v1/things');
   assert.ok(thingRequests.some((url) => Number(url.searchParams.get('offset')) > 0));
   assert.ok(thingRequests.every((url) => url.searchParams.get('depth') === '1'));
-  assert.ok(thingRequests.every((url) => url.searchParams.get('fields') === 'id,name,description,main_image,ref_brand,ref_categories'));
+  assert.ok(thingRequests.every((url) => url.searchParams.get('fields') === 'id,name,description,main_image,ref_brand,ref_categories,more_picks'));
   assert.ok(requests.every((url) => !url.searchParams.has('draftKey')));
 });
 

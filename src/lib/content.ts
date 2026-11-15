@@ -33,7 +33,7 @@ export async function getContent(env: ContentEnvironment = {
       client.getAllContents({ endpoint: 'categories', queries: { fields: 'id,name' } }),
       client.getAllContents({
         endpoint: 'things',
-        queries: { fields: 'id,name,description,main_image,ref_brand,ref_categories', depth: 1 },
+        queries: { fields: 'id,name,description,main_image,ref_brand,ref_categories,more_picks', depth: 1 },
       }),
     ]);
   } catch {

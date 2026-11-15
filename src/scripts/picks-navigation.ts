@@ -2,10 +2,20 @@ import { collectionPath } from '../lib/paths';
 
 interface ReturnPosition {
   listUrl: string;
+  // 関連詳細を巡回しても、一覧で最初に開いた商品を復元対象にする。
   detailPath: string;
   scrollY: number;
   itemTop: number;
   restoreFocus?: boolean;
+}
+
+interface ReturnContext {
+  position: ReturnPosition;
+  currentDetailUrl: string;
+}
+
+interface DetailDeparture extends ReturnContext {
+  fromUrl: string;
 }
 
 const departureKey = 'picks:detail-departure';
@@ -34,6 +44,33 @@ export function parseReturnPosition(value: unknown): ReturnPosition | null {
   }
 }
 
+function parseDetailUrl(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  try {
+    const url = new URL(value, 'https://picks.invalid');
+    return url.origin === 'https://picks.invalid' && !url.hash && /^\/picks\/things\/[^/?#]+$/.test(url.pathname)
+      ? `${url.pathname}${url.search}` : null;
+  } catch {
+    return null;
+  }
+}
+
+function parseReturnContext(value: unknown): ReturnContext | null {
+  if (!value || typeof value !== 'object') return null;
+  const context = value as Partial<ReturnContext>;
+  const position = parseReturnPosition(context.position);
+  const currentDetailUrl = parseDetailUrl(context.currentDetailUrl);
+  return position && currentDetailUrl ? { position, currentDetailUrl } : null;
+}
+
+function parseDetailDeparture(value: unknown): DetailDeparture | null {
+  const context = parseReturnContext(value);
+  if (!context) return null;
+  const fromUrl = (value as Partial<DetailDeparture>).fromUrl;
+  if (typeof fromUrl !== 'string' || (fromUrl !== context.position.listUrl && parseDetailUrl(fromUrl) !== fromUrl)) return null;
+  return { ...context, fromUrl };
+}
+
 function matchesReferrer(referrer: string, path: string, origin: string) {
   try {
     const url = new URL(referrer);
@@ -51,26 +88,39 @@ export function detailReturnPosition(options: {
   referrer: string;
 }): ReturnPosition | null {
   const current = new URL(options.currentUrl);
+  const currentDetailUrl = `${current.pathname}${current.search}`;
   if (options.navigationType === 'reload' || options.navigationType === 'back_forward') {
-    const saved = parseReturnPosition(options.saved);
-    return saved?.detailPath === current.pathname ? saved : null;
+    const saved = parseReturnContext(options.saved);
+    return saved?.currentDetailUrl === currentDetailUrl ? saved.position : null;
   }
-  const pending = parseReturnPosition(options.pending);
-  return pending?.detailPath === current.pathname && matchesReferrer(options.referrer, pending.listUrl, current.origin)
-    ? pending : null;
+  const pending = parseDetailDeparture(options.pending);
+  return pending?.currentDetailUrl === currentDetailUrl && matchesReferrer(options.referrer, pending.fromUrl, current.origin)
+    ? pending.position : null;
 }
 
-function takePosition(key: string) {
+export function collectionReturnPosition(options: {
+  pending: unknown;
+  currentUrl: string;
+  referrer: string;
+}): ReturnPosition | null {
+  const current = new URL(options.currentUrl);
+  const pending = parseReturnContext(options.pending);
+  return pending && pending.position.listUrl === `${current.pathname}${current.search}`
+    && matchesReferrer(options.referrer, pending.currentDetailUrl, current.origin)
+    ? pending.position : null;
+}
+
+function takeStoredPosition(key: string): unknown {
   try {
     const value = sessionStorage.getItem(key);
     sessionStorage.removeItem(key);
-    return value ? parseReturnPosition(JSON.parse(value)) : null;
+    return value ? JSON.parse(value) : null;
   } catch {
     return null;
   }
 }
 
-function savePosition(key: string, position: ReturnPosition) {
+function savePosition(key: string, position: ReturnContext | DetailDeparture) {
   try { sessionStorage.setItem(key, JSON.stringify(position)); } catch { /* 通常のリンク移動は維持する。 */ }
 }
 
@@ -109,12 +159,13 @@ export function initCollectionNavigation() {
     history.replaceState(history.state, '', `${window.location.pathname}${window.location.search}`);
   }
 
-  takePosition(departureKey);
-  const pending = takePosition(returnKey);
-  if (pending && pending.listUrl === `${window.location.pathname}${window.location.search}`
-    && matchesReferrer(document.referrer, pending.detailPath, window.location.origin)) {
-    restorePosition(pending);
-  }
+  takeStoredPosition(departureKey);
+  const position = collectionReturnPosition({
+    pending: takeStoredPosition(returnKey),
+    currentUrl: window.location.href,
+    referrer: document.referrer,
+  });
+  if (position) restorePosition(position);
 
   grid.addEventListener('click', (event) => {
     if (!(event.target instanceof Element)) return;
@@ -122,18 +173,24 @@ export function initCollectionNavigation() {
     const item = link?.closest<HTMLElement>('[data-item]');
     if (!link || !item || !isSameTabClick(event, link)) return;
     const target = new URL(link.href);
-    if (target.origin !== window.location.origin) return;
+    const currentDetailUrl = parseDetailUrl(`${target.pathname}${target.search}`);
+    if (target.origin !== window.location.origin || !currentDetailUrl) return;
+    const listUrl = `${collectionPath}${window.location.search}`;
     savePosition(departureKey, {
-      listUrl: `${collectionPath}${window.location.search}`,
-      detailPath: target.pathname,
-      scrollY: window.scrollY,
-      itemTop: item.getBoundingClientRect().top,
+      position: {
+        listUrl,
+        detailPath: target.pathname,
+        scrollY: window.scrollY,
+        itemTop: item.getBoundingClientRect().top,
+      },
+      currentDetailUrl,
+      fromUrl: listUrl,
     });
   });
 
   window.addEventListener('pageshow', (event) => {
     // ブラウザの「戻る」ではネイティブの位置復元をそのまま使う。
-    if (event.persisted) takePosition(departureKey);
+    if (event.persisted) takeStoredPosition(departureKey);
   });
 }
 
@@ -142,19 +199,43 @@ export function initDetailNavigation() {
   if (!link) return;
   const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
   const position = detailReturnPosition({
-    pending: takePosition(departureKey),
+    pending: takeStoredPosition(departureKey),
     saved: history.state?.[historyKey],
     navigationType: navigation?.type ?? 'navigate',
     currentUrl: window.location.href,
     referrer: document.referrer,
   });
+  const currentDetailUrl = `${window.location.pathname}${window.location.search}`;
   // リロード・履歴移動時だけ、この詳細ページ自身の履歴に紐づく位置を再利用する。
-  history.replaceState({ ...history.state, [historyKey]: position }, '');
+  history.replaceState({ ...history.state, [historyKey]: position ? { position, currentDetailUrl } : null }, '');
   link.href = position?.listUrl ?? collectionPath;
   link.addEventListener('click', (event) => {
     if (!isSameTabClick(event, link)) return;
-    takePosition(returnKey);
+    takeStoredPosition(returnKey);
     // キーボード・支援技術によるクリックだけ、戻った商品へフォーカスを移す。
-    if (position) savePosition(returnKey, { ...position, restoreFocus: event.detail === 0 });
+    if (position) savePosition(returnKey, {
+      position: { ...position, restoreFocus: event.detail === 0 },
+      currentDetailUrl,
+    });
+  });
+
+  document.querySelector<HTMLElement>('[data-more-picks]')?.addEventListener('click', (event) => {
+    if (!(event.target instanceof Element)) return;
+    const relatedLink = event.target.closest<HTMLAnchorElement>('.item-card-link');
+    if (!relatedLink || !isSameTabClick(event, relatedLink)) return;
+    const target = new URL(relatedLink.href);
+    const nextDetailUrl = parseDetailUrl(`${target.pathname}${target.search}`);
+    if (target.origin !== window.location.origin || !nextDetailUrl) return;
+    takeStoredPosition(departureKey);
+    // 巡回先だけを更新し、一覧で最初に開いた商品とその位置は保持する。
+    if (position) savePosition(departureKey, { position, currentDetailUrl: nextDetailUrl, fromUrl: currentDetailUrl });
+  });
+
+  window.addEventListener('pageshow', (event) => {
+    // bfcacheでは初期化を再実行しないため、取消し・履歴移動で残った出発情報を破棄する。
+    if (event.persisted) {
+      takeStoredPosition(departureKey);
+      takeStoredPosition(returnKey);
+    }
   });
 }

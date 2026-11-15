@@ -149,6 +149,13 @@ export function validateThings(
       // Missing or unpublished references are optional; do not invent categories.
       if (category) selectedCategories.set(category.id, category);
     }
+    const morePicks = data.more_picks ?? [];
+    if (!Array.isArray(morePicks)) return fail(`${path}.more_picks は複数コンテンツ参照である必要があります。`);
+    const morePickIds = new Set<string>();
+    for (const [referenceIndex, reference] of morePicks.entries()) {
+      const pickId = referenceId(reference, `${path}.more_picks[${referenceIndex}]`);
+      if (pickId && pickId !== id) morePickIds.add(pickId);
+    }
 
     return {
       id,
@@ -157,6 +164,7 @@ export function validateThings(
       image: data.main_image == null ? null : image(data.main_image, `${path}.main_image`, options.allowLocalImages ?? false),
       descriptionHtml: sanitizeDescription(optionalText(data.description, `${path}.description`)),
       categories: [...selectedCategories.values()],
+      morePickIds: [...morePickIds],
     };
   });
 }

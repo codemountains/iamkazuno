@@ -108,15 +108,15 @@ svg { display: block; flex-shrink: 0; }
   .item-card-link:focus-visible .item-image { transform: translateY(-2px); }
 }
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .item-grid:not([data-touch-input]) .item-card-link:hover .item-image { transform: translateY(-2px); }
-  .item-grid:not([data-touch-input]) .item-card-link:active .item-image { transform: translateY(0); transition-duration: 80ms; }
+  :is(.item-grid, .more-picks-track):not([data-touch-input]) .item-card-link:hover .item-image { transform: translateY(-2px); }
+  :is(.item-grid, .more-picks-track):not([data-touch-input]) .item-card-link:active .item-image { transform: translateY(0); transition-duration: 80ms; }
 }
 .item-card-link[data-pressed] .item-image { transform: translateY(0); }
 .item-number { position: absolute; left: 17px; top: 16px; z-index: 1; color: var(--muted); font-family: var(--font-mono); font-size: var(--font-size-caption); line-height: 1.5; }
 .item-category { position: absolute; bottom: 16px; left: 17px; right: 17px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-mono); font-size: var(--font-size-caption); line-height: 1.5; color: var(--muted); }
 .item-copy { padding: 18px 1px 0; }
 .item-brand { letter-spacing: .6px; font-family: var(--font-mono); font-size: var(--font-size-label); line-height: 1.6; color: var(--muted); margin: 0 0 7px; overflow-wrap: anywhere; }
-.item-copy h2 { font-size: .9375rem; font-weight: 500; letter-spacing: -.15px; line-height: 1.5; margin: 0; overflow-wrap: anywhere; }
+.item-copy :is(h2, h3) { font-size: .9375rem; font-weight: 500; letter-spacing: -.15px; line-height: 1.5; margin: 0; overflow-wrap: anywhere; }
 .image-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; width: 100%; height: 100%; color: var(--muted); }
 .image-placeholder span { font-family: var(--font-mono); font-size: var(--font-size-caption); line-height: 1.5; }
 .empty-state { padding: 64px 20px; text-align: center; background: var(--card); border-radius: 5px; }
@@ -150,6 +150,20 @@ svg { display: block; flex-shrink: 0; }
 .detail-categories li { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
 .detail-description + .detail-categories { border-top: 1px solid var(--line); padding-top: 16px; }
 .detail-description { min-width: 0; }
+.more-picks { margin-top: 64px; padding-top: 28px; border-top: 1px solid var(--line); min-width: 0; }
+.more-picks-heading { margin: 0 0 24px; font-size: 20px; line-height: 1.4; font-weight: 500; letter-spacing: -.3px; }
+.more-picks-controls { display: flex; align-items: center; gap: 32px; margin-top: 24px; }
+.more-picks-progress { display: block; appearance: none; flex: 1; width: 100%; min-width: 0; height: 2px; border: 0; border-radius: 2px; background: var(--line); color: var(--ink); overflow: hidden; }
+.more-picks-progress::-webkit-progress-bar { background: var(--line); }
+.more-picks-progress::-webkit-progress-value { background: var(--ink); border-radius: 2px; }
+.more-picks-progress::-moz-progress-bar { background: var(--ink); border-radius: 2px; }
+.more-picks-buttons { display: flex; flex-shrink: 0; gap: 8px; }
+.more-picks-button { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: var(--card); cursor: pointer; }
+.more-picks-button:hover:enabled { background: var(--soft); }
+.more-picks-button:disabled { opacity: .35; cursor: default; }
+.more-picks-track { display: grid; grid-auto-flow: column; grid-auto-columns: 220px; gap: 16px; list-style: none; margin: -8px; padding: 8px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; scroll-padding-inline: 8px; scrollbar-width: none; }
+.more-picks-track::-webkit-scrollbar { display: none; }
+.more-picks-track > .item { scroll-snap-align: start; }
 .rich-text { font-size: var(--font-size-body); line-height: 1.85; overflow-wrap: anywhere; }
 .rich-text > :first-child { margin-top: 0; }
 .rich-text > :last-child { margin-bottom: 0; }
@@ -215,6 +229,10 @@ svg { display: block; flex-shrink: 0; }
   .thing-detail { padding: 16px 0 48px; }
   .detail-topline { margin-bottom: 16px; }
   .collection-back { gap: 8px; }
+  .more-picks { margin-top: 40px; padding-top: 24px; }
+  .more-picks-heading { margin-bottom: 18px; }
+  .more-picks-controls { gap: 20px; margin-top: 16px; }
+  .more-picks-track { grid-auto-columns: clamp(140px, 42%, 180px); gap: 12px; }
   .return-link { gap: 8px; }
   .not-found { padding: 80px 0; }
 }

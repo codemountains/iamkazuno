@@ -5,21 +5,23 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 import SiteHeader from '../../../components/SiteHeader.astro';
 import SiteFooter from '../../../components/SiteFooter.astro';
 import ThingImage from '../../../components/ThingImage.astro';
+import MorePicks from '../../../components/MorePicks.astro';
 import { getContent } from '../../../lib/content';
+import { getMorePicks } from '../../../lib/more-picks';
 import { collectionPath } from '../../../lib/paths';
 
 export const getStaticPaths = (async () => {
   const content = await getContent();
   return content.things.map((thing) => ({
     params: { id: thing.id },
-    props: { thing, source: content.source },
+    props: { thing, morePicks: getMorePicks(thing, content.things), source: content.source },
   }));
 }) satisfies GetStaticPaths;
 
-interface Props { thing: Thing; source: Content['source'] }
-const { thing, source } = Astro.props;
+interface Props { thing: Thing; morePicks: Thing[]; source: Content['source'] }
+const { thing, morePicks, source } = Astro.props;
 const sample = source === 'sample';
-const preconnectImageCdn = thing.image?.url.startsWith('https://images.microcms-assets.io/') ?? false;
+const preconnectImageCdn = [thing, ...morePicks].some((item) => item.image?.url.startsWith('https://images.microcms-assets.io/'));
 const description = `${thing.name}${thing.brand ? ` — ${thing.brand.name}` : ''}。/picksのコレクション。`;
 ---
 
@@ -44,6 +46,7 @@ const description = `${thing.name}${thing.brand ? ` — ${thing.brand.name}` : '
         </div>
       )}
     </article>
+    <MorePicks things={morePicks} />
   </main>
   <div class="site-shell site-shell--wide">
     <SiteFooter />
