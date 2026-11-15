@@ -108,8 +108,20 @@ const sampleVariations: MicroCMSThing[] = Array.from({ length: 87 }, (_, index) 
   };
 });
 
+const sampleMorePicks: Record<string, string[]> = {
+  'mountain-boots': [
+    'mountain-backpack', 'mountain-watch', 'ski-skis', 'ski-goggles',
+    'myog-tote', 'myog-stuff-sack', 'other-camera', 'sample-no-image', 'sample-no-brand',
+  ],
+  'mountain-backpack': ['mountain-watch'],
+};
+
 export const sampleThings: MicroCMSThing[] = [
-  ...sampleTemplates,
+  // 元テンプレートには設定せず、派生サンプルへ関連設定が広がるのを防ぐ。
+  ...sampleTemplates.map((thing) => ({
+    ...thing,
+    more_picks: sampleMorePicks[thing.id]?.map((id) => ({ id })),
+  })),
   ...sampleVariations,
   // 任意フィールドや複数カテゴリの表示も、実際の画面で確認できるようにする。
   {

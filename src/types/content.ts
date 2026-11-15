@@ -23,6 +23,7 @@ export interface Thing {
   image: PickImage | null;
   descriptionHtml: string;
   categories: Category[];
+  morePickIds: string[];
 }
 
 export interface Content {
@@ -45,6 +46,7 @@ export interface MicroCMSThing {
   main_image?: PickImage | null;
   ref_brand?: { id: string } | null;
   ref_categories?: Array<{ id: string } | null> | null;
+  more_picks?: Array<{ id: string } | null> | null;
 }
 
 export interface ContentEnvironment {
