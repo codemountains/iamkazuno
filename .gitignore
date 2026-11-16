@@ -12,3 +12,8 @@ dist/
 coverage/
 playwright-report/
 test-results/
+tmp
+temp
+.tmp
+.temp
+/.cache/
