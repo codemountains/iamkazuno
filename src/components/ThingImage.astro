@@ -31,13 +31,12 @@ const imageAttributes = {
 {image ? (
   deferred ? (
     <picture class="thing-picture" data-deferred-picture>
-      {sources && <source type="image/avif" data-image-srcset={sources.avifSrcset} sizes={sizes} />}
+      {sources && <source type="image/avif" sizes={sizes} />}
       <img
         {...imageAttributes}
         data-collection-image
         src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
-        data-image-src={sources?.src ?? image.url}
-        data-image-srcset={sources?.webpSrcset}
+        data-image-src={image.url}
       />
     </picture>
     <noscript>

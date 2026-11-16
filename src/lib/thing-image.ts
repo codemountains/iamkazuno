@@ -7,7 +7,7 @@ interface ThingImageSources {
 }
 
 // The width descriptors represent output pixels; the browser applies the device DPR.
-export function getThingImageSources(image: PickImage, detail = false): ThingImageSources | null {
+export function getThingImageSources(image: Pick<PickImage, 'url' | 'width'>, detail = false): ThingImageSources | null {
   let original: URL;
   try {
     original = new URL(image.url);

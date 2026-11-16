@@ -33,6 +33,7 @@ const shareImage = Astro.site && image ? new URL(image, Astro.site) : undefined;
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     {preconnectImageCdn && <link rel="preconnect" href="https://images.microcms-assets.io" />}
+    <slot name="preload" />
     <meta name="description" content={description} />
     <ThemeInit />
     {noindex && <meta name="robots" content="noindex, follow" />}
