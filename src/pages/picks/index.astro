@@ -5,6 +5,7 @@ import SiteFooter from '../../components/SiteFooter.astro';
 import ItemCard from '../../components/ItemCard.astro';
 import CollectionSizeControl from '../../components/CollectionSizeControl.astro';
 import CollectionImages from '../../components/CollectionImages.astro';
+import CollectionImagePreload from '../../components/CollectionImagePreload.astro';
 import { getContent } from '../../lib/content';
 import { collectionSize } from '../../lib/collection-size';
 
@@ -21,6 +22,7 @@ const initialFilterStyles = categoryKeys.map((key) =>
 ---
 
 <BaseLayout noindex={sample} preconnectImageCdn={preconnectImageCdn}>
+  <CollectionImagePreload slot="preload" things={things} categories={categories} />
   <div class="site-shell site-shell--wide site-shell--collection">
     <SiteHeader />
 

@@ -1,0 +1,11 @@
+---
+import { bundleInlineScript } from '../../build/bundle-inline-script.mjs';
+import { getCollectionPreloadEntries } from '../lib/collection-image-preload';
+import type { Category, Thing } from '../types/content';
+
+interface Props { things: Thing[]; categories: Category[] }
+const { things, categories } = Astro.props;
+const images = getCollectionPreloadEntries(things, categories);
+const script = await bundleInlineScript('src/scripts/collection-image-preload.ts');
+---
+<script is:inline data-image-preload data-images={JSON.stringify(images)} set:html={script} />
