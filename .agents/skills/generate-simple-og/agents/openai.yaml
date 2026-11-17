@@ -1,0 +1,4 @@
+interface:
+  display_name: "シンプルな OG 画像生成"
+  short_description: "iamkaz.uno・notes の文字中心の OG 画像を生成"
+  default_prompt: "$generate-simple-og を使って、iamkaz.uno と notes の OG 画像を再生成してください。"
