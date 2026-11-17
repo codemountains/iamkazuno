@@ -136,6 +136,14 @@ test('size adjustments after reload load newly visible images before the gesture
     // モバイルでは取得を続けつつ、既存画像の候補切り替えは確定まで保留する。
     await expect(images.first()).toHaveAttribute('sizes', initialSizes!);
     await expect(newlyVisibleImage).toHaveAttribute('sizes', initialSizes!);
+  } else {
+    const measuredSizes = await images.first().evaluate((image) => {
+      const style = getComputedStyle(image);
+      return `${Math.ceil(image.getBoundingClientRect().width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight))}px`;
+    });
+    expect(measuredSizes).not.toBe(initialSizes);
+    await expect(images.first()).toHaveAttribute('sizes', measuredSizes);
+    await expect(newlyVisibleImage).toHaveAttribute('sizes', measuredSizes);
   }
 
   await inputSize(232, true);
