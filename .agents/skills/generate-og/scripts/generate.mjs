@@ -5,11 +5,12 @@ import sharp from 'sharp';
 
 const variants = {
   home: 'iamkaz<span>.</span>uno',
-  notes: '<span>/</span>notes<span>.</span>',
+  notes: 'iamkaz<span>.</span>uno<span>/</span>notes',
+  picks: 'iamkaz<span>.</span>uno<span>/</span>picks',
 };
 const [target, requestedOutput, ...extra] = process.argv.slice(2);
 if (!Object.hasOwn(variants, target) || extra.length) {
-  throw new Error('Usage: node generate.mjs <home|notes> [output.png] (run from the repository root)');
+  throw new Error('Usage: node generate.mjs <home|notes|picks> [output.png] (run from the repository root)');
 }
 const output = resolve(requestedOutput ?? `public/og-${target}.png`);
 if (!output.endsWith('.png')) throw new Error('Output must have a .png extension.');
@@ -54,8 +55,8 @@ const html = `<!doctype html>
 <h1>${variants[target]}</h1>
 </html>`;
 
-await mkdir('.tmp/simple-og', { recursive: true });
-await writeFile(`.tmp/simple-og/${target}.html`, html);
+await mkdir('.tmp/og', { recursive: true });
+await writeFile(`.tmp/og/${target}.html`, html);
 const browser = await chromium.launch();
 try {
   const page = await browser.newPage({ viewport: { width: 1200, height: 630 }, deviceScaleFactor: 1 });
