@@ -25,7 +25,8 @@ const { note, newer, older, source } = Astro.props;
   title={`${note.title} — /notes`}
   description={note.excerpt || `${note.title}。/notes に綴る、日々の振り返りや考えたこと。`}
   siteName="/notes"
-  image={false}
+  image="/og-notes.png"
+  imageAlt="/notes — Thoughts, put into words."
   type="article"
   publishedAt={note.publishedAt}
   noindex={source === 'sample'}
