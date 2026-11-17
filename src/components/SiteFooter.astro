@@ -1,9 +1,13 @@
 ---
 import Wordmark from './Wordmark.astro';
+import { collectionPath, notesPath } from '../lib/paths';
+
+interface Props { section?: 'picks' | 'notes' }
+const { section = 'picks' } = Astro.props;
 ---
 <footer class="site-footer">
   <div class="footer-main">
-    <Wordmark small />
+    <Wordmark small section={section} />
     <a href="#top" class="back-to-top">
       Back to top
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -12,9 +16,14 @@ import Wordmark from './Wordmark.astro';
     </a>
   </div>
   <div class="footer-links">
-    <a href="/" class="footer-home-link" data-astro-prefetch aria-label="iamkaz.uno トップページに戻る">
-      <span aria-hidden="true">←</span> iamkaz.uno
-    </a>
+    <nav class="footer-destinations" aria-label="サイト内のページ">
+      <a href="/" class="footer-home-link" data-astro-prefetch aria-label="iamkaz.uno トップページに戻る">
+        <span aria-hidden="true">←</span> iamkaz.uno
+      </a>
+      <a href={section === 'notes' ? collectionPath : notesPath} class="footer-section-link" data-astro-prefetch>
+        /{section === 'notes' ? 'picks' : 'notes'}<span class="wordmark-dot" aria-hidden="true">.</span>
+      </a>
+    </nav>
     <a
       href="https://www.instagram.com/drop_in_com/"
       class="footer-social-link"

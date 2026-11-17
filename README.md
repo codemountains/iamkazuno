@@ -4,6 +4,7 @@ Kazuno の個人サイト `iamkaz.uno` です。
 
 - [iamkaz.uno](https://iamkaz.uno) : トップページ
 - [iamkaz.uno/picks](https://iamkaz.uno/picks) : 持ち物のコレクション
+- [iamkaz.uno/notes](https://iamkaz.uno/notes) : 日々の振り返りや考えたこと
 
 ## 開発・運用
 

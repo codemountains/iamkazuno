@@ -1,0 +1,60 @@
+---
+import type { GetStaticPaths } from 'astro';
+import type { Note } from '../../types/notes';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SiteHeader from '../../components/SiteHeader.astro';
+import SiteFooter from '../../components/SiteFooter.astro';
+import NoteDate from '../../components/NoteDate.astro';
+import { getNotes } from '../../lib/notes';
+import { notesPath, notePath } from '../../lib/paths';
+import '../../styles/notes.css';
+
+export const getStaticPaths = (async () => {
+  const { notes, source } = await getNotes();
+  return notes.map((note, index) => ({
+    params: { id: note.id },
+    props: { note, newer: notes[index - 1] ?? null, older: notes[index + 1] ?? null, source },
+  }));
+}) satisfies GetStaticPaths;
+
+interface Props { note: Note; newer: Note | null; older: Note | null; source: 'sample' | 'microcms' }
+const { note, newer, older, source } = Astro.props;
+---
+
+<BaseLayout
+  title={`${note.title} — /notes`}
+  description={note.excerpt || `${note.title}。/notes に綴る、日々の振り返りや考えたこと。`}
+  siteName="/notes"
+  image={false}
+  type="article"
+  publishedAt={note.publishedAt}
+  noindex={source === 'sample'}
+>
+  <div class="site-shell site-shell--wide">
+    <SiteHeader section="notes" />
+  </div>
+
+  <main id="main" class="note-detail">
+    <a class="collection-back" href={notesPath} data-astro-prefetch><span aria-hidden="true">←</span> Back to notes</a>
+
+    <article aria-labelledby="note-title">
+      <header class="note-heading">
+        {note.publishedAt && <p class="note-date"><NoteDate date={note.publishedAt} /></p>}
+        <h1 id="note-title">{note.title}</h1>
+      </header>
+      {note.bodyHtml && <div class="note-body rich-text" set:html={note.bodyHtml} />}
+      <div class="note-end" aria-label="本文終わり"><span></span><span></span><span></span></div>
+    </article>
+
+    {(newer || older) && (
+      <nav class="note-pagination" aria-label="ほかのノート">
+        {newer && <a class="note-neighbor" href={notePath(newer.id)} data-astro-prefetch><span>← Newer note</span><span>{newer.title}</span></a>}
+        {older && <a class="note-neighbor note-neighbor--older" href={notePath(older.id)} data-astro-prefetch><span>Older note →</span><span>{older.title}</span></a>}
+      </nav>
+    )}
+  </main>
+
+  <div class="site-shell site-shell--wide">
+    <SiteFooter section="notes" />
+  </div>
+</BaseLayout>

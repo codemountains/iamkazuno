@@ -1,0 +1,65 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SiteHeader from '../../components/SiteHeader.astro';
+import SiteFooter from '../../components/SiteFooter.astro';
+import NoteDate from '../../components/NoteDate.astro';
+import { getNotes } from '../../lib/notes';
+import { notePath } from '../../lib/paths';
+import '../../styles/notes.css';
+
+const { notes, source } = await getNotes();
+---
+
+<BaseLayout
+  title="/notes — Thoughts, put into words."
+  description="日常や非日常の振り返り、考えたこと。とりとめのないことを、言葉にして残しておく場所。"
+  siteName="/notes"
+  image={false}
+  noindex={source === 'sample'}
+>
+  <div class="site-shell site-shell--wide">
+    <SiteHeader section="notes" />
+  </div>
+
+  <main id="main" class="notes-index">
+    <header class="notes-intro">
+      <p class="notes-eyebrow"><span aria-hidden="true">/</span> A PERSONAL NOTEBOOK</p>
+      <h1>言葉にして、<br />残しておく。</h1>
+      <p class="notes-intro-copy">日常のこと、非日常のこと。<br />考えたことを、とりとめもなく。</p>
+    </header>
+
+    <section class="notes-collection" aria-labelledby="notes-heading">
+      <div class="notes-collection-heading">
+        <h2 id="notes-heading">All notes<span class="notes-count" aria-label={`${notes.length}件`}>{String(notes.length).padStart(2, '0')}</span></h2>
+        {notes.length > 1 && <p>Newest first</p>}
+      </div>
+      {notes.length > 0 ? (
+        <ol class="note-list">
+          {notes.map((note) => (
+            <li>
+              <article>
+                <a class="note-entry" href={notePath(note.id)} data-astro-prefetch aria-labelledby={`note-${note.id}`}>
+                  <div class="note-entry-date"><NoteDate date={note.publishedAt} /></div>
+                  <div class="note-entry-copy">
+                    <h2 id={`note-${note.id}`}>{note.title}</h2>
+                    {note.excerpt && <p class="note-excerpt">{note.excerpt}</p>}
+                  </div>
+                  <span class="note-entry-arrow" aria-hidden="true">↗</span>
+                </a>
+              </article>
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <div class="notes-empty">
+          <p>まだ、白紙。</p>
+          <p>言葉になったら、ここに。</p>
+        </div>
+      )}
+    </section>
+  </main>
+
+  <div class="site-shell site-shell--wide">
+    <SiteFooter section="notes" />
+  </div>
+</BaseLayout>

@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { collectionPath } from '../lib/paths';
+import ThemePicker from '../components/ThemePicker.astro';
+import { collectionPath, notesPath } from '../lib/paths';
 ---
 
 <BaseLayout
@@ -10,15 +11,34 @@ import { collectionPath } from '../lib/paths';
   image="/og-home.png"
   imageAlt="iamkaz.uno"
 >
+  <div class="home-theme-control">
+    <ThemePicker />
+  </div>
   <main id="main" class="home">
     <div class="home-content">
       <h1>iamkaz<span class="wordmark-dot">.</span>uno</h1>
-      <a class="home-link" href={collectionPath} data-astro-prefetch="viewport">/picks</a>
+      <nav class="home-links" aria-label="サイト内のページ">
+        <a class="home-link" href={collectionPath} data-astro-prefetch="viewport">/picks</a>
+        <a class="home-link" href={notesPath} data-astro-prefetch="viewport">/notes</a>
+      </nav>
     </div>
   </main>
 </BaseLayout>
 
 <style>
+  .home-theme-control {
+    position: absolute;
+    top: 30px;
+    right: 32px;
+  }
+
+  @media (max-width: 600px) {
+    .home-theme-control {
+      top: 20px;
+      right: 16px;
+    }
+  }
+
   .home {
     min-height: 100svh;
     display: grid;
@@ -40,6 +60,11 @@ import { collectionPath } from '../lib/paths';
     font-weight: 400;
     letter-spacing: -0.06em;
     line-height: 1.2;
+  }
+
+  .home-links {
+    display: flex;
+    gap: 8px;
   }
 
   .home-link {

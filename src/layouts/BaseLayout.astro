@@ -11,6 +11,8 @@ interface Props {
   image?: string | false;
   imageAlt?: string;
   preconnectImageCdn?: boolean;
+  type?: 'website' | 'article';
+  publishedAt?: string | null;
 }
 
 const {
@@ -21,6 +23,8 @@ const {
   image = import.meta.env.PROD ? '/og-picks.jpg' : '/og-picks.png',
   imageAlt = '/picks — Things I use and love.',
   preconnectImageCdn = false,
+  type = 'website',
+  publishedAt,
 } = Astro.props;
 const pathname = Astro.url.pathname.replace(/\/+$/, '') || '/';
 const canonical = Astro.site ? new URL(pathname, Astro.site) : undefined;
@@ -39,7 +43,8 @@ const shareImage = Astro.site && image ? new URL(image, Astro.site) : undefined;
     {noindex && <meta name="robots" content="noindex, follow" />}
     {canonical && <link rel="canonical" href={canonical} />}
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={type} />
+    {type === 'article' && publishedAt && <meta property="article:published_time" content={publishedAt} />}
     <meta property="og:site_name" content={siteName} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
