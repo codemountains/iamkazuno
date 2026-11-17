@@ -1,5 +1,9 @@
 import assert from 'node:assert/strict';
 import test, { type TestContext } from 'node:test';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { build } from 'esbuild';
 import { sampleBrands, sampleCategories, sampleThings } from '../src/data/sample';
 import { getContent } from '../src/lib/content';
 import {
@@ -96,6 +100,73 @@ function mockCMS(t: TestContext, things: unknown[]) {
   });
   return requests;
 }
+
+// Exercise Astro's replaced environment values with a fresh module per build/dev session.
+async function loadContentModule(t: TestContext, production: boolean) {
+  await mkdir('.tmp', { recursive: true });
+  const directory = await mkdtemp('.tmp/content-test-');
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const file = join(directory, 'content.mjs');
+  const result = await build({
+    entryPoints: ['src/lib/content.ts'],
+    bundle: true,
+    platform: 'node',
+    format: 'esm',
+    packages: 'external',
+    write: false,
+    define: {
+      'import.meta.env.PROD': String(production),
+      'import.meta.env.DATA_SOURCE': JSON.stringify('microcms'),
+      'import.meta.env.MICROCMS_SERVICE_DOMAIN': JSON.stringify(credentials.MICROCMS_SERVICE_DOMAIN),
+      'import.meta.env.MICROCMS_API_KEY': JSON.stringify(credentials.MICROCMS_API_KEY),
+    },
+  });
+  await writeFile(file, result.outputFiles[0].text);
+  return await import(pathToFileURL(file).href) as typeof import('../src/lib/content');
+}
+
+test('a build shares one CMS snapshot across concurrent and subsequent route loads', async (t) => {
+  const things = [cmsThing()];
+  const requests = mockCMS(t, things);
+  await getContent(credentials);
+  const requestsPerLoad = requests.length;
+  requests.length = 0;
+  const module = await loadContentModule(t, true);
+
+  const [listing, details] = await Promise.all([module.getContent(), module.getContent()]);
+  assert.equal(requests.length, requestsPerLoad);
+  assert.strictEqual(listing, details);
+  things.push({ ...cmsThing(), id: 'published-during-build' });
+  assert.strictEqual(await module.getContent(), listing);
+  assert.equal(requests.length, requestsPerLoad);
+  assert.equal(listing.things.length, 1);
+
+  // Explicit configuration never reuses the implicit build environment's snapshot.
+  const explicit = await module.getContent(credentials);
+  assert.equal(explicit.things.length, 2);
+  assert.equal(requests.length, requestsPerLoad * 2);
+  const nextBuild = await loadContentModule(t, true);
+  assert.equal((await nextBuild.getContent()).things.length, 2);
+});
+
+test('dev route loads see CMS updates without restarting the server', async (t) => {
+  const things = [cmsThing()];
+  mockCMS(t, things);
+  const module = await loadContentModule(t, false);
+  assert.equal((await module.getContent()).things.length, 1);
+  things.push({ ...cmsThing(), id: 'published-during-dev' });
+  assert.equal((await module.getContent()).things.length, 2);
+});
+
+test('a failed shared CMS request can be retried', async (t) => {
+  t.mock.method(globalThis, 'fetch', async () => new Response('{}', { status: 403 }));
+  const module = await loadContentModule(t, true);
+  const results = await Promise.allSettled([module.getContent(), module.getContent()]);
+  assert.ok(results.every((result) => result.status === 'rejected'));
+  t.mock.restoreAll();
+  mockCMS(t, [cmsThing()]);
+  assert.equal((await module.getContent()).things.length, 1);
+});
 
 test('things map main_image and resolve current brand and category names from their APIs', () => {
   const currentBrands = [{ id: 'brand', name: 'Current brand' }];

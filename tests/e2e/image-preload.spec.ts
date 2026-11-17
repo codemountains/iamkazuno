@@ -65,6 +65,14 @@ async function installCdnImages(page: Page) {
   return requests;
 }
 
+async function inputSizeWithoutCommit(page: Page, size: number) {
+  await page.getByRole('slider', { name: '画像サイズ' }).evaluate(async (element: HTMLInputElement, value) => {
+    element.value = String(value);
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+  }, size);
+}
+
 async function expectPreloadReused(page: Page, requests: string[], id: string) {
   const image = page.locator(`a[href="/picks/things/${id}"] [data-collection-image]`);
   await expect.poll(() => image.evaluate((element: HTMLImageElement) =>
@@ -138,4 +146,66 @@ test('desktop keeps measured image sizing without the mobile preload', async ({ 
   await expect.poll(() => page.locator('[data-collection-image]').first().evaluate((element: HTMLImageElement) =>
     !element.hasAttribute('data-image-src') && element.complete && element.naturalWidth > 1,
   )).toBe(true);
+});
+
+test('desktop enlargement requests a sharper image before the gesture ends', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'PCの操作中も拡大後の実幅に合う画像を取得する。');
+  const requests = await installCdnImages(page);
+  await page.addInitScript(() => sessionStorage.setItem('picks:image-size', '88'));
+  await page.goto('/picks');
+  await expectCollectionReady(page);
+  const image = page.locator('[data-collection-image]').first();
+  await expect.poll(() => image.evaluate((element: HTMLImageElement) =>
+    !element.hasAttribute('data-image-src') && element.complete && element.naturalWidth > 1,
+  )).toBe(true);
+  const original = new URL(await image.evaluate((element: HTMLImageElement) => element.currentSrc));
+  const originalWidth = Number(original.searchParams.get('w'));
+
+  await inputSizeWithoutCommit(page, 280);
+
+  await expect.poll(() => requests.some((url) => {
+    const requested = new URL(url);
+    return requested.pathname === original.pathname && Number(requested.searchParams.get('w')) > originalWidth;
+  })).toBe(true);
+  await expect.poll(() => image.evaluate((element: HTMLImageElement, width) =>
+    element.complete && element.naturalWidth > 1 && Number(new URL(element.currentSrc).searchParams.get('w')) > width,
+  originalWidth)).toBe(true);
+  expect(await page.evaluate(() => sessionStorage.getItem('picks:image-size'))).toBe('88');
+});
+
+test('desktop shrinkage fetches newly visible images at their current width before the gesture ends', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'PCでは縮小で現れた画像も現在の実幅に合わせて取得する。');
+  const requests = await installCdnImages(page);
+  await page.addInitScript(() => sessionStorage.setItem('picks:image-size', '280'));
+  await page.goto('/picks');
+  await expectCollectionReady(page);
+  await page.evaluate(() => document.fonts.ready);
+  const images = page.locator('[data-collection-image]');
+  const deferredIndex = await images.evaluateAll((elements) => elements.findIndex((image) =>
+    image.hasAttribute('data-image-src') && image.getBoundingClientRect().top > innerHeight + 240,
+  ));
+  expect(deferredIndex).toBeGreaterThan(0);
+  const image = images.nth(deferredIndex);
+  const pathname = new URL((await image.getAttribute('data-image-src'))!).pathname;
+  const imageRequests = () => requests.filter((url) => new URL(url).pathname === pathname);
+  expect(imageRequests()).toEqual([]);
+
+  await inputSizeWithoutCommit(page, 88);
+
+  await expect(image).toBeInViewport();
+  await expect.poll(() => image.evaluate((element: HTMLImageElement) =>
+    !element.hasAttribute('data-image-src') && element.complete && element.naturalWidth > 1,
+  )).toBe(true);
+  const expected = await image.evaluate((element: HTMLImageElement) => {
+    const style = getComputedStyle(element);
+    const width = Math.ceil(element.getBoundingClientRect().width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight));
+    const candidates = element.closest('picture')!.querySelector('source')!.srcset.split(', ');
+    return {
+      sizes: `${width}px`,
+      source: candidates.find((candidate) => Number(candidate.split(' ')[1].slice(0, -1)) >= width * devicePixelRatio)!.split(' ')[0],
+    };
+  });
+  await expect(image).toHaveAttribute('sizes', expected.sizes);
+  expect(imageRequests()).toEqual([expected.source]);
+  expect(await page.evaluate(() => sessionStorage.getItem('picks:image-size'))).toBe('280');
 });

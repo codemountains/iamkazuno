@@ -4,12 +4,28 @@ import { sampleBrands, sampleCategories, sampleThings } from '../data/sample';
 import type { Content, ContentEnvironment } from '../types/content';
 import { resolveContentConfiguration, validateBrands, validateCategories, validateThings } from './content-validation';
 
-// Astro's build-time replacement requires explicit references to private env keys.
-export async function getContent(env: ContentEnvironment = {
-  DATA_SOURCE: import.meta.env.DATA_SOURCE,
-  MICROCMS_SERVICE_DOMAIN: import.meta.env.MICROCMS_SERVICE_DOMAIN,
-  MICROCMS_API_KEY: import.meta.env.MICROCMS_API_KEY,
-}): Promise<Content> {
+let buildContent: Promise<Content> | undefined;
+
+export async function getContent(env?: ContentEnvironment): Promise<Content> {
+  // Explicit environments stay independent, including callers outside Astro.
+  if (env) return loadContent(env);
+
+  // Astro's build-time replacement requires explicit references to private env keys.
+  const environment = {
+    DATA_SOURCE: import.meta.env.DATA_SOURCE,
+    MICROCMS_SERVICE_DOMAIN: import.meta.env.MICROCMS_SERVICE_DOMAIN,
+    MICROCMS_API_KEY: import.meta.env.MICROCMS_API_KEY,
+  };
+  // Refresh CMS content on each dev request. A build shares one snapshot across routes.
+  if (!import.meta.env.PROD) return loadContent(environment);
+  buildContent ??= loadContent(environment).catch((error) => {
+    buildContent = undefined;
+    throw error;
+  });
+  return buildContent;
+}
+
+async function loadContent(env: ContentEnvironment): Promise<Content> {
   const config = resolveContentConfiguration(env);
 
   if (config.source === 'sample') {
