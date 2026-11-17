@@ -129,6 +129,9 @@ svg { display: block; flex-shrink: 0; }
 .back-to-top { margin-left: auto; min-height: 44px; font-size: var(--font-size-control); line-height: 1.5; display: flex; align-items: center; gap: 8px; color: var(--muted); }
 .back-to-top:hover { color: var(--accent); }
 .footer-links { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-top: 12px; }
+.footer-destinations { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 28px; }
+.footer-section-link { display: inline-flex; align-items: center; min-height: 44px; color: var(--muted); font-family: var(--font-mono); font-size: var(--font-size-control); }
+.footer-section-link:hover { color: var(--ink); }
 .footer-home-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: var(--muted); font-family: var(--font-mono); font-size: var(--font-size-control); line-height: 1.5; }
 .footer-home-link:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 4px; }
 .footer-social-link { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 44px; height: 44px; color: var(--muted); border-radius: 5px; }
