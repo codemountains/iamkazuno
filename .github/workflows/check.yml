@@ -22,18 +22,43 @@ jobs:
       DATA_SOURCE: sample
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+      - name: Detect documentation and skill changes
+        id: changes
+        if: github.event_name != 'workflow_dispatch'
+        env:
+          # PR ではテスト対象のマージ結果を base と比較し、push では更新前の tip と比較する。
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+            # 複数コミットの push では更新前の tip が浅い checkout に含まれないことがある。
+            git fetch --no-tags --depth=1 origin "$BASE_SHA" || exit 0
+          fi
+
+          if git diff --quiet --no-renames "$BASE_SHA" HEAD -- . \
+            ':(top,exclude,literal)README.md' ':(top,exclude,literal)AGENTS.md' \
+            ':(top,exclude,glob)docs/**' ':(top,exclude,glob).agents/skills/**'; then
+            echo "docs_only=true" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        if: steps.changes.outputs.docs_only != 'true'
         with:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+        if: steps.changes.outputs.docs_only != 'true'
       - run: npm run check
+        if: steps.changes.outputs.docs_only != 'true'
       - run: npm test
+        if: steps.changes.outputs.docs_only != 'true'
       - run: npx playwright install --with-deps --only-shell chromium webkit
+        if: steps.changes.outputs.docs_only != 'true'
       # E2EのwebServerがサンプルの本番ビルドを生成して配信する。
       - run: npm run test:e2e
+        if: steps.changes.outputs.docs_only != 'true'
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.changes.outputs.docs_only != 'true' }}
         with:
           name: playwright-report
           path: |
