@@ -1,0 +1,78 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SiteHeader from './SiteHeader.astro';
+import SiteFooter from './SiteFooter.astro';
+import NoteDate from './NoteDate.astro';
+import type { NotesPage } from '../lib/notes-pagination';
+import type { NotesContent } from '../types/notes';
+import { notePath, notesPagePath } from '../lib/paths';
+import '../styles/notes.css';
+
+interface Props { page: NotesPage; source: NotesContent['source'] }
+const { page, source } = Astro.props;
+const { notes, currentPage, totalPages, totalNotes } = page;
+---
+
+<BaseLayout
+  title={currentPage === 1 ? '/notes — Thoughts, put into words.' : `Page ${currentPage} — /notes`}
+  description="日常や非日常の振り返り、考えたこと。とりとめのないことを、言葉にして残しておく場所。"
+  siteName="/notes"
+  image="/og-notes.png"
+  imageAlt="/notes — Thoughts, put into words."
+  noindex={source === 'sample'}
+>
+  <div class="site-shell site-shell--wide">
+    <SiteHeader section="notes" />
+  </div>
+
+  <main id="main" class="notes-index">
+    <header class="notes-intro">
+      <p class="notes-eyebrow"><span aria-hidden="true">/</span> A PERSONAL NOTEBOOK</p>
+      <h1>言葉にして、<br />残しておく。</h1>
+      <p class="notes-intro-copy">日常のこと、非日常のこと。<br />考えたことを、とりとめもなく。</p>
+    </header>
+
+    <section class="notes-collection" aria-labelledby="notes-heading">
+      <div class="notes-collection-heading">
+        <h2 id="notes-heading">All notes<span class="notes-count" aria-label={`${totalNotes}件`}>{String(totalNotes).padStart(2, '0')}</span></h2>
+        {totalNotes > 1 && <p>Newest first</p>}
+      </div>
+      {notes.length > 0 ? (
+        <ol class="note-list">
+          {notes.map((note) => (
+            <li>
+              <article>
+                <a class="note-entry" href={notePath(note.id)} data-astro-prefetch aria-labelledby={`note-${note.id}`}>
+                  <div class="note-entry-date"><NoteDate date={note.publishedAt} /></div>
+                  <div class="note-entry-copy">
+                    <h2 id={`note-${note.id}`}>{note.title}</h2>
+                    {note.excerpt && <p class="note-excerpt">{note.excerpt}</p>}
+                  </div>
+                  <svg class="note-entry-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="m6 3.5 4.5 4.5L6 12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </a>
+              </article>
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <div class="notes-empty">
+          <p>まだ、白紙。</p>
+          <p>言葉になったら、ここに。</p>
+        </div>
+      )}
+      {totalPages > 1 && (
+        <nav class="notes-page-links" aria-label="ノート一覧のページ送り">
+          {currentPage > 1 && <a rel="prev" href={notesPagePath(currentPage - 1)} data-astro-prefetch><span aria-hidden="true">←</span> Previous</a>}
+          <span class="notes-page-count" aria-current="page">Page {currentPage} / {totalPages}</span>
+          {currentPage < totalPages && <a rel="next" href={notesPagePath(currentPage + 1)} data-astro-prefetch>Next <span aria-hidden="true">→</span></a>}
+        </nav>
+      )}
+    </section>
+  </main>
+
+  <div class="site-shell site-shell--wide">
+    <SiteFooter section="notes" />
+  </div>
+</BaseLayout>

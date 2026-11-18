@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { build } from 'esbuild';
 import { getNotes } from '../src/lib/notes';
+import { paginateNotes } from '../src/lib/notes-pagination';
 import { validateNotes } from '../src/lib/notes-validation';
 
 const credentials = { MICROCMS_SERVICE_DOMAIN: 'my-notes', MICROCMS_API_KEY: 'test-notes-key' };
@@ -102,6 +103,20 @@ test('publication order uses normalized instants, keeps ties stable, and puts un
   ]);
   assert.deepEqual(notes.map((note) => note.id), ['newer', 'same-time', 'older', 'undated']);
   assert.equal(notes[2].publishedAt, '2026-11-16T14:30:00.000Z');
+});
+
+test('notes pagination keeps the index for an empty collection and preserves order across ten-note pages', () => {
+  for (const [count, pageSizes] of [[0, [0]], [10, [10]], [11, [10, 1]], [20, [10, 10]], [21, [10, 10, 1]]] as const) {
+    const notes = validateNotes(Array.from({ length: count }, (_, index) => ({ id: `note-${index}` })));
+    const pages = paginateNotes(notes);
+    assert.deepEqual(pages.map((page) => page.notes.length), pageSizes);
+    assert.deepEqual(pages.flatMap((page) => page.notes), notes);
+    for (const [index, page] of pages.entries()) {
+      assert.equal(page.currentPage, index + 1);
+      assert.equal(page.totalPages, pageSizes.length);
+      assert.equal(page.totalNotes, count);
+    }
+  }
 });
 
 test('malformed API values, invalid dates and duplicate IDs fail with field context', () => {
