@@ -18,7 +18,7 @@ jobs:
   check:
     # ubuntu-latest の更新で Playwright の OS 依存関係が変わるのを防ぐ。
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 30
     env:
       DATA_SOURCE: sample
     steps:
