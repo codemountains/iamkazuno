@@ -7,19 +7,23 @@ import SiteFooter from '../../components/SiteFooter.astro';
 import NoteDate from '../../components/NoteDate.astro';
 import NotePhotos from '../../components/NotePhotos.astro';
 import { getNotes } from '../../lib/notes';
-import { notesPath, notePath } from '../../lib/paths';
+import { NOTES_PER_PAGE } from '../../lib/notes-pagination';
+import { notePath, notesPagePath } from '../../lib/paths';
 import '../../styles/notes.css';
 
 export const getStaticPaths = (async () => {
   const { notes, source } = await getNotes();
   return notes.map((note, index) => ({
     params: { id: note.id },
-    props: { note, newer: notes[index - 1] ?? null, older: notes[index + 1] ?? null, source },
+    props: {
+      note, newer: notes[index - 1] ?? null, older: notes[index + 1] ?? null, source,
+      listPage: Math.floor(index / NOTES_PER_PAGE) + 1,
+    },
   }));
 }) satisfies GetStaticPaths;
 
-interface Props { note: Note; newer: Note | null; older: Note | null; source: 'sample' | 'microcms' }
-const { note, newer, older, source } = Astro.props;
+interface Props { note: Note; newer: Note | null; older: Note | null; source: 'sample' | 'microcms'; listPage: number }
+const { note, newer, older, source, listPage } = Astro.props;
 ---
 
 <BaseLayout
@@ -37,7 +41,7 @@ const { note, newer, older, source } = Astro.props;
   </div>
 
   <main id="main" class="note-detail">
-    <a class="collection-back" href={notesPath} data-astro-prefetch><span aria-hidden="true">←</span> Back to notes</a>
+    <a class="collection-back" href={notesPagePath(listPage)} data-astro-prefetch><span aria-hidden="true">←</span> Back to notes</a>
 
     <article aria-labelledby="note-title">
       <header class="note-heading">

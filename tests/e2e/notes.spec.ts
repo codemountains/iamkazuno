@@ -22,7 +22,9 @@ test('home opens the notes list, readers can open an article with the keyboard a
   await expect(page).toHaveURL('/notes');
   await expect(page.getByRole('main').getByRole('heading', { level: 1 })).toBeVisible();
   await expect(page.getByRole('banner').getByRole('link', { name: '/notes ホーム' })).toHaveAttribute('href', '/notes');
-  await expect(page.locator('.note-list .note-entry')).toHaveCount(sampleNotes.length);
+  await expect(page.locator('.note-list .note-entry')).toHaveCount(Math.min(sampleNotes.length, 10));
+  await expect(page.locator('.notes-count')).toHaveAttribute('aria-label', `${sampleNotes.length}件`);
+  await expect(page.getByRole('navigation', { name: 'ノート一覧のページ送り' })).toHaveCount(sampleNotes.length > 10 ? 1 : 0);
   await expect(page.getByRole('heading', { level: 2, name: sampleNotes[0].title! })).toBeVisible();
 
   const dates = await page.locator('.note-list time').evaluateAll((elements) =>

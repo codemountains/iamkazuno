@@ -1,0 +1,16 @@
+---
+import type { GetStaticPaths } from 'astro';
+import NotesIndex from '../../../components/NotesIndex.astro';
+import { getNotes } from '../../../lib/notes';
+import { paginateNotes } from '../../../lib/notes-pagination';
+
+export const getStaticPaths = (async () => {
+  const { notes, source } = await getNotes();
+  return paginateNotes(notes).slice(1).map((page) => ({
+    params: { page: String(page.currentPage) },
+    props: { page, source },
+  }));
+}) satisfies GetStaticPaths;
+---
+
+<NotesIndex {...Astro.props} />
