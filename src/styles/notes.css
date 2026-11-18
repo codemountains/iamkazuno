@@ -51,6 +51,27 @@
 .note-body pre { letter-spacing: 0; line-height: 1.7; }
 .note-body > :first-child { margin-top: 0; }
 .note-body > :last-child { margin-bottom: 0; }
+.note-photos { margin-top: clamp(36px, 6vw, 56px); }
+.note-photos h2 { margin: 0 0 16px; font-size: 1.125rem; font-weight: 500; line-height: 1.7; overflow-wrap: anywhere; }
+.note-photos-track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 100%;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  border-radius: 3px;
+  background: var(--card);
+}
+.note-photos-track:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.note-photos:has(.note-photos-controls:not([hidden])) .note-photos-track { scrollbar-width: none; }
+.note-photos-track picture { display: grid; align-items: center; min-width: 0; scroll-snap-align: start; scroll-snap-stop: always; }
+.note-photos-track img { display: block; width: 100%; height: auto; max-height: 70svh; object-fit: contain; }
+.note-photos-controls { display: flex; align-items: center; gap: 6px; margin-top: 12px; }
+.note-photos-count { margin-right: auto; font: var(--font-size-caption)/1.6 var(--font-mono); color: var(--muted); }
+.note-photos-controls button { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: var(--card); cursor: pointer; }
+.note-photos-controls button:hover { background: var(--soft); }
+.note-photos-play[data-playing] .play-icon, .note-photos-play:not([data-playing]) .pause-icon { display: none; }
 .note-end { display: flex; justify-content: center; gap: 8px; margin-top: 64px; }
 .note-end span { width: 3px; height: 3px; border-radius: 50%; background: var(--accent); }
 .note-pagination { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--line); }

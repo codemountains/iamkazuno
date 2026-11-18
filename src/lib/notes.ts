@@ -26,7 +26,7 @@ export async function getNotes(env?: ContentEnvironment): Promise<NotesContent> 
 async function loadNotes(env: ContentEnvironment): Promise<NotesContent> {
   const config = resolveContentConfiguration(env);
   if (config.source === 'sample') {
-    return { notes: validateNotes(sampleNotes), source: 'sample' };
+    return { notes: validateNotes(sampleNotes, { allowLocalImages: true }), source: 'sample' };
   }
 
   const client = createClient({ serviceDomain: config.serviceDomain, apiKey: config.apiKey });
@@ -34,7 +34,7 @@ async function loadNotes(env: ContentEnvironment): Promise<NotesContent> {
   try {
     rawNotes = await client.getAllContents({
       endpoint: 'notes',
-      queries: { fields: 'id,title,note,publish_date', orders: '-publish_date' },
+      queries: { fields: 'id,title,note,publish_date,note_photo', orders: '-publish_date' },
     });
   } catch {
     throw new Error(

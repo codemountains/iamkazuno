@@ -43,11 +43,31 @@ async function loadNotesModule(t: TestContext, production: boolean) {
 
 test('notes tolerate optional fields and preserve an empty published collection', () => {
   assert.deepEqual(validateNotes([]), []);
-  for (const note of validateNotes([{ id: 'absent', publishedAt: '2026-11-17T00:00:00Z' }, { id: 'null', title: ' ', note: null, publish_date: null }])) {
+  for (const note of validateNotes([{ id: 'absent', publishedAt: '2026-11-17T00:00:00Z' }, { id: 'null', title: ' ', note: null, publish_date: null, note_photo: null }])) {
     assert.equal(note.title, '無題');
     assert.equal(note.bodyHtml, '');
     assert.equal(note.excerpt, '');
     assert.equal(note.publishedAt, null);
+    assert.equal(note.photoSection, null);
+  }
+});
+
+test('photo sections preserve image order, dimensions and optional titles', () => {
+  const landscape = { url: 'https://images.microcms-assets.io/assets/landscape.jpeg', width: 1818, height: 1228 };
+  const portrait = { url: 'https://images.microcms-assets.io/assets/portrait.jpeg', width: 1228, height: 1818, alt: '雨上がりの山' };
+  const [several, single, empty, titleOnly] = validateNotes([
+    { id: 'several', note_photo: { fieldId: 'photo_section', photo_title: ' 雨乞岳、イブネ・クラシ ', photo_list: [portrait, landscape] } },
+    { id: 'single', note_photo: { photo_list: [landscape] } },
+    { id: 'empty', note_photo: { photo_list: [] } },
+    { id: 'title-only', note_photo: { photo_title: '山', photo_list: null } },
+  ]);
+  assert.deepEqual(several.photoSection, { title: '雨乞岳、イブネ・クラシ', photos: [portrait, landscape] });
+  assert.deepEqual(single.photoSection, { title: '', photos: [landscape] });
+  assert.equal(empty.photoSection, null);
+  assert.equal(titleOnly.photoSection, null);
+  for (const url of ['javascript:alert(1)', '/og-notes.png']) {
+    assert.throws(() => validateNotes([{ id: 'invalid', note_photo: { photo_list: [{ ...portrait, url }] } }]),
+      /\[notes\] notes\[0\]\.note_photo\.photo_list\[0\]\.url/);
   }
 });
 
@@ -111,7 +131,7 @@ test('CMS loading fetches every page from notes in publication order without dra
   assert.equal(content.source, 'microcms');
   assert.equal(content.notes.length, 101);
   assert.ok(requests.some((url) => Number(url.searchParams.get('offset')) > 0));
-  assert.ok(requests.every((url) => url.searchParams.get('fields') === 'id,title,note,publish_date'));
+  assert.ok(requests.every((url) => url.searchParams.get('fields') === 'id,title,note,publish_date,note_photo'));
   assert.ok(requests.every((url) => url.searchParams.get('orders') === '-publish_date'));
   assert.ok(requests.every((url) => !url.searchParams.has('draftKey')));
 });
