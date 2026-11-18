@@ -1,9 +1,17 @@
+import type { ContentImage } from './content';
+
+export interface NotePhotoSection {
+  title: string;
+  photos: ContentImage[];
+}
+
 export interface Note {
   id: string;
   title: string;
   bodyHtml: string;
   excerpt: string;
   publishedAt: string | null;
+  photoSection: NotePhotoSection | null;
 }
 
 export interface NotesContent {
@@ -17,4 +25,9 @@ export interface MicroCMSNote {
   title?: string | null;
   note?: string | null;
   publish_date?: string | null;
+  note_photo?: {
+    fieldId: 'photo_section';
+    photo_title?: string | null;
+    photo_list?: ContentImage[] | null;
+  } | null;
 }

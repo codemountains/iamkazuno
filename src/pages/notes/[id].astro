@@ -5,6 +5,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import SiteHeader from '../../components/SiteHeader.astro';
 import SiteFooter from '../../components/SiteFooter.astro';
 import NoteDate from '../../components/NoteDate.astro';
+import NotePhotos from '../../components/NotePhotos.astro';
 import { getNotes } from '../../lib/notes';
 import { notesPath, notePath } from '../../lib/paths';
 import '../../styles/notes.css';
@@ -44,6 +45,7 @@ const { note, newer, older, source } = Astro.props;
         <h1 id="note-title">{note.title}</h1>
       </header>
       {note.bodyHtml && <div class="note-body rich-text" set:html={note.bodyHtml} />}
+      {note.photoSection && <NotePhotos section={note.photoSection} />}
       <div class="note-end" aria-label="本文終わり"><span></span><span></span><span></span></div>
     </article>
 

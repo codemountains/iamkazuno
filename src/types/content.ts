@@ -8,12 +8,14 @@ export interface Brand {
   name: string;
 }
 
-export interface PickImage {
+export interface ContentImage {
   url: string;
   width: number;
   height: number;
   alt?: string;
 }
+
+export type PickImage = ContentImage;
 
 // Display models: normalized from either the CMS responses or the sample fixtures.
 export interface Thing {

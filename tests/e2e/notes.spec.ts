@@ -2,6 +2,11 @@ import type { Page } from '@playwright/test';
 import { sampleNotes } from '../../src/data/sample-notes';
 import { test, expect } from './fixtures';
 
+const photoNote = sampleNotes.find((note) => note.id === 'sample-note')!;
+const photoPath = `/notes/${photoNote.id}`;
+const photos = photoNote.note_photo?.photo_list ?? [];
+const photoIntervalMs = 3_500;
+
 async function firstNote(page: Page) {
   const link = page.locator('.note-list .note-entry').first();
   await expect(link).toBeVisible();
@@ -107,8 +112,106 @@ test('the list and article stay within a narrow viewport', async ({ page }) => {
   )).toBeLessThanOrEqual(1);
 });
 
+test('note photos advance in view and support stopping, restarting, and manual navigation', async ({ page }) => {
+  await page.clock.install();
+  await page.goto(photoPath);
+  const gallery = page.locator('.note-photos');
+  const images = gallery.locator('.note-photos-track img');
+  const count = gallery.locator('.note-photos-count');
+  const stop = gallery.getByRole('button', { name: '自動再生を停止' });
+  const start = gallery.getByRole('button', { name: '自動再生を開始' });
+  const total = photos.length;
+  expect(total).toBeGreaterThan(1);
+  await expect(images).toHaveCount(total);
+  const body = (await page.locator('.note-body').boundingBox())!;
+  expect((await gallery.boundingBox())!.y).toBeGreaterThanOrEqual(body.y + body.height - 1);
+
+  await expect(stop).toBeVisible();
+  await expect(gallery).not.toBeInViewport();
+  await page.clock.fastForward(photoIntervalMs);
+  await expect(count).toHaveText(`1 / ${total}`);
+  await gallery.scrollIntoViewIfNeeded();
+  await expect(images.first()).toBeInViewport();
+  await expect(images.nth(1)).not.toBeInViewport({ ratio: 0.05 });
+  await page.clock.fastForward(photoIntervalMs);
+  await expect(count).toHaveText(`2 / ${total}`);
+  await expect(images.nth(1)).toBeInViewport();
+  await expect(images.first()).not.toBeInViewport({ ratio: 0.05 });
+
+  await stop.click();
+  await expect(start).toBeVisible();
+  await page.clock.fastForward(photoIntervalMs);
+  await expect(count).toHaveText(`2 / ${total}`);
+  await start.click();
+  await expect(stop).toBeVisible();
+  await page.clock.fastForward(photoIntervalMs);
+  const next = (2 % total) + 1;
+  await expect(count).toHaveText(`${next} / ${total}`);
+
+  await gallery.getByRole('button', { name: '前の写真' }).click();
+  await expect(start).toBeVisible();
+  await page.clock.fastForward(photoIntervalMs);
+  await expect(count).toHaveText(`2 / ${total}`);
+});
+
+test('reduced motion starts paused and keyboard navigation wraps at both ends', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.clock.install();
+  await page.goto(photoPath);
+  const gallery = page.locator('.note-photos');
+  const images = gallery.locator('.note-photos-track img');
+  const count = gallery.locator('.note-photos-count');
+  const total = photos.length;
+  await gallery.scrollIntoViewIfNeeded();
+  await expect(gallery.getByRole('button', { name: '自動再生を開始' })).toBeVisible();
+  await page.clock.fastForward(photoIntervalMs);
+  await expect(count).toHaveText(`1 / ${total}`);
+  await gallery.getByRole('button', { name: '前の写真' }).press('Enter');
+  await expect(count).toHaveText(`${total} / ${total}`);
+  await expect(images.last()).toBeInViewport();
+  await gallery.getByRole('button', { name: '次の写真' }).press('Enter');
+  await expect(count).toHaveText(`1 / ${total}`);
+  await expect(images.first()).toBeInViewport();
+});
+
+test('portrait photos fit inside the slide without cropping', async ({ page }) => {
+  await page.route(`**${photos[0].url}`, (route) => route.fulfill({
+    contentType: 'image/svg+xml',
+    body: '<svg xmlns="http://www.w3.org/2000/svg" width="240" height="480"><rect width="240" height="480" fill="teal"/></svg>',
+  }));
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto(photoPath);
+  const track = page.locator('.note-photos-track');
+  const portrait = track.locator('img').first();
+  await track.scrollIntoViewIfNeeded();
+  await expect.poll(() => portrait.evaluate((image: HTMLImageElement) =>
+    image.complete && image.naturalHeight > image.naturalWidth && image.naturalWidth > 0,
+  )).toBe(true);
+  await expect(portrait).toHaveCSS('object-fit', 'contain');
+  const frame = (await track.boundingBox())!;
+  const image = (await portrait.boundingBox())!;
+  expect(image.x).toBeGreaterThanOrEqual(frame.x - 1);
+  expect(image.y).toBeGreaterThanOrEqual(frame.y - 1);
+  expect(image.x + image.width).toBeLessThanOrEqual(frame.x + frame.width + 1);
+  expect(image.y + image.height).toBeLessThanOrEqual(frame.y + frame.height + 1);
+});
+
 test.describe('without JavaScript', () => {
   test.use({ javaScriptEnabled: false });
+
+  test('readers can scroll from the first photo to the last', async ({ page }) => {
+    await page.goto(photoPath);
+    const gallery = page.locator('.note-photos');
+    const track = gallery.locator('.note-photos-track');
+    const images = track.locator('img');
+    await expect(gallery.getByRole('button')).toHaveCount(0);
+    await track.scrollIntoViewIfNeeded();
+    await expect(images.first()).toBeInViewport();
+    await expect(images.last()).not.toBeInViewport();
+    await track.evaluate((element) => element.scrollTo({ left: element.scrollWidth, behavior: 'instant' }));
+    await expect(images.last()).toBeInViewport();
+    await expect(images.first()).not.toBeInViewport();
+  });
 
   test('notes remain readable and navigable', async ({ page }) => {
     await page.goto('/notes');
