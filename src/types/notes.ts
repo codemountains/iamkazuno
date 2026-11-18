@@ -24,7 +24,7 @@ export interface MicroCMSNote {
   id: string;
   title?: string | null;
   note?: string | null;
-  publish_date?: string | null;
+  publishedAt?: string | null;
   note_photo?: {
     fieldId: 'photo_section';
     photo_title?: string | null;

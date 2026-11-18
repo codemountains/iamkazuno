@@ -34,7 +34,7 @@ async function loadNotes(env: ContentEnvironment): Promise<NotesContent> {
   try {
     rawNotes = await client.getAllContents({
       endpoint: 'notes',
-      queries: { fields: 'id,title,note,publish_date,note_photo', orders: '-publish_date' },
+      queries: { fields: 'id,title,note,publishedAt,note_photo', orders: '-publishedAt' },
     });
   } catch {
     throw new Error(

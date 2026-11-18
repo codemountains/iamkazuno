@@ -5,7 +5,7 @@ export const sampleNotes: MicroCMSNote[] = [
   {
     id: 'sample-note',
     title: '言葉を置いておく場所',
-    publish_date: '2026-11-16T15:00:00.000Z',
+    publishedAt: '2026-11-16T15:00:00.000Z',
     note_photo: {
       fieldId: 'photo_section',
       photo_title: 'スライドのサンプル',

@@ -35,12 +35,14 @@ test('home opens the notes list, readers can open an article with the keyboard a
   expect(dates).toEqual([...dates].sort((a, b) => b - a));
 
   const { link, title, href } = await firstNote(page);
+  await expect(link.locator('time')).toHaveText('2026.11.17');
   await expect(link.locator('.note-excerpt')).not.toBeEmpty();
   await expect(link.locator('.note-excerpt').locator('*')).toHaveCount(0);
   await link.focus();
   await link.press('Enter');
   await expect(page).toHaveURL(href);
   await expect(page.locator('main article').getByRole('heading', { level: 1 })).toHaveText(title);
+  await expect(page.locator('.note-heading time')).toHaveText('2026.11.17');
   await expect(page.locator('.note-body')).not.toBeEmpty();
   await expect(page.locator('.note-body').getByRole('heading', { name: '書きながら、考える' })).toBeVisible();
   await expect(page.locator('.note-body blockquote')).toContainText('とりとめのないことにも、書き留める場所を。');

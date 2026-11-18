@@ -44,7 +44,7 @@ async function loadNotesModule(t: TestContext, production: boolean) {
 
 test('notes tolerate optional fields and preserve an empty published collection', () => {
   assert.deepEqual(validateNotes([]), []);
-  for (const note of validateNotes([{ id: 'absent', publishedAt: '2026-11-17T00:00:00Z' }, { id: 'null', title: ' ', note: null, publish_date: null, note_photo: null }])) {
+  for (const note of validateNotes([{ id: 'absent' }, { id: 'null', title: ' ', note: null, publishedAt: null, note_photo: null }])) {
     assert.equal(note.title, '無題');
     assert.equal(note.bodyHtml, '');
     assert.equal(note.excerpt, '');
@@ -97,9 +97,9 @@ test('excerpt truncation preserves complete graphemes and only adds ellipsis whe
 test('publication order uses normalized instants, keeps ties stable, and puts undated notes last', () => {
   const notes = validateNotes([
     { id: 'undated' },
-    { id: 'older', publish_date: '2026-11-16T23:30:00+09:00', publishedAt: '2026-11-18T00:00:00Z' },
-    { id: 'newer', publish_date: '2026-11-16T22:30:00Z', publishedAt: '2026-11-17T00:00:00Z' },
-    { id: 'same-time', publish_date: '2026-11-16T22:30:00Z' },
+    { id: 'older', publishedAt: '2026-11-16T23:30:00+09:00' },
+    { id: 'newer', publishedAt: '2026-11-16T22:30:00Z' },
+    { id: 'same-time', publishedAt: '2026-11-16T22:30:00Z' },
   ]);
   assert.deepEqual(notes.map((note) => note.id), ['newer', 'same-time', 'older', 'undated']);
   assert.equal(notes[2].publishedAt, '2026-11-16T14:30:00.000Z');
@@ -126,8 +126,8 @@ test('malformed API values, invalid dates and duplicate IDs fail with field cont
   assert.throws(() => validateNotes([{ id: 'a' }, { id: 'a' }]), /重複/);
   assert.throws(() => validateNotes([{ id: 'a', title: 12 }]), /title/);
   assert.throws(() => validateNotes([{ id: 'a', note: {} }]), /note/);
-  for (const publish_date of ['yesterday', '2026-11-17', '2026-02-30T00:00:00Z', '2026-13-10T00:00:00Z']) {
-    assert.throws(() => validateNotes([{ id: 'a', publish_date }]), /publish_date/);
+  for (const publishedAt of ['yesterday', '2026-11-17', '2026-02-30T00:00:00Z', '2026-13-10T00:00:00Z']) {
+    assert.throws(() => validateNotes([{ id: 'a', publishedAt }]), /publishedAt/);
   }
 });
 
@@ -146,8 +146,8 @@ test('CMS loading fetches every page from notes in publication order without dra
   assert.equal(content.source, 'microcms');
   assert.equal(content.notes.length, 101);
   assert.ok(requests.some((url) => Number(url.searchParams.get('offset')) > 0));
-  assert.ok(requests.every((url) => url.searchParams.get('fields') === 'id,title,note,publish_date,note_photo'));
-  assert.ok(requests.every((url) => url.searchParams.get('orders') === '-publish_date'));
+  assert.ok(requests.every((url) => url.searchParams.get('fields') === 'id,title,note,publishedAt,note_photo'));
+  assert.ok(requests.every((url) => url.searchParams.get('orders') === '-publishedAt'));
   assert.ok(requests.every((url) => !url.searchParams.has('draftKey')));
 });
 

@@ -61,7 +61,7 @@ export function validateNotes(input: unknown, options: { allowLocalImages?: bool
       title: optionalText(data.title, `${path}.title`) || '無題',
       bodyHtml,
       excerpt: excerptFromHtml(bodyHtml),
-      publishedAt: publicationDate(data.publish_date, `${path}.publish_date`),
+      publishedAt: publicationDate(data.publishedAt, `${path}.publishedAt`),
       photoSection: photoSection(data.note_photo, `${path}.note_photo`, options.allowLocalImages ?? false),
     };
   });
