@@ -9,7 +9,6 @@
 .notes-eyebrow { display: flex; align-items: center; gap: 10px; margin: 0 0 28px; color: var(--muted); font-family: var(--font-mono); font-size: var(--font-size-caption); letter-spacing: .06em; line-height: 1.6; }
 .notes-eyebrow > span { color: var(--accent); }
 .notes-intro h1 { margin: 0; font-size: clamp(2rem, 3.6vw, 2.75rem); line-height: 1.65; font-weight: 400; letter-spacing: .055em; }
-.notes-intro-copy { margin: 24px 0 0; color: var(--muted); font-size: .9375rem; line-height: 2; letter-spacing: .03em; }
 .notes-collection-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; border-bottom: 1px solid var(--line); padding-bottom: 18px; }
 .notes-collection-heading h2 { display: flex; align-items: baseline; gap: 12px; margin: 0; font-family: var(--font-mono); font-size: var(--font-size-control); line-height: 1.6; font-weight: 400; }
 .notes-count { color: var(--muted); font-size: var(--font-size-caption); }
@@ -94,7 +93,6 @@
   .notes-intro { padding-bottom: 48px; }
   .notes-eyebrow { margin-bottom: 24px; font-size: .6875rem; }
   .notes-intro h1 { font-size: 2rem; }
-  .notes-intro-copy { font-size: var(--font-size-label); }
   .note-entry { grid-template-columns: minmax(0, 1fr); gap: 12px; padding-block: 24px; }
   .note-entry-date { padding-top: 0; }
   .note-entry h2 { font-size: 1.125rem; }
