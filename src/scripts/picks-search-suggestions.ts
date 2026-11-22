@@ -41,8 +41,7 @@ export function initSearchSuggestions(input: HTMLInputElement, panel: HTMLElemen
   }
 
   function refresh() {
-    const focused = document.activeElement === input || document.activeElement === more;
-    const open = requested && !composing && focused && !!input.value.trim() && options.length > 0;
+    const open = requested && !composing && !!input.value.trim() && options.length > 0;
     panel.hidden = !open;
     if (open && !more.hidden) list.setAttribute('aria-describedby', moreCount.id);
     else list.removeAttribute('aria-describedby');
@@ -55,6 +54,7 @@ export function initSearchSuggestions(input: HTMLInputElement, panel: HTMLElemen
   }
 
   function open() {
+    if (document.activeElement !== input && document.activeElement !== more) return;
     requested = true;
     refresh();
   }
@@ -116,8 +116,8 @@ export function initSearchSuggestions(input: HTMLInputElement, panel: HTMLElemen
     refresh();
   }
 
-  function onBlur(event: FocusEvent) {
-    if (event.relatedTarget !== input && event.relatedTarget !== more) close();
+  function closeIfOutside(event: Event) {
+    if (requested && event.target !== input && event.target instanceof Node && !panel.contains(event.target)) close();
   }
 
   function dismissSuggestions() {
@@ -157,8 +157,6 @@ export function initSearchSuggestions(input: HTMLInputElement, panel: HTMLElemen
 
   input.addEventListener('focus', open);
   input.addEventListener('click', open);
-  input.addEventListener('blur', onBlur);
-  more.addEventListener('blur', onBlur);
   more.addEventListener('focus', () => select(-1));
   more.addEventListener('click', dismissSuggestions);
   more.addEventListener('keydown', onKeydown);
@@ -174,9 +172,9 @@ export function initSearchSuggestions(input: HTMLInputElement, panel: HTMLElemen
   panel.addEventListener('pointerdown', (event) => {
     if (event.button === 0) event.preventDefault();
   });
-  document.addEventListener('pointerdown', (event) => {
-    if (requested && event.target !== input && event.target instanceof Node && !panel.contains(event.target)) close();
-  });
+  // iOS では候補をタップしている途中で入力欄が blur する。外側での操作を確認してから閉じる。
+  document.addEventListener('pointerdown', closeIfOutside);
+  document.addEventListener('focusin', closeIfOutside);
   window.addEventListener('pagehide', close);
   return update;
 }
