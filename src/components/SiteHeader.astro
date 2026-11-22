@@ -4,16 +4,31 @@ import ThemePicker from './ThemePicker.astro';
 
 interface Props {
   section?: 'picks' | 'notes';
+  pageHeading?: boolean;
 }
-const { section = 'picks' } = Astro.props;
+const { section = 'picks', pageHeading = false } = Astro.props;
 ---
 
 <header id="top" class="site-header">
   <div class="site-identity">
-    <Wordmark section={section} />
+    {pageHeading ? (
+      <h1 class="site-title" aria-label={`/${section}`}>
+        <Wordmark section={section} />
+      </h1>
+    ) : (
+      <Wordmark section={section} />
+    )}
     <p class="site-subtitle">
       {section === 'notes' ? 'Thoughts, put into words.' : 'Things I use and love.'}
     </p>
   </div>
   <ThemePicker />
 </header>
+
+<style>
+  .site-title {
+    display: flex;
+    margin: 0;
+    font: inherit;
+  }
+</style>

@@ -71,6 +71,23 @@ for (const [name, path] of [
 test.describe('without JavaScript', () => {
   test.use({ javaScriptEnabled: false });
 
+  test('the collection and detail HTML each have one page heading', async ({ page }) => {
+    await page.goto('/picks');
+    await expect(page.locator('h1')).toHaveCount(1);
+    await expect(
+      page.getByRole('heading', { level: 1, name: '/picks', exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 2, name: 'ブーツ', exact: true }),
+    ).toBeVisible();
+
+    await page.goto('/picks/things/mountain-boots');
+    await expect(page.locator('h1')).toHaveCount(1);
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'ブーツ', exact: true }),
+    ).toBeVisible();
+  });
+
   test('all items and their detail pages remain available while interactive controls stay hidden', async ({
     page,
   }) => {
