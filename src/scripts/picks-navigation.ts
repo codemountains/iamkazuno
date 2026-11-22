@@ -129,30 +129,56 @@ function isSameTabClick(event: MouseEvent, link: HTMLAnchorElement) {
     && (!link.target || link.target === '_self') && !link.hasAttribute('download');
 }
 
-function restorePosition(position: ReturnPosition) {
+// 候補から開くときも、一覧上のカードの位置を使って戻り先を記録する。
+export function rememberCollectionDeparture(event: MouseEvent, cardLink: HTMLAnchorElement) {
+  const item = cardLink.closest<HTMLElement>('[data-item]');
+  if (!item || !isSameTabClick(event, cardLink)) return;
+  const target = new URL(cardLink.href);
+  const currentDetailUrl = parseDetailUrl(`${target.pathname}${target.search}`);
+  if (target.origin !== window.location.origin || !currentDetailUrl) return;
+  const listUrl = `${collectionPath}${window.location.search}`;
+  const position = { listUrl, detailPath: target.pathname, scrollY: window.scrollY, itemTop: item.getBoundingClientRect().top };
+  if (new URLSearchParams(window.location.search).get('q')?.trim()) {
+    // 履歴移動で一覧が再生成された場合も、検索結果が戻った後に元の商品へ合わせる。
+    history.replaceState({ ...history.state, [historyKey]: { ...position, restoreFocus: event.detail === 0 } }, '');
+  }
+  savePosition(departureKey, { position, currentDetailUrl, fromUrl: listUrl });
+}
+
+async function restorePosition(position: ReturnPosition, filtersReady?: Promise<void>) {
+  const controller = new AbortController();
+  for (const type of ['pointerdown', 'touchstart', 'wheel', 'keydown', 'pagehide', 'popstate']) {
+    window.addEventListener(type, () => controller.abort(), { once: true, passive: true, signal: controller.signal });
+  }
+  if (filtersReady) await filtersReady;
+  if (controller.signal.aborted || position.listUrl !== `${collectionPath}${window.location.search}`) {
+    controller.abort();
+    return;
+  }
   const link = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-item]:not([hidden]) .item-card-link'))
     .find((item) => new URL(item.href).pathname === position.detailPath);
   const item = link?.closest<HTMLElement>('[data-item]');
   const scroll = () => {
-    const top = item ? window.scrollY + item.getBoundingClientRect().top - position.itemTop : position.scrollY;
+    const rect = item?.getBoundingClientRect();
+    // 検索候補を選んだときは、対応するカードが画面外にある場合がある。
+    if (position.restoreFocus && rect && (position.itemTop >= window.innerHeight || position.itemTop + rect.height <= 0)) {
+      link?.scrollIntoView({ block: 'center', behavior: 'instant' });
+      return;
+    }
+    const top = rect ? window.scrollY + rect.top - position.itemTop : position.scrollY;
     window.scrollTo({ top: Math.max(0, top), behavior: 'instant' });
   };
   if (position.restoreFocus) link?.focus({ preventScroll: true });
   scroll();
 
   // フォント確定で行の高さが変わった場合だけ補正。操作開始後は引き戻さない。
-  const controller = new AbortController();
-  for (const type of ['pointerdown', 'touchstart', 'wheel', 'keydown', 'pagehide']) {
-    window.addEventListener(type, () => controller.abort(), { once: true, passive: true, signal: controller.signal });
-  }
   void document.fonts.ready.then(() => requestAnimationFrame(() => {
     if (!controller.signal.aborted) scroll();
     controller.abort();
   }));
 }
 
-// initFilters()の初期適用後に呼び、絞り込んだレイアウトで位置を復元する。
-export function initCollectionNavigation() {
+export function initCollectionNavigation(filtersReady?: Promise<void>) {
   const grid = document.querySelector<HTMLElement>('[data-item-grid]');
   if (!grid) return;
   if (window.location.hash === '#collection') {
@@ -160,32 +186,18 @@ export function initCollectionNavigation() {
   }
 
   takeStoredPosition(departureKey);
+  const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
   const position = collectionReturnPosition({
     pending: takeStoredPosition(returnKey),
     currentUrl: window.location.href,
     referrer: document.referrer,
-  });
-  if (position) restorePosition(position);
+  }) ?? (navigation?.type === 'back_forward' ? parseReturnPosition(history.state?.[historyKey]) : null);
+  if (position) void restorePosition(position, filtersReady);
 
   grid.addEventListener('click', (event) => {
     if (!(event.target instanceof Element)) return;
     const link = event.target.closest<HTMLAnchorElement>('.item-card-link');
-    const item = link?.closest<HTMLElement>('[data-item]');
-    if (!link || !item || !isSameTabClick(event, link)) return;
-    const target = new URL(link.href);
-    const currentDetailUrl = parseDetailUrl(`${target.pathname}${target.search}`);
-    if (target.origin !== window.location.origin || !currentDetailUrl) return;
-    const listUrl = `${collectionPath}${window.location.search}`;
-    savePosition(departureKey, {
-      position: {
-        listUrl,
-        detailPath: target.pathname,
-        scrollY: window.scrollY,
-        itemTop: item.getBoundingClientRect().top,
-      },
-      currentDetailUrl,
-      fromUrl: listUrl,
-    });
+    if (link) rememberCollectionDeparture(event, link);
   });
 
   window.addEventListener('pageshow', (event) => {

@@ -10,7 +10,7 @@ const scriptTypes = new Set([
 ]);
 
 /** @param {Iterable<string>} pages */
-export function createContentSecurityPolicy(pages) {
+export function createContentSecurityPolicy(pages, { allowWasm = false } = {}) {
   /** @type {Set<string>} */
   const scripts = new Set();
   /** @type {Set<string>} */
@@ -50,7 +50,7 @@ export function createContentSecurityPolicy(pages) {
     "frame-ancestors 'none'",
     "frame-src 'none'",
     "form-action 'none'",
-    ["script-src 'self' https://static.cloudflareinsights.com", ...[...scripts].sort()].join(' '),
+    ["script-src 'self' https://static.cloudflareinsights.com", ...(allowWasm ? ["'wasm-unsafe-eval'"] : []), ...[...scripts].sort()].join(' '),
     "script-src-attr 'none'",
     ["style-src 'self'", ...[...styles].sort()].join(' '),
     "style-src-attr 'none'",
@@ -67,11 +67,15 @@ export async function writeContentSecurityPolicy(directory) {
     .filter((path) => path.endsWith('.html')).sort();
   if (!paths.length) throw new Error('CSP generation requires the final built HTML.');
   const pages = await Promise.all(paths.map((path) => readFile(join(directory, path), 'utf8')));
-  const line = `  Content-Security-Policy: ${createContentSecurityPolicy(pages)}`;
+  const globalLine = `  Content-Security-Policy: ${createContentSecurityPolicy(pages)}`;
+  const collectionIndex = paths.indexOf(join('picks', 'index.html'));
+  const picksLine = collectionIndex === -1 ? '' :
+    `  Content-Security-Policy: ${createContentSecurityPolicy([pages[collectionIndex]], { allowWasm: true })}`;
   // Cloudflare ignores invalid _headers lines; fail the build instead of deploying without CSP.
   // https://developers.cloudflare.com/workers/static-assets/headers/
-  if (line.length > 2000) {
-    throw new Error(`CSP exceeds Cloudflare's 2,000-character header line limit (${line.length}). Externalize inline code before adding more hashes.`);
+  const longestLine = Math.max(globalLine.length, picksLine.length);
+  if (longestLine > 2000) {
+    throw new Error(`CSP exceeds Cloudflare's 2,000-character header line limit (${longestLine}). Externalize inline code before adding more hashes.`);
   }
 
   const path = join(directory, '_headers');
@@ -80,13 +84,19 @@ export async function writeContentSecurityPolicy(directory) {
     throw new Error('CSP must be generated once from the final HTML, not also defined in public/_headers.');
   }
   const lines = headers.trimEnd().split(/\r?\n/);
+  // Pagefind uses Wasm only in the collection. Detach the inherited policy before
+  // attaching its page-specific replacement, so browsers enforce a single CSP.
+  if (picksLine) {
+    if (!lines.includes('/picks')) lines.push('', '/picks');
+    lines.splice(lines.indexOf('/picks') + 1, 0, '  ! Content-Security-Policy', picksLine);
+  }
   const rules = lines.filter((line) => /^(?:\/|https:\/\/)/.test(line));
   if (rules.length > 100) throw new Error('Cloudflare\'s 100 header rule limit is exceeded.');
   if (rules.filter((rule) => rule.trim() === '/*').length !== 1) {
     throw new Error('CSP generation requires exactly one /* rule in public/_headers.');
   }
   // Duplicate path blocks overwrite each other in Cloudflare: extend the existing global rule.
-  lines.splice(lines.findIndex((line) => line.trim() === '/*') + 1, 0, line);
+  lines.splice(lines.findIndex((line) => line.trim() === '/*') + 1, 0, globalLine);
   await writeFile(path, `${lines.join('\n')}\n`);
 }
 

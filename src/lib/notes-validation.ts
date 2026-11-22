@@ -1,7 +1,6 @@
-import { Parser } from 'htmlparser2';
 import type { Note, NotePhotoSection } from '../types/notes';
 import { optionalText, record, requiredText, validateImage } from './cms-fields';
-import { sanitizeDescription } from './rich-text';
+import { plainTextFromHtml, sanitizeDescription } from './rich-text';
 
 function photoSection(value: unknown, path: string, allowLocalImages: boolean): NotePhotoSection | null {
   if (value == null) return null;
@@ -30,18 +29,8 @@ function publicationDate(value: unknown, path: string): string | null {
   return new Date(timestamp).toISOString();
 }
 
-// Receive sanitized HTML only. Parse entities once, preserving inline text while
-// separating paragraphs, line breaks and table cells in the plain-text excerpt.
 function excerptFromHtml(html: string): string {
-  const boundaries = new Set(['p', 'br', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'blockquote', 'pre', 'hr', 'figure', 'figcaption', 'tr', 'th', 'td']);
-  let text = '';
-  const parser = new Parser({
-    onopentag(name) { if (boundaries.has(name)) text += ' '; },
-    ontext(value) { text += value; },
-    onclosetag(name) { if (boundaries.has(name)) text += ' '; },
-  }, { decodeEntities: true });
-  parser.end(html);
-  const normalized = text.replace(/\s+/gu, ' ').trim();
+  const normalized = plainTextFromHtml(html);
   const characters = Array.from(new Intl.Segmenter('ja', { granularity: 'grapheme' }).segment(normalized), (part) => part.segment);
   return characters.length > 140 ? `${characters.slice(0, 140).join('').trimEnd()}…` : normalized;
 }

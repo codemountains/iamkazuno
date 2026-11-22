@@ -1,4 +1,19 @@
+import { Parser } from 'htmlparser2';
 import sanitizeHtml from 'sanitize-html';
+
+const textBoundaries = new Set(['p', 'br', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'blockquote', 'pre', 'hr', 'figure', 'figcaption', 'tr', 'th', 'td']);
+
+// 入力はサニタイズ済みのHTML。インライン要素の途中で単語を分割しない。
+export function plainTextFromHtml(html: string): string {
+  let text = '';
+  const boundary = (name: string) => { if (textBoundaries.has(name)) text += ' '; };
+  new Parser({
+    onopentag: boundary,
+    ontext(value) { text += value; },
+    onclosetag: boundary,
+  }, { decodeEntities: true }).end(html);
+  return text.replace(/\s+/gu, ' ').trim();
+}
 
 // Only use this at build time. The returned HTML may be passed to Astro's set:html.
 function safeUrl(value: string | undefined, kind: 'link' | 'image'): string | undefined {

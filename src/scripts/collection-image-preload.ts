@@ -4,10 +4,11 @@ import { getThingImageSources } from '../lib/thing-image';
 
 // CSSとカードの解析を待たず、実際のカテゴリ・保存サイズに合う画像を取得する。
 // PCはスクロールバーなどによる幅の差を避け、既存の実幅計測に任せる。
-if (window.matchMedia('(max-width: 600px) and (pointer: coarse)').matches) {
+const params = new URLSearchParams(location.search);
+if (window.matchMedia('(max-width: 600px) and (pointer: coarse)').matches && !params.get('q')?.trim()) {
   const script = document.currentScript as HTMLScriptElement | null;
   const entries = new Map<string, CollectionPreloadEntry[1]>(JSON.parse(script?.dataset.images ?? '[]'));
-  const category = new URLSearchParams(location.search).get('category') ?? '';
+  const category = params.get('category') ?? '';
   const image = entries.get(entries.has(category) ? category : '');
   if (image) {
     let size: number = collectionSize.initial;

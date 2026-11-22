@@ -16,6 +16,9 @@ for (const path of ['/', '/picks', '/picks/things/mountain-boots', '/missing-sec
     expect(policy).toContain("'sha256-");
     expect(policy).not.toContain("'unsafe-inline'");
     expect(policy).not.toContain("'unsafe-eval'");
+    expect(policy.includes("'wasm-unsafe-eval'")).toBe(path === '/picks');
+    expect(policy).toContain("worker-src 'none'");
+    expect(policy.split(',')).toHaveLength(1);
     expect(headers['content-security-policy-report-only']).toBeUndefined();
     await expect(page.locator('main')).toBeVisible();
     if (path === '/picks') await expectCollectionReady(page);

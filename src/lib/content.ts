@@ -45,11 +45,11 @@ async function loadContent(env: ContentEnvironment): Promise<Content> {
   let rawThings: unknown;
   try {
     [rawBrands, rawCategories, rawThings] = await Promise.all([
-      client.getAllContents({ endpoint: 'brands', queries: { fields: 'id,name' } }),
+      client.getAllContents({ endpoint: 'brands', queries: { fields: 'id,name,search_aliases' } }),
       client.getAllContents({ endpoint: 'categories', queries: { fields: 'id,name' } }),
       client.getAllContents({
         endpoint: 'things',
-        queries: { fields: 'id,name,description,main_image,ref_brand,ref_categories,more_picks', depth: 1 },
+        queries: { fields: 'id,name,search_aliases,description,main_image,ref_brand,ref_categories,more_picks', depth: 1 },
       }),
     ]);
   } catch {

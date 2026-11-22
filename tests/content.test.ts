@@ -40,7 +40,7 @@ test('service domain must be an ID, not a URL or arbitrary host', () => {
   }
 });
 
-test('sample fixtures provide 100 unique local items with the actual CMS schema', async () => {
+test('sample fixtures provide 100 unique local items', async () => {
   const content = await getContent({});
   assert.equal(content.source, 'sample');
   assert.equal(content.things.length, 100);
@@ -199,6 +199,22 @@ test('all optional fields may be absent, empty or null without blocking publicat
   assert.deepEqual(validateCategories([{ id: 'category', name: null }]), [{ id: 'category', name: 'Unnamed category' }]);
 });
 
+test('product and brand aliases read repeater values, preserving order and multiword names', () => {
+  const aliases = (values: string[]) => values.map((value) => ({ fieldId: 'search_alias', value }));
+  const [brand] = validateBrands([{ id: 'brand', search_aliases: aliases(['  Brand Name ', ' ', '別名', 'Brand Name']) }]);
+  const [thing] = validateThings([{
+    id: 'camera', ref_brand: { id: 'brand' }, search_aliases: aliases(['SC-35', ' エスシー ']),
+  }], [brand], []);
+  assert.deepEqual(thing.searchAliases, ['SC-35', 'エスシー']);
+  assert.deepEqual(thing.brand?.searchAliases, ['Brand Name', '別名']);
+  for (const empty of [undefined, null, [], [{ fieldId: 'search_alias' }]]) {
+    assert.equal(validateBrands([{ id: 'brand', search_aliases: empty }])[0].searchAliases, undefined);
+  }
+  assert.throws(() => validateBrands([{ id: 'brand', search_aliases: 42 }]), /search_aliases/);
+  assert.throws(() => validateThings([{ id: 'camera', search_aliases: [{ fieldId: 'search_alias', value: 42 }] }], [], []),
+    /search_aliases\[0\]\.value/);
+});
+
 test('missing or unpublished references are omitted without adding synthetic categories', () => {
   const actualCategories = [{ id: 'all', name: 'An actual category named all' }];
   const [thing] = validateThings([{
@@ -237,12 +253,16 @@ test('API ordering is preserved and duplicate content IDs are rejected', () => {
 });
 
 test('CMS retrieval uses only the three Content API endpoints and retrieves more than one page of things', async (t) => {
-  const sourceThings = Array.from({ length: 101 }, (_, index) => ({ ...cmsThing(), id: `thing-${index}` }));
+  const sourceThings = Array.from({ length: 101 }, (_, index) => ({
+    ...cmsThing(), id: `thing-${index}`, search_aliases: [{ fieldId: 'search_alias', value: `model-${index}` }],
+  }));
   const requests = mockCMS(t, sourceThings);
   const content = await getContent(credentials);
   assert.equal(content.source, 'microcms');
   assert.equal(content.things.length, 101);
   assert.equal(content.things[100].id, 'thing-100');
+  assert.deepEqual(content.things[100].searchAliases, ['model-100']);
+  assert.deepEqual(content.things[100].brand?.searchAliases, ['サンプルオブジェクツ']);
   assert.deepEqual(new Set(requests.map((url) => `${url.hostname}${url.pathname}`)), new Set([
     'my-picks.microcms.io/api/v1/brands',
     'my-picks.microcms.io/api/v1/categories',
@@ -251,7 +271,9 @@ test('CMS retrieval uses only the three Content API endpoints and retrieves more
   const thingRequests = requests.filter((url) => url.pathname === '/api/v1/things');
   assert.ok(thingRequests.some((url) => Number(url.searchParams.get('offset')) > 0));
   assert.ok(thingRequests.every((url) => url.searchParams.get('depth') === '1'));
-  assert.ok(thingRequests.every((url) => url.searchParams.get('fields') === 'id,name,description,main_image,ref_brand,ref_categories,more_picks'));
+  assert.ok(thingRequests.every((url) => url.searchParams.get('fields') === 'id,name,search_aliases,description,main_image,ref_brand,ref_categories,more_picks'));
+  const brandRequests = requests.filter((url) => url.pathname === '/api/v1/brands');
+  assert.ok(brandRequests.every((url) => url.searchParams.get('fields') === 'id,name,search_aliases'));
   assert.ok(requests.every((url) => !url.searchParams.has('draftKey')));
 });
 

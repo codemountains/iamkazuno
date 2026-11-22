@@ -91,9 +91,40 @@ svg { display: block; flex-shrink: 0; }
 .filter-scroll-button:disabled { opacity: 0; pointer-events: none; }
 .filter-button-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .filter-count { font-family: var(--font-mono); font-size: var(--font-size-caption); opacity: .75; }
+.filters[data-counts='pending'] .filter-count { visibility: hidden; }
 .filter-button:hover { background: var(--soft); }
 .filter-button[aria-pressed='true'] { background: var(--ink); color: var(--paper); }
-.results-label { font-family: var(--font-mono); font-size: var(--font-size-caption); line-height: 1.5; color: var(--muted); white-space: nowrap; margin: 0; }
+.picks-search-field { position: relative; width: clamp(140px, 17vw, 225px); min-width: 0; }
+.picks-search-field:has(.picks-search[hidden]) { display: none; }
+.picks-search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+.picks-search { display: block; width: 100%; min-height: 44px; padding: 8px 44px 8px 36px; border: 1px solid var(--line); border-radius: 5px; background: var(--paper); font-size: var(--font-size-control); }
+.picks-search:placeholder-shown { padding-right: 12px; }
+.picks-search:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.picks-search::placeholder { color: var(--muted); }
+.picks-search-clear { position: absolute; inset: 0 0 0 auto; width: 44px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 5px; background: transparent; color: var(--muted); cursor: pointer; }
+.picks-search-clear:focus-visible { outline-offset: -4px; }
+.picks-search:placeholder-shown + .picks-search-clear { display: none; }
+.picks-suggestions {
+  position: absolute; z-index: 5; top: calc(100% + 6px); right: 0; width: max(100%, 19rem);
+  display: flex; flex-direction: column; max-height: min(26rem, 55dvh);
+  overflow: hidden; border: 1px solid var(--line); border-radius: 6px;
+  background: var(--paper); box-shadow: 0 6px 18px #0002;
+}
+.picks-suggestions [role='listbox'] { min-height: 0; overflow-y: auto; overscroll-behavior: contain; list-style: none; margin: 0; padding: 4px; }
+.picks-suggestions-more { flex: none; min-height: 44px; padding: 8px 12px; border: 0; border-top: 1px solid var(--line); background: transparent; color: var(--muted); font-family: var(--font-mono); font-size: var(--font-size-caption); text-align: left; cursor: pointer; }
+.picks-suggestions-more:focus-visible { background: var(--soft); outline-offset: -3px; }
+.picks-suggestions [role='option'] { display: grid; align-content: center; gap: 2px; min-height: 44px; padding: 8px; border-radius: 3px; font-size: var(--font-size-label); line-height: 1.4; overflow-wrap: anywhere; }
+.picks-suggestion-brand { color: var(--muted); font-family: var(--font-mono); font-size: var(--font-size-caption); }
+.picks-suggestion-detail { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: var(--font-size-control); }
+.picks-suggestions mark { background: transparent; color: var(--ink); font-weight: 700; }
+.picks-suggestions [aria-selected='true'] { background: var(--soft); box-shadow: inset 2px 0 var(--accent); }
+@media (hover: hover) {
+  .picks-suggestions [role='option']:hover, .picks-suggestions-more:hover { background: var(--soft); }
+}
+.results-label { display: flex; max-width: 30%; font-family: var(--font-mono); font-size: var(--font-size-caption); line-height: 1.5; color: var(--muted); white-space: nowrap; margin: 0; }
+.results-label [data-count-prefix] { overflow: hidden; text-overflow: ellipsis; white-space: pre; }
+.search-error { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 16px; margin-bottom: 16px; font-size: var(--font-size-label); }
+.search-error button { padding: 8px 0; border: 0; text-decoration: underline; background: transparent; cursor: pointer; }
 .no-script-note { font-size: var(--font-size-control); line-height: 1.6; color: var(--muted); }
 
 .item-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 35px 24px; padding: 0; margin: 0; list-style: none; }
@@ -121,7 +152,11 @@ svg { display: block; flex-shrink: 0; }
 .image-placeholder span { font-family: var(--font-mono); font-size: var(--font-size-caption); line-height: 1.5; }
 .empty-state { padding: 64px 20px; text-align: center; background: var(--card); border-radius: 5px; }
 .empty-state > span { display: inline-block; color: var(--accent); font-size: 36px; }
+.empty-state-search-icon { margin-inline: auto; color: var(--accent); }
+.empty-state:not([data-empty-state='search']) .empty-state-search-icon,
+.empty-state[data-empty-state='search'] > span { display: none; }
 .empty-state > p { font-size: var(--font-size-body); line-height: 1.6; }
+.empty-state-action { min-height: 44px; padding: 8px 12px; background: var(--paper); border: 1px solid var(--line); border-radius: 5px; font-size: var(--font-size-control); cursor: pointer; }
 .collection { padding-bottom: 53px; }
 
 .site-footer { border-top: 1px solid var(--line); padding: 28px 0 32px; }
@@ -200,7 +235,11 @@ svg { display: block; flex-shrink: 0; }
   .site-header { min-height: 88px; }
   .site-identity { gap: 16px; }
   .item-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px 20px; }
-  .results-label { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+  .collection-toolbar { display: grid; grid-template-columns: minmax(0, 1fr); padding-block: 16px; gap: 10px; }
+  .picks-search-field { width: 100%; }
+  .picks-search { font-size: 1rem; }
+  .picks-suggestions { width: 100%; }
+  .results-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   .footer-main { gap: 20px; flex-wrap: wrap; }
 }
 @media (max-width: 760px) {
@@ -260,6 +299,7 @@ svg { display: block; flex-shrink: 0; }
   .filters { scroll-padding-inline: 0; }
   .filter-button { flex: 1 0 auto; min-width: 44px; justify-content: center; padding-inline: 8px; }
   .filter-count, .filter-scroll-button { display: none; }
+  .filters[data-counts='matches'] .filter-count, .filters[data-counts='pending'] .filter-count { display: inline; }
 }
 /* 残像クローンも同じ実幅で判定。名前は視覚的に隠し、リンクの読み上げ名は維持する。 */
 @container (width < 128px) {

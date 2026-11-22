@@ -40,6 +40,18 @@ export function resolveContentConfiguration(env: ContentEnvironment): ContentCon
   return { source: 'microcms', serviceDomain, apiKey };
 }
 
+function searchAliases(data: Record<string, unknown>, path: string): Pick<Thing, 'searchAliases'> {
+  const entries = data.search_aliases ?? [];
+  if (!Array.isArray(entries)) throw new Error(`${path}.search_aliases は繰り返しフィールドである必要があります。`);
+  const aliases = new Set<string>();
+  for (const [index, entry] of entries.entries()) {
+    const entryPath = `${path}.search_aliases[${index}]`;
+    const alias = optionalText(record(entry, entryPath).value, `${entryPath}.value`);
+    if (alias) aliases.add(alias);
+  }
+  return aliases.size ? { searchAliases: [...aliases] } : {};
+}
+
 function namedContents(input: unknown, endpoint: 'brands' | 'categories', fallbackName: string): Array<Brand | Category> {
   if (!Array.isArray(input)) return fail(`${endpoint} API はリスト形式で作成してください。`);
   const seen = new Set<string>();
@@ -49,7 +61,10 @@ function namedContents(input: unknown, endpoint: 'brands' | 'categories', fallba
     const id = requiredText(data.id, `${path}.id`);
     if (seen.has(id)) throw new Error(`${path}.id が重複しています。`);
     seen.add(id);
-    return { id, name: optionalText(data.name, `${path}.name`) || fallbackName };
+    return {
+      id, name: optionalText(data.name, `${path}.name`) || fallbackName,
+      ...(endpoint === 'brands' && searchAliases(data, path)),
+    };
   });
 }
 
@@ -104,6 +119,7 @@ export function validateThings(
     return {
       id,
       name: optionalText(data.name, `${path}.name`) || 'Unnamed item',
+      ...searchAliases(data, path),
       brand: brandId ? knownBrands.get(brandId) ?? null : null,
       image: data.main_image == null ? null : validateImage(data.main_image, `${path}.main_image`, options.allowLocalImages ?? false),
       descriptionHtml: sanitizeDescription(optionalText(data.description, `${path}.description`)),

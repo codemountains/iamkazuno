@@ -6,6 +6,7 @@ export interface Category {
 export interface Brand {
   id: string;
   name: string;
+  searchAliases?: string[];
 }
 
 export interface ContentImage {
@@ -21,6 +22,7 @@ export type PickImage = ContentImage;
 export interface Thing {
   id: string;
   name: string;
+  searchAliases?: string[];
   brand: Brand | null;
   image: PickImage | null;
   descriptionHtml: string;
@@ -35,15 +37,24 @@ export interface Content {
   source: 'sample' | 'microcms';
 }
 
-// The custom fields in the configured microCMS schemas are all optional.
 export interface MicroCMSNamedContent {
   id: string;
   name?: string | null;
 }
 
+interface MicroCMSSearchAlias {
+  fieldId: 'search_alias';
+  value: string;
+}
+
+export interface MicroCMSBrand extends MicroCMSNamedContent {
+  search_aliases?: MicroCMSSearchAlias[] | null;
+}
+
 export interface MicroCMSThing {
   id: string;
   name?: string | null;
+  search_aliases?: MicroCMSSearchAlias[] | null;
   description?: string | null;
   main_image?: PickImage | null;
   ref_brand?: { id: string } | null;

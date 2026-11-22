@@ -68,16 +68,42 @@ const initialFilterStyles = categoryKeys.map((key) =>
             </button>
           </div>
           <noscript><p class="no-script-note">Showing all items.</p></noscript>
-          <p class="results-label" role="status" aria-live="polite" aria-atomic="true" data-results-label><span data-result-count>{String(things.length).padStart(2, '0')}</span> things, well loved.</p>
+          <p class="results-label" role="status" aria-live="polite" aria-atomic="true" data-results-label><span data-count-prefix></span><span data-result-count>{String(things.length).padStart(2, '0')} things</span><span data-count-suffix>, well loved.</span></p>
+          <div class="picks-search-field">
+            <svg class="picks-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false">
+              <circle cx="10.5" cy="10.5" r="6.5" /><path d="m15.5 15.5 5 5" />
+            </svg>
+            <input class="picks-search" type="text" role="combobox" aria-label="Search picks" placeholder="Search picks…"
+              aria-autocomplete="list" aria-expanded="false" aria-controls="picks-suggestions"
+              autocomplete="off" autocapitalize="none" enterkeyhint="search" hidden data-picks-search />
+            <button class="picks-search-clear" type="button" aria-label="Clear search" data-picks-search-clear>
+              <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8" /></svg>
+            </button>
+            <div class="picks-suggestions" hidden data-picks-suggestions>
+              <ul id="picks-suggestions" role="listbox" aria-label="Matching picks"></ul>
+              <button class="picks-suggestions-more" id="picks-suggestions-more" type="button" hidden>
+                <span id="picks-suggestions-more-count"></span><span class="sr-only">Close suggestions</span>
+              </button>
+            </div>
+          </div>
         </div>
-
-        <ul class="item-grid item-grid--adjustable" data-item-grid>
+        <div class="search-error" data-search-error hidden>
+          <span role="alert">Search is unavailable. Showing the selected category.</span>
+          <button type="button" data-search-retry>Retry search</button>
+        </div>
+        <ul class="item-grid item-grid--adjustable" id="picks-grid" data-item-grid>
           <CollectionImages />
           {things.map((thing, index) => <ItemCard thing={thing} index={index} />)}
         </ul>
         <div class="empty-state" data-empty-state hidden={things.length !== 0}>
           <span aria-hidden="true">↳</span>
-          <p>No items yet.</p>
+          <svg class="empty-state-search-icon" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true" focusable="false">
+            <circle cx="10" cy="10" r="6.5" />
+            <path d="m14.75 14.75 5.75 5.75" />
+            <path d="m8.2 8.2 3.6 3.6m0-3.6-3.6 3.6" stroke-width="1.45" />
+          </svg>
+          <p data-empty-message>No items yet.</p>
+          <button type="button" class="empty-state-action" hidden data-search-all-categories></button>
         </div>
         <script is:inline data-filter-apply>
           (() => {
@@ -96,10 +122,9 @@ const initialFilterStyles = categoryKeys.map((key) =>
               visible++;
             }
             for (const button of buttons) button.setAttribute('aria-pressed', String(button === selected));
-            const label = document.querySelector('[data-results-label]');
-            if (label) label.textContent = category === ''
-              ? `${String(visible).padStart(2, '0')} things, well loved.`
-              : `${selected.dataset.filterLabel} — ${String(visible).padStart(2, '0')} things`;
+            document.querySelector('[data-count-prefix]').textContent = category ? `${selected.dataset.filterLabel} — ` : '';
+            document.querySelector('[data-result-count]').textContent = `${String(visible).padStart(2, '0')} things`;
+            document.querySelector('[data-count-suffix]').textContent = category ? '' : ', well loved.';
             const empty = document.querySelector('[data-empty-state]');
             if (empty) empty.hidden = visible !== 0;
             document.getElementById('picks-initial-filter')?.remove();
@@ -124,9 +149,10 @@ const initialFilterStyles = categoryKeys.map((key) =>
   import { initCollectionSize } from '../../scripts/collection-size';
   import { initSizeControl } from '../../scripts/size-control';
   initCollectionSize();
-  initFilters();
+  const filtersReady = initFilters();
   initItemInteractions();
-  initCollectionNavigation();
+  initCollectionNavigation(filtersReady);
   initSizeControl();
-  initCollectionPrefetch();
+  if (filtersReady) void filtersReady.then(initCollectionPrefetch);
+  else initCollectionPrefetch();
 </script>
