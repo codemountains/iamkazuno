@@ -78,6 +78,23 @@ test('search is laid out with the filters and count, and is loaded on demand', a
   await expect(page).toHaveURL(href!);
 });
 
+test('tapping a suggestion opens its product even if the keyboard dismisses during the tap', async ({ page, isMobile }) => {
+  test.skip(!isMobile, 'Requires touch input');
+  await page.goto('/picks');
+  const input = page.getByRole('combobox');
+  await input.tap();
+  await input.fill('カメラ');
+  const option = page.getByRole('option').nth(1);
+  await expect(option).toBeVisible();
+  const href = await option.getAttribute('href');
+  // モバイルのエミュレーションには実機のキーボードがないため、指を離す前の blur を再現する。
+  await input.evaluate((element) => {
+    document.addEventListener('pointerdown', () => element.blur(), { once: true });
+  });
+  await option.tap();
+  await expect(page).toHaveURL(href!);
+});
+
 test('name and description matches rank and filter existing cards, then restore their original order', async ({ page }) => {
   await page.goto('/picks?q=' + encodeURIComponent('カメラ'));
   await expectCollectionReady(page);
