@@ -128,9 +128,13 @@ export function validateThings(
       if (pickId && pickId !== id) morePickIds.add(pickId);
     }
 
+    const name = optionalText(data.name, `${path}.name`) || 'Unnamed item';
+    // 同名の2台のうち、本文にZEROシリーズと明記された掲載分。CMSで改名したらそちらを使う。
+    const displayName =
+      id === 'xhtc5otumm' && name === 'WHITEWALKER 116' ? `${name}（ZEROシリーズ）` : name;
     return {
       id,
-      name: optionalText(data.name, `${path}.name`) || 'Unnamed item',
+      name: displayName,
       ...searchAliases(data, path),
       brand: brandId ? (knownBrands.get(brandId) ?? null) : null,
       image:
