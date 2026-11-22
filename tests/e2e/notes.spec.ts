@@ -165,6 +165,8 @@ test('note photos advance in view and support stopping, restarting, and manual n
   const total = photos.length;
   expect(total).toBeGreaterThan(1);
   await expect(images).toHaveCount(total);
+  await expect(page.locator('.note-end')).toHaveCount(1);
+  await expect(page.locator('.note-body + .note-end + .note-photos')).toBeVisible();
   const body = (await page.locator('.note-body').boundingBox())!;
   expect((await gallery.boundingBox())!.y).toBeGreaterThanOrEqual(body.y + body.height - 1);
 

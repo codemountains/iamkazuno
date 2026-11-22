@@ -302,6 +302,10 @@
   gap: 8px;
   margin-top: 64px;
 }
+.note-end:has(+ .note-photos),
+.note-end + .note-photos {
+  margin-top: clamp(24px, 4vw, 40px);
+}
 .note-end span {
   width: 3px;
   height: 3px;
