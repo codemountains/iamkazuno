@@ -51,3 +51,27 @@ test('the uncategorized item at the end of the collection is reachable', async (
   ).toBeVisible();
   await expect(page.getByRole('list', { name: 'カテゴリ', exact: true })).toHaveCount(0);
 });
+
+test('collection and detail pages include their description in search and sharing metadata', async ({
+  page,
+}) => {
+  const descriptions = [
+    ['/picks', /登山.*スキー.*スノーボード.*MYOG/],
+    [
+      '/picks/things/mountain-boots',
+      'いつもの登山道から、まだ歩いたことのない稜線へ。 土や岩の感触を確かめながら、一歩ずつ進む。山を歩く時間をともにする、足元の道具。',
+    ],
+    [
+      '/picks/things/sample-no-description',
+      'SAMPLE OBJECTSの「説明未設定のサンプル」を「other」の持ち物として紹介します。',
+    ],
+  ] as const;
+  for (const [path, description] of descriptions) {
+    await page.goto(path);
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', description);
+    await expect(page.locator('meta[property="og:description"]')).toHaveAttribute(
+      'content',
+      description,
+    );
+  }
+});
