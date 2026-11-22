@@ -91,7 +91,9 @@ svg { display: block; flex-shrink: 0; }
 .filter-scroll-button:disabled { opacity: 0; pointer-events: none; }
 .filter-button-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .filter-count { font-family: var(--font-mono); font-size: var(--font-size-caption); opacity: .75; }
-.filters[data-counts='pending'] .filter-count { visibility: hidden; }
+@media (width > 600px) {
+  .filters[data-counts='pending'] .filter-count { visibility: hidden; }
+}
 .filter-button:hover { background: var(--soft); }
 .filter-button[aria-pressed='true'] { background: var(--ink); color: var(--paper); }
 .picks-search-field { position: relative; width: clamp(140px, 17vw, 225px); min-width: 0; }
@@ -298,8 +300,7 @@ svg { display: block; flex-shrink: 0; }
   }
   .filters { scroll-padding-inline: 0; }
   .filter-button { flex: 1 0 auto; min-width: 44px; justify-content: center; padding-inline: 8px; }
-  .filter-count, .filter-scroll-button { display: none; }
-  .filters[data-counts='matches'] .filter-count, .filters[data-counts='pending'] .filter-count { display: inline; }
+  .filter-scroll-button { display: none; }
 }
 /* 残像クローンも同じ実幅で判定。名前は視覚的に隠し、リンクの読み上げ名は維持する。 */
 @container (width < 128px) {

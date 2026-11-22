@@ -284,7 +284,7 @@ test('Tab from search focuses the first result and preserves keyboard navigation
   await expect(page.getByRole('button', { name: 'Clear search' })).toBeFocused();
 });
 
-test('Tab immediately after typing focuses the first result of the pending search', async ({ page }) => {
+test('Tab immediately after typing focuses the first result of the pending search', async ({ page, isMobile }) => {
   await page.goto('/picks');
   const input = page.getByRole('combobox');
   let release!: () => void;
@@ -296,6 +296,7 @@ test('Tab immediately after typing focuses the first result of the pending searc
   try {
     await input.fill('カメラ');
     await input.press('Tab');
+    if (isMobile) await expect(page.locator('[data-filter=""] .filter-count')).toBeVisible();
   } finally {
     release();
   }
@@ -410,9 +411,18 @@ for (const [asset, requestUrl] of [
 
 test('category counts follow the query and a category with zero results can show all matches', async ({ page }) => {
   const query = '行動食';
-  await page.goto('/picks?category=ski&q=' + encodeURIComponent(query));
+  await page.goto('/picks?category=ski');
   const categories = page.getByRole('group', { name: 'カテゴリで絞り込む' });
   const count = (id: string) => categories.locator(`[data-filter="${id}"] .filter-count`);
+  const skiTotal = sampleThings.filter((thing) => thing.ref_categories?.some((category) => category?.id === 'ski')).length;
+  async function expectTotals() {
+    for (const [id, total] of Object.entries({ '': sampleThings.length, ski: skiTotal })) {
+      await expect(count(id)).toBeVisible();
+      await expect(count(id)).toHaveText(String(total));
+    }
+  }
+  await expectTotals();
+  await page.getByRole('combobox').fill(query);
   const showAll = page.getByRole('button', { name: 'View 9 things across all categories', exact: true });
   await expect(showAll).toBeVisible();
   await expect.poll(() => page.getByRole('status').ariaSnapshot()).toMatch(/ski.*00 things/s);
@@ -431,7 +441,7 @@ test('category counts follow the query and a category with zero results can show
   await expect(showAll).toBeVisible();
   await expect(visibleLinks(page)).toHaveCount(0);
   await page.getByRole('button', { name: 'Clear search' }).click();
-  await expect(count('')).toHaveText(String(sampleThings.length));
+  await expectTotals();
   await expect(page).toHaveURL('/picks?category=ski');
   await expect(showAll).toBeHidden();
 });
