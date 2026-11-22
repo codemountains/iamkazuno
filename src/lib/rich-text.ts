@@ -39,6 +39,15 @@ export function plainTextFromHtml(html: string): string {
   return text.replace(/\s+/gu, ' ').trim();
 }
 
+export function excerptFromHtml(html: string): string {
+  const normalized = plainTextFromHtml(html);
+  const characters = Array.from(
+    new Intl.Segmenter('ja', { granularity: 'grapheme' }).segment(normalized),
+    (part) => part.segment,
+  );
+  return characters.length > 140 ? `${characters.slice(0, 140).join('').trimEnd()}…` : normalized;
+}
+
 // Only use this at build time. The returned HTML may be passed to Astro's set:html.
 function safeUrl(value: string | undefined, kind: 'link' | 'image'): string | undefined {
   const input = value?.trim();

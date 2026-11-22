@@ -28,7 +28,11 @@ const initialFilterStyles =
     .join('\n') + '\nhtml[data-initial-category] [data-results-label] { visibility: hidden; }';
 ---
 
-<BaseLayout noindex={sample} preconnectImageCdn={preconnectImageCdn}>
+<BaseLayout
+  description="登山で使う装備やスキー、スノーボードの道具、自分で作った道具（MYOG）など、愛用している持ち物を写真とともに紹介します。"
+  noindex={sample}
+  preconnectImageCdn={preconnectImageCdn}
+>
   <CollectionImagePreload slot="preload" things={things} categories={categories} />
   <div class="site-shell site-shell--wide site-shell--collection">
     <SiteHeader pageHeading />

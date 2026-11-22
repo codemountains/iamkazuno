@@ -1,6 +1,6 @@
 import type { Note, NotePhotoSection } from '../types/notes';
 import { optionalText, record, requiredText, validateImage } from './cms-fields';
-import { plainTextFromHtml, sanitizeDescription } from './rich-text';
+import { excerptFromHtml, sanitizeDescription } from './rich-text';
 
 function photoSection(
   value: unknown,
@@ -34,15 +34,6 @@ function publicationDate(value: unknown, path: string): string | null {
     throw new Error(`${path} に有効な日時を設定してください。`);
   }
   return new Date(timestamp).toISOString();
-}
-
-function excerptFromHtml(html: string): string {
-  const normalized = plainTextFromHtml(html);
-  const characters = Array.from(
-    new Intl.Segmenter('ja', { granularity: 'grapheme' }).segment(normalized),
-    (part) => part.segment,
-  );
-  return characters.length > 140 ? `${characters.slice(0, 140).join('').trimEnd()}…` : normalized;
 }
 
 export function validateNotes(
