@@ -17,20 +17,34 @@ export function initFilterMotion(grid: HTMLElement, items: HTMLElement[]) {
     outgoingLayer = null;
   }
 
-  function animate(element: HTMLElement, keyframes: Keyframe[], duration: number, onFinish?: () => void) {
+  function animate(
+    element: HTMLElement,
+    keyframes: Keyframe[],
+    duration: number,
+    onFinish?: () => void,
+  ) {
     const animation = element.animate(keyframes, {
       duration,
       easing: 'cubic-bezier(.2,.7,.2,1)',
     });
     animations.add(animation);
-    animation.addEventListener('finish', () => {
-      animations.delete(animation);
-      onFinish?.();
-    }, { once: true });
+    animation.addEventListener(
+      'finish',
+      () => {
+        animations.delete(animation);
+        onFinish?.();
+      },
+      { once: true },
+    );
   }
 
   function inViewport(rect: DOMRect) {
-    return rect.bottom > 0 && rect.top < window.innerHeight && rect.right > 0 && rect.left < window.innerWidth;
+    return (
+      rect.bottom > 0 &&
+      rect.top < window.innerHeight &&
+      rect.right > 0 &&
+      rect.left < window.innerWidth
+    );
   }
 
   function fadeOut(item: HTMLElement, snapshot: ItemSnapshot) {
@@ -39,8 +53,14 @@ export function initFilterMotion(grid: HTMLElement, items: HTMLElement[]) {
       outgoingLayer.setAttribute('aria-hidden', 'true');
       outgoingLayer.inert = true;
       Object.assign(outgoingLayer.style, {
-        position: 'fixed', inset: '0', margin: '0', padding: '0',
-        listStyle: 'none', overflow: 'hidden', pointerEvents: 'none', zIndex: '1',
+        position: 'fixed',
+        inset: '0',
+        margin: '0',
+        padding: '0',
+        listStyle: 'none',
+        overflow: 'hidden',
+        pointerEvents: 'none',
+        zIndex: '1',
       });
       document.body.append(outgoingLayer);
     }
@@ -55,9 +75,12 @@ export function initFilterMotion(grid: HTMLElement, items: HTMLElement[]) {
       element.removeAttribute('aria-labelledby');
     }
     Object.assign(ghost.style, {
-      position: 'absolute', margin: '0',
-      left: `${snapshot.rect.left}px`, top: `${snapshot.rect.top}px`,
-      width: `${snapshot.rect.width}px`, height: `${snapshot.rect.height}px`,
+      position: 'absolute',
+      margin: '0',
+      left: `${snapshot.rect.left}px`,
+      top: `${snapshot.rect.top}px`,
+      width: `${snapshot.rect.width}px`,
+      height: `${snapshot.rect.height}px`,
     });
     const layer = outgoingLayer;
     layer.append(ghost);
@@ -71,13 +94,19 @@ export function initFilterMotion(grid: HTMLElement, items: HTMLElement[]) {
   }
 
   function update(change: () => void, options: { animate?: boolean; pointerType?: string } = {}) {
-    const shouldAnimate = options.animate !== false && !reducedMotion.matches && typeof grid.animate === 'function';
-    const rearrange = hoverPointer.matches && (!options.pointerType || options.pointerType === 'mouse');
+    const shouldAnimate =
+      options.animate !== false && !reducedMotion.matches && typeof grid.animate === 'function';
+    const rearrange =
+      hoverPointer.matches && (!options.pointerType || options.pointerType === 'mouse');
     const before = new Map<HTMLElement, ItemSnapshot>();
 
     if (shouldAnimate && rearrange) {
       for (const item of items) {
-        if (!item.hidden) before.set(item, { rect: item.getBoundingClientRect(), opacity: getComputedStyle(item).opacity });
+        if (!item.hidden)
+          before.set(item, {
+            rect: item.getBoundingClientRect(),
+            opacity: getComputedStyle(item).opacity,
+          });
       }
     }
     // 連打時は現在の見た目を記録してから古い演出を解除する。
@@ -91,7 +120,9 @@ export function initFilterMotion(grid: HTMLElement, items: HTMLElement[]) {
     }
 
     // 計測を先にまとめ、カードごとの書き込みで再レイアウトを繰り返さない。
-    const after = new Map(items.filter((item) => !item.hidden).map((item) => [item, item.getBoundingClientRect()]));
+    const after = new Map(
+      items.filter((item) => !item.hidden).map((item) => [item, item.getBoundingClientRect()]),
+    );
     for (const item of items) {
       const previous = before.get(item);
       const next = after.get(item);
@@ -103,13 +134,20 @@ export function initFilterMotion(grid: HTMLElement, items: HTMLElement[]) {
 
       const dx = previous ? previous.rect.left - next.left : 0;
       const dy = previous ? previous.rect.top - next.top : 0;
-      const nearby = previous && inViewport(previous.rect) && Math.hypot(dx, dy) <= Math.max(next.width, next.height) * 1.5;
+      const nearby =
+        previous &&
+        inViewport(previous.rect) &&
+        Math.hypot(dx, dy) <= Math.max(next.width, next.height) * 1.5;
       if (nearby) {
         if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5 || Number(previous.opacity) < 1) {
-          animate(item, [
-            { transform: `translate(${dx}px, ${dy}px)`, opacity: previous.opacity },
-            { transform: 'translate(0, 0)', opacity: 1 },
-          ], 220);
+          animate(
+            item,
+            [
+              { transform: `translate(${dx}px, ${dy}px)`, opacity: previous.opacity },
+              { transform: 'translate(0, 0)', opacity: 1 },
+            ],
+            220,
+          );
         }
       } else {
         // 遠いカードは画面を横断させず、その場で短く表示する。

@@ -1,24 +1,50 @@
 import { Parser } from 'htmlparser2';
 import sanitizeHtml from 'sanitize-html';
 
-const textBoundaries = new Set(['p', 'br', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'blockquote', 'pre', 'hr', 'figure', 'figcaption', 'tr', 'th', 'td']);
+const textBoundaries = new Set([
+  'p',
+  'br',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'li',
+  'blockquote',
+  'pre',
+  'hr',
+  'figure',
+  'figcaption',
+  'tr',
+  'th',
+  'td',
+]);
 
 // 入力はサニタイズ済みのHTML。インライン要素の途中で単語を分割しない。
 export function plainTextFromHtml(html: string): string {
   let text = '';
-  const boundary = (name: string) => { if (textBoundaries.has(name)) text += ' '; };
-  new Parser({
-    onopentag: boundary,
-    ontext(value) { text += value; },
-    onclosetag: boundary,
-  }, { decodeEntities: true }).end(html);
+  const boundary = (name: string) => {
+    if (textBoundaries.has(name)) text += ' ';
+  };
+  new Parser(
+    {
+      onopentag: boundary,
+      ontext(value) {
+        text += value;
+      },
+      onclosetag: boundary,
+    },
+    { decodeEntities: true },
+  ).end(html);
   return text.replace(/\s+/gu, ' ').trim();
 }
 
 // Only use this at build time. The returned HTML may be passed to Astro's set:html.
 function safeUrl(value: string | undefined, kind: 'link' | 'image'): string | undefined {
   const input = value?.trim();
-  if (!input || /[\u0000-\u0020\u007f\\]/.test(input) || input.startsWith('//')) return undefined;
+  // eslint-disable-next-line no-control-regex -- URLs must reject ASCII control characters.
+  const invalidUrlCharacters = /[\u0000-\u0020\u007f\\]/;
+  if (!input || invalidUrlCharacters.test(input) || input.startsWith('//')) return undefined;
 
   if (input.startsWith('/') || (kind === 'link' && input.startsWith('#'))) return input;
 
@@ -35,11 +61,42 @@ function safeUrl(value: string | undefined, kind: 'link' | 'image'): string | un
 export function sanitizeDescription(html: string): string {
   const clean = sanitizeHtml(html, {
     allowedTags: [
-      'p', 'br', 'h2', 'h3', 'h4', 'h5', 'h6',
-      'strong', 'b', 'em', 'i', 'u', 's', 'del', 'sub', 'sup', 'mark',
-      'ul', 'ol', 'li', 'blockquote', 'pre', 'code', 'hr', 'a',
-      'figure', 'figcaption', 'img',
-      'table', 'caption', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td',
+      'p',
+      'br',
+      'h2',
+      'h3',
+      'h4',
+      'h5',
+      'h6',
+      'strong',
+      'b',
+      'em',
+      'i',
+      'u',
+      's',
+      'del',
+      'sub',
+      'sup',
+      'mark',
+      'ul',
+      'ol',
+      'li',
+      'blockquote',
+      'pre',
+      'code',
+      'hr',
+      'a',
+      'figure',
+      'figcaption',
+      'img',
+      'table',
+      'caption',
+      'thead',
+      'tbody',
+      'tfoot',
+      'tr',
+      'th',
+      'td',
     ],
     allowedAttributes: {
       a: ['href', 'title', 'target', 'rel'],
@@ -51,7 +108,20 @@ export function sanitizeDescription(html: string): string {
     allowedSchemes: ['https', 'http', 'mailto'],
     allowedSchemesByTag: { img: ['https', 'http'] },
     allowProtocolRelative: false,
-    nonTextTags: ['script', 'style', 'textarea', 'option', 'xmp', 'noscript', 'iframe', 'object', 'embed', 'svg', 'math', 'template'],
+    nonTextTags: [
+      'script',
+      'style',
+      'textarea',
+      'option',
+      'xmp',
+      'noscript',
+      'iframe',
+      'object',
+      'embed',
+      'svg',
+      'math',
+      'template',
+    ],
     transformTags: {
       h1: 'h2',
       a: (tagName, attributes) => {
@@ -87,6 +157,7 @@ export function sanitizeDescription(html: string): string {
 
   // Empty editor paragraphs should use the detail page's empty-description state.
   const text = sanitizeHtml(clean, { allowedTags: [], allowedAttributes: {} });
-  const hasText = text.replace(/&nbsp;|&#160;|&#x0*a0;/gi, '').replace(/[\s\u200b-\u200d\ufeff]/g, '').length > 0;
+  const hasText =
+    text.replace(/&nbsp;|&#160;|&#x0*a0;/gi, '').replace(/[\s\u200b-\u200d\ufeff]/g, '').length > 0;
   return hasText || /<img\b/.test(clean) ? clean : '';
 }

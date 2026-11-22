@@ -3,7 +3,10 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { runInNewContext } from 'node:vm';
 
-const component = readFileSync(new URL('../src/components/ThemeInit.astro', import.meta.url), 'utf8');
+const component = readFileSync(
+  new URL('../src/components/ThemeInit.astro', import.meta.url),
+  'utf8',
+);
 const inlineScript = component.match(/<script is:inline>([\s\S]*?)<\/script>/)?.[1];
 if (!inlineScript) throw new Error('ThemeInit must contain an early inline initializer.');
 
@@ -12,7 +15,9 @@ class ThemeDocument extends EventTarget {
 }
 
 class SystemTheme extends EventTarget {
-  constructor(public matches: boolean) { super(); }
+  constructor(public matches: boolean) {
+    super();
+  }
 
   change(matches: boolean) {
     this.matches = matches;
@@ -25,20 +30,28 @@ class ThemeWindow extends EventTarget {
     private media: SystemTheme,
     private storage: Map<string, string>,
     private storageBlocked: boolean,
-  ) { super(); }
+  ) {
+    super();
+  }
 
-  matchMedia() { return this.media; }
+  matchMedia() {
+    return this.media;
+  }
 
   get localStorage() {
     if (this.storageBlocked) throw new Error('Storage access denied');
     return {
       getItem: (key: string) => this.storage.get(key) ?? null,
-      setItem: (key: string, value: string) => { this.storage.set(key, value); },
+      setItem: (key: string, value: string) => {
+        this.storage.set(key, value);
+      },
     };
   }
 }
 
-function loadPage(options: { dark?: boolean; storage?: Map<string, string>; blocked?: boolean } = {}) {
+function loadPage(
+  options: { dark?: boolean; storage?: Map<string, string>; blocked?: boolean } = {},
+) {
   const document = new ThemeDocument();
   const media = new SystemTheme(options.dark ?? false);
   const storage = options.storage ?? new Map<string, string>();
@@ -49,7 +62,8 @@ function loadPage(options: { dark?: boolean; storage?: Map<string, string>; bloc
     storage,
     media,
     window,
-    choose: (preference: string) => document.dispatchEvent(new CustomEvent('picks:theme-change', { detail: preference })),
+    choose: (preference: string) =>
+      document.dispatchEvent(new CustomEvent('picks:theme-change', { detail: preference })),
   };
 }
 

@@ -11,6 +11,9 @@
     "build": "astro build",
     "preview": "astro preview --host 127.0.0.1",
     "check": "astro check",
+    "lint": "eslint . --max-warnings 0",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
     "test": "node --import tsx --test tests/*.test.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
@@ -26,15 +29,22 @@
   },
   "devDependencies": {
     "@astrojs/check": "0.9.12",
+    "@eslint/js": "10.0.1",
     "@playwright/test": "1.65.0",
     "@types/node": "24.19.2",
     "@types/sanitize-html": "2.16.2",
     "esbuild": "0.28.2",
+    "eslint": "10.15.0",
+    "eslint-plugin-astro": "3.2.1",
+    "globals": "17.14.0",
     "htmlparser2": "12.0.0",
     "pagefind": "1.6.0",
+    "prettier": "3.10.1",
+    "prettier-plugin-astro": "1.1.2",
     "sharp": "0.35.5",
     "tsx": "4.23.15",
     "typescript": "6.0.3",
+    "typescript-eslint": "8.73.0",
     "wrangler": "4.160.0"
   }
 }

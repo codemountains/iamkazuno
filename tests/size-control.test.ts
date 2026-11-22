@@ -25,12 +25,16 @@ class Element extends Target {
   dataset: Record<string, string> = {};
   attributes = new Set<string>();
   children: Element[] = [];
-  contains(value: unknown) { return value === this || this.children.includes(value as Element); }
+  contains(value: unknown) {
+    return value === this || this.children.includes(value as Element);
+  }
   toggleAttribute(name: string, present: boolean) {
     if (present) this.attributes.add(name);
     else this.attributes.delete(name);
   }
-  querySelectorAll() { return this.children; }
+  querySelectorAll() {
+    return this.children;
+  }
 }
 
 function setup(t: TestContext, visible = true) {
@@ -45,7 +49,7 @@ function setup(t: TestContext, visible = true) {
   grid.children.push(item);
   const document = Object.assign(new Target(), {
     activeElement: null as Element | null,
-    querySelector: (selector: string) => selector === '[data-size-control]' ? control : grid,
+    querySelector: (selector: string) => (selector === '[data-size-control]' ? control : grid),
   });
   const window = new Target();
   for (const [key, value] of Object.entries({ document, window })) {
@@ -58,10 +62,18 @@ function setup(t: TestContext, visible = true) {
   }
   initSizeControl();
   return {
-    control, range, item, document, window,
+    control,
+    range,
+    item,
+    document,
+    window,
     faded: () => control.attributes.has('data-scroll-hidden'),
-    pointerDown: (id = 1) => document.emit('pointerdown', { target: range, pointerId: id, isPrimary: true, button: 0 }),
-    focus: () => { document.activeElement = range; control.emit('focusin', { target: range }); },
+    pointerDown: (id = 1) =>
+      document.emit('pointerdown', { target: range, pointerId: id, isPrimary: true, button: 0 }),
+    focus: () => {
+      document.activeElement = range;
+      control.emit('focusin', { target: range });
+    },
   };
 }
 

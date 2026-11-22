@@ -27,8 +27,12 @@ export default function indexableSitemap() {
       'astro:build:done': async (options) => {
         indexableUrls.clear();
         const directory = fileURLToPath(options.dir);
-        const paths = (await readdir(directory, { recursive: true })).filter((path) => path.endsWith('.html'));
-        const pages = await Promise.all(paths.map((path) => readFile(join(directory, path), 'utf8')));
+        const paths = (await readdir(directory, { recursive: true })).filter((path) =>
+          path.endsWith('.html'),
+        );
+        const pages = await Promise.all(
+          paths.map((path) => readFile(join(directory, path), 'utf8')),
+        );
 
         // Use the rendered metadata so sample content and future noindex pages stay excluded.
         for (const html of pages) {
@@ -39,11 +43,19 @@ export default function indexableSitemap() {
             onopentag(name, attributes) {
               if (name === 'head') inHead = true;
               if (!inHead) return;
-              if (name === 'link' && attributes.rel?.toLowerCase().split(/\s+/).includes('canonical')) {
+              if (
+                name === 'link' &&
+                attributes.rel?.toLowerCase().split(/\s+/).includes('canonical')
+              ) {
                 canonical = attributes.href;
               }
-              if (name === 'meta' && ['robots', 'googlebot'].includes(attributes.name?.toLowerCase())) {
-                noindex ||= (attributes.content ?? '').toLowerCase().split(/[\s,]+/)
+              if (
+                name === 'meta' &&
+                ['robots', 'googlebot'].includes(attributes.name?.toLowerCase())
+              ) {
+                noindex ||= (attributes.content ?? '')
+                  .toLowerCase()
+                  .split(/[\s,]+/)
                   .some((directive) => directive === 'noindex' || directive === 'none');
               }
             },

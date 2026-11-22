@@ -7,14 +7,18 @@ interface ThingImageSources {
 }
 
 // The width descriptors represent output pixels; the browser applies the device DPR.
-export function getThingImageSources(image: Pick<PickImage, 'url' | 'width'>, detail = false): ThingImageSources | null {
+export function getThingImageSources(
+  image: Pick<PickImage, 'url' | 'width'>,
+  detail = false,
+): ThingImageSources | null {
   let original: URL;
   try {
     original = new URL(image.url);
   } catch {
     return null;
   }
-  if (original.hostname !== 'images.microcms-assets.io' || /\.svgz?$/i.test(original.pathname)) return null;
+  if (original.hostname !== 'images.microcms-assets.io' || /\.svgz?$/i.test(original.pathname))
+    return null;
 
   const candidates = detail ? [480, 640, 960, 1280] : [80, 120, 160, 240, 320, 400, 480, 640, 960];
   const widths = [...new Set(candidates.map((width) => Math.min(width, image.width)))];
@@ -29,7 +33,8 @@ export function getThingImageSources(image: Pick<PickImage, 'url' | 'width'>, de
     url.searchParams.delete('dpr');
     return url.href;
   };
-  const srcset = (format: 'avif' | 'webp') => widths.map((width) => `${imageAt(width, format)} ${width}w`).join(', ');
+  const srcset = (format: 'avif' | 'webp') =>
+    widths.map((width) => `${imageAt(width, format)} ${width}w`).join(', ');
 
   return {
     src: imageAt(Math.min(detail ? 960 : 640, image.width), 'webp'),

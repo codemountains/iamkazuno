@@ -14,7 +14,8 @@ interface PageFixture {
 
 const site = 'https://preview.example.test';
 const canonical = (pathname: string) => `<link rel="canonical" href="${site}${pathname}">`;
-const locations = (xml: string) => Array.from(xml.matchAll(/<loc>([^<]+)<\/loc>/g), (match) => match[1]).sort();
+const locations = (xml: string) =>
+  Array.from(xml.matchAll(/<loc>([^<]+)<\/loc>/g), (match) => match[1]).sort();
 
 async function buildSitemap(t: TestContext, fixtures: PageFixture[]) {
   await mkdir('.tmp', { recursive: true });
@@ -23,9 +24,15 @@ async function buildSitemap(t: TestContext, fixtures: PageFixture[]) {
   for (const fixture of fixtures) {
     const file = join(directory, fixture.file);
     await mkdir(dirname(file), { recursive: true });
-    await writeFile(file, `<!doctype html><html><head>${fixture.head}</head><body>Page</body></html>`);
+    await writeFile(
+      file,
+      `<!doctype html><html><head>${fixture.head}</head><body>Page</body></html>`,
+    );
   }
-  await writeFile(join(directory, 'robots.txt'), `User-agent: *\nAllow: /\nSitemap: ${site}/sitemap-index.xml\n`);
+  await writeFile(
+    join(directory, 'robots.txt'),
+    `User-agent: *\nAllow: /\nSitemap: ${site}/sitemap-index.xml\n`,
+  );
 
   const integration = indexableSitemap();
   const configure = integration.hooks['astro:config:done'];
@@ -34,8 +41,12 @@ async function buildSitemap(t: TestContext, fixtures: PageFixture[]) {
   assert.ok(configure && resolveRoutes && finishBuild);
   const logger = {
     info() {},
-    warn(message: string) { assert.fail(message); },
-    error(message: string) { assert.fail(message); },
+    warn(message: string) {
+      assert.fail(message);
+    },
+    error(message: string) {
+      assert.fail(message);
+    },
   };
   // These hook fixtures provide only the Astro fields consumed by the sitemap integration.
   await configure({
@@ -45,7 +56,9 @@ async function buildSitemap(t: TestContext, fixtures: PageFixture[]) {
   await resolveRoutes({
     routes: [
       ...['/', '/picks', '/notes', '/404'].map((pathname) => ({
-        type: 'page', pathname, generate: () => pathname,
+        type: 'page',
+        pathname,
+        generate: () => pathname,
       })),
       { type: 'page', pathname: undefined, generate: () => '/picks/things/camera' },
       { type: 'page', pathname: undefined, generate: () => '/notes/first-entry' },
@@ -68,11 +81,14 @@ async function buildSitemap(t: TestContext, fixtures: PageFixture[]) {
 
 test('generated sitemap includes static and dynamic canonical URLs using the configured site', async (t) => {
   const paths = ['/', '/picks', '/picks/things/camera', '/notes', '/notes/first-entry'];
-  const { index, sitemap } = await buildSitemap(t, paths.map((pathname) => ({
-    pathname: pathname === '/' ? '' : `${pathname.slice(1)}/`,
-    file: pathname === '/' ? 'index.html' : `${pathname.slice(1)}/index.html`,
-    head: canonical(pathname),
-  })));
+  const { index, sitemap } = await buildSitemap(
+    t,
+    paths.map((pathname) => ({
+      pathname: pathname === '/' ? '' : `${pathname.slice(1)}/`,
+      file: pathname === '/' ? 'index.html' : `${pathname.slice(1)}/index.html`,
+      head: canonical(pathname),
+    })),
+  );
 
   assert.deepEqual(locations(index), [`${site}/sitemap-0.xml`]);
   assert.deepEqual(locations(sitemap), paths.map((pathname) => `${site}${pathname}`).sort());
@@ -82,23 +98,31 @@ test('generated sitemap excludes noindex and none pages, status pages, redirects
   const { sitemap } = await buildSitemap(t, [
     { pathname: '', file: 'index.html', head: canonical('/') },
     {
-      pathname: 'picks/', file: 'picks/index.html',
+      pathname: 'picks/',
+      file: 'picks/index.html',
       head: `${canonical('/picks')}<meta name="robots" content="noindex, follow">`,
     },
     {
-      pathname: 'picks/things/sample/', file: 'picks/things/sample/index.html',
+      pathname: 'picks/things/sample/',
+      file: 'picks/things/sample/index.html',
       head: `${canonical('/picks/things/sample')}<meta name="robots" content="NOINDEX, FOLLOW">`,
     },
     {
-      pathname: 'notes/', file: 'notes/index.html',
+      pathname: 'notes/',
+      file: 'notes/index.html',
       head: `<meta name="robots" content="none">${canonical('/notes')}`,
     },
     { pathname: '404', file: '404.html', head: canonical('/404') },
     {
-      pathname: 'things/camera/', file: 'things/camera/index.html',
+      pathname: 'things/camera/',
+      file: 'things/camera/index.html',
       head: '<meta http-equiv="refresh" content="0;url=/picks/things/camera">',
     },
-    { pathname: 'uncanonicalized/', file: 'uncanonicalized/index.html', head: '<title>No canonical</title>' },
+    {
+      pathname: 'uncanonicalized/',
+      file: 'uncanonicalized/index.html',
+      head: '<title>No canonical</title>',
+    },
   ]);
 
   assert.deepEqual(locations(sitemap), [`${site}/`]);

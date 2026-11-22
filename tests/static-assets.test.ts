@@ -11,11 +11,15 @@ test('sample builds keep referenced illustrations, including rich text and absol
   const samples = join(directory, 'images/samples');
   await mkdir(samples, { recursive: true });
   await mkdir(join(directory, 'picks/things/example'), { recursive: true });
-  for (const name of ['boots.svg', 'camera.svg', 'unused.svg']) await writeFile(join(samples, name), '<svg/>');
+  for (const name of ['boots.svg', 'camera.svg', 'unused.svg'])
+    await writeFile(join(samples, name), '<svg/>');
   await writeFile(join(directory, 'favicon.svg'), '<svg/>');
   await writeFile(join(directory, '_redirects'), '/old /new 301');
   await writeFile(join(directory, 'picks/index.html'), '<img src="/images/samples/boots.svg">');
-  await writeFile(join(directory, 'picks/things/example/index.html'), '<p><img src="https://iamkaz.uno/images/samples/camera.svg"></p>');
+  await writeFile(
+    join(directory, 'picks/things/example/index.html'),
+    '<p><img src="https://iamkaz.uno/images/samples/camera.svg"></p>',
+  );
 
   await pruneSampleImages(directory);
 
@@ -27,7 +31,10 @@ test('sample builds keep referenced illustrations, including rich text and absol
 test('CMS builds omit unreferenced samples and builds without a sample directory work', async (t) => {
   const directory = await mkdtemp(join(tmpdir(), 'picks-assets-'));
   t.after(() => rm(directory, { recursive: true, force: true }));
-  await writeFile(join(directory, 'index.html'), '<img src="https://images.microcms-assets.io/product.png">');
+  await writeFile(
+    join(directory, 'index.html'),
+    '<img src="https://images.microcms-assets.io/product.png">',
+  );
   await pruneSampleImages(directory);
   const samples = join(directory, 'images/samples');
   await mkdir(samples, { recursive: true });

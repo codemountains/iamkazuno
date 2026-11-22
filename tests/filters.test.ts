@@ -15,7 +15,8 @@ class Target {
     this.listeners.set(type, [...(this.listeners.get(type) ?? []), listener]);
   }
   emit(type: string, event: Record<string, unknown> = {}) {
-    for (const listener of this.listeners.get(type) ?? []) listener({ type, target: this, ...event });
+    for (const listener of this.listeners.get(type) ?? [])
+      listener({ type, target: this, ...event });
   }
 }
 
@@ -26,13 +27,17 @@ function matches(paths: string[]): Map<string, PickSearchHit> {
   return new Map(paths.map((path) => [path, { loadEvidence: async () => ({}) }]));
 }
 
-function setup(t: TestContext, category = 'ski', options: {
-  inline?: boolean;
-  nextCategory?: string;
-  query?: string;
-  search?: (term: string) => Promise<Map<string, PickSearchHit>>;
-  emptyCollection?: boolean;
-} = {}) {
+function setup(
+  t: TestContext,
+  category = 'ski',
+  options: {
+    inline?: boolean;
+    nextCategory?: string;
+    query?: string;
+    search?: (term: string) => Promise<Map<string, PickSearchHit>>;
+    emptyCollection?: boolean;
+  } = {},
+) {
   const writes = { items: 0, buttons: 0, label: 0, empty: 0 };
   const notifications: string[] = [];
   const scrolls: number[] = [];
@@ -45,36 +50,61 @@ function setup(t: TestContext, category = 'ski', options: {
   };
   setCategory(category, options.query);
   let scrollLeft = 0;
-  const itemCategories = options.emptyCollection ? [] : [['mountain'], ['ski'], ['mountain', 'ski'], [unusualCategory]];
-  const badges = categories.map((id) => ({ textContent: String(itemCategories.filter((ids) => !id || ids.includes(id)).length) }));
-  const buttons = categories.map((id, index) => Object.assign(new Target(), {
-    dataset: { filter: id, filterLabel: id || 'all' },
-    pressed: id === '',
-    focus() {},
-    querySelector: () => badges[index],
-    setAttribute(_name: string, value: string) {
-      writes.buttons++;
-      this.pressed = value === 'true';
-    },
-    getBoundingClientRect() { return { left: index * 120 - scrollLeft, width: 100 }; },
+  const itemCategories = options.emptyCollection
+    ? []
+    : [['mountain'], ['ski'], ['mountain', 'ski'], [unusualCategory]];
+  const badges = categories.map((id) => ({
+    textContent: String(itemCategories.filter((ids) => !id || ids.includes(id)).length),
   }));
+  const buttons = categories.map((id, index) =>
+    Object.assign(new Target(), {
+      dataset: { filter: id, filterLabel: id || 'all' },
+      pressed: id === '',
+      focus() {},
+      querySelector: () => badges[index],
+      setAttribute(_name: string, value: string) {
+        writes.buttons++;
+        this.pressed = value === 'true';
+      },
+      getBoundingClientRect() {
+        return { left: index * 120 - scrollLeft, width: 100 };
+      },
+    }),
+  );
   const items = itemCategories.map((ids, index) => {
     let hidden = false;
     return {
-      dataset: { categories: JSON.stringify(ids), categoryKeys: ids.map(encodeURIComponent).join(' ') },
+      dataset: {
+        categories: JSON.stringify(ids),
+        categoryKeys: ids.map(encodeURIComponent).join(' '),
+      },
       querySelector: () => ({ pathname: `/picks/things/${index}` }),
-      get hidden() { return hidden; },
-      set hidden(value: boolean) { writes.items++; hidden = value; },
+      get hidden() {
+        return hidden;
+      },
+      set hidden(value: boolean) {
+        writes.items++;
+        hidden = value;
+      },
     };
   });
   let labelText = '';
   const count = {
-    get textContent() { return labelText; },
-    set textContent(value: string) { writes.label++; labelText = value; },
+    get textContent() {
+      return labelText;
+    },
+    set textContent(value: string) {
+      writes.label++;
+      labelText = value;
+    },
   };
   const prefix = { textContent: '' };
   const suffix = { textContent: '' };
-  const label = { get textContent() { return prefix.textContent + count.textContent + suffix.textContent; } };
+  const label = {
+    get textContent() {
+      return prefix.textContent + count.textContent + suffix.textContent;
+    },
+  };
   const input = Object.assign(new Target(), { value: '', hidden: true });
   const retry = new Target();
   const error = { hidden: true };
@@ -83,37 +113,59 @@ function setup(t: TestContext, category = 'ski', options: {
   let emptyHidden = true;
   const empty = {
     dataset: { emptyState: '' },
-    get hidden() { return emptyHidden; },
-    set hidden(value: boolean) { writes.empty++; emptyHidden = value; },
+    get hidden() {
+      return emptyHidden;
+    },
+    set hidden(value: boolean) {
+      writes.empty++;
+      emptyHidden = value;
+    },
   };
   const previous = Object.assign(new Target(), { disabled: true });
   const next = Object.assign(new Target(), { disabled: false });
   const navigation = {
     hidden: true,
     dataset: {} as Record<string, string>,
-    querySelector: (selector: string) => selector.includes('previous') ? previous : next,
+    querySelector: (selector: string) => (selector.includes('previous') ? previous : next),
   };
   const controls = Object.assign(new Target(), {
     dataset: {} as Record<string, string>,
-    clientWidth: 160, clientLeft: 0, scrollWidth: 600,
-    get scrollLeft() { return scrollLeft; },
+    clientWidth: 160,
+    clientLeft: 0,
+    scrollWidth: 600,
+    get scrollLeft() {
+      return scrollLeft;
+    },
     closest: () => navigation,
-    contains: (button: unknown) => buttons.includes(button as typeof buttons[number]),
+    contains: (button: unknown) => buttons.includes(button as (typeof buttons)[number]),
     querySelectorAll: () => buttons,
     getBoundingClientRect: () => ({ left: 0 }),
-    scrollTo({ left }: { left: number }) { scrollLeft = left; scrolls.push(left); },
+    scrollTo({ left }: { left: number }) {
+      scrollLeft = left;
+      scrolls.push(left);
+    },
   });
   Object.defineProperty(controls, 'scrollLeft', { get: () => scrollLeft });
   let orderedItems = [...items];
   const grid = {
-    dataset: {} as Record<string, string>, querySelectorAll: () => items,
+    dataset: {} as Record<string, string>,
+    querySelectorAll: () => items,
     attributes: new Map<string, string>(),
-    setAttribute(key: string, value: string) { this.attributes.set(key, value); },
-    removeAttribute(key: string) { this.attributes.delete(key); },
-    hasAttribute(key: string) { return this.attributes.has(key); },
-    append(...moved: typeof items) { orderedItems = [...orderedItems.filter((item) => !moved.includes(item)), ...moved]; },
+    setAttribute(key: string, value: string) {
+      this.attributes.set(key, value);
+    },
+    removeAttribute(key: string) {
+      this.attributes.delete(key);
+    },
+    hasAttribute(key: string) {
+      return this.attributes.has(key);
+    },
+    append(...moved: typeof items) {
+      orderedItems = [...orderedItems.filter((item) => !moved.includes(item)), ...moved];
+    },
   };
-  const visible = () => orderedItems.filter((item) => !item.hidden).map((item) => items.indexOf(item));
+  const visible = () =>
+    orderedItems.filter((item) => !item.hidden).map((item) => items.indexOf(item));
   const documentTarget = new Target();
   const document = Object.assign(documentTarget, {
     documentElement: { dataset: {} as Record<string, string> },
@@ -134,7 +186,7 @@ function setup(t: TestContext, category = 'ski', options: {
       if (selector === '[data-empty-state]') return empty;
       throw new Error(`Unexpected selector: ${selector}`);
     },
-    querySelectorAll: (selector: string) => selector === '[data-filter]' ? buttons : items,
+    querySelectorAll: (selector: string) => (selector === '[data-filter]' ? buttons : items),
     getElementById: () => undefined,
     dispatchEvent(event: Event) {
       notifications.push(event.type);
@@ -143,7 +195,9 @@ function setup(t: TestContext, category = 'ski', options: {
     },
   });
   const window = Object.assign(new Target(), {
-    get location() { return currentUrl; },
+    get location() {
+      return currentUrl;
+    },
     matchMedia: () => Object.assign(new Target(), { matches: true }),
     history: {
       state: { saved: true },
@@ -163,8 +217,11 @@ function setup(t: TestContext, category = 'ski', options: {
   }
   if (options.nextCategory !== undefined) setCategory(options.nextCategory);
   const globals = {
-    document, window,
-    ResizeObserver: class { observe() {} },
+    document,
+    window,
+    ResizeObserver: class {
+      observe() {}
+    },
   };
   for (const [key, value] of Object.entries(globals)) {
     const old = Object.getOwnPropertyDescriptor(globalThis, key);
@@ -182,7 +239,30 @@ function setup(t: TestContext, category = 'ski', options: {
   };
   clearStats();
   const ready = initFilters(options.search);
-  return { buttons, badges, controls, items, input, error, retry, emptyMessage, searchAll, ready, visible, label, empty, grid, navigation, writes, notifications, scrolls, historyEntries, window, setCategory, clearStats };
+  return {
+    buttons,
+    badges,
+    controls,
+    items,
+    input,
+    error,
+    retry,
+    emptyMessage,
+    searchAll,
+    ready,
+    visible,
+    label,
+    empty,
+    grid,
+    navigation,
+    writes,
+    notifications,
+    scrolls,
+    historyEntries,
+    window,
+    setCategory,
+    clearStats,
+  };
 }
 
 for (const category of ['ski', '', 'missing', 'empty', unusualCategory]) {
@@ -196,16 +276,22 @@ for (const category of ['ski', '', 'missing', 'empty', unusualCategory]) {
     assert.equal(h.buttons.find((button) => button.pressed)?.dataset.filter, normalized);
     const visible = h.items.filter((item) => !item.hidden);
     assert.equal(h.empty.hidden, visible.length > 0);
-    assert.equal(h.label.textContent, normalized
-      ? `${normalized} — ${String(visible.length).padStart(2, '0')} things`
-      : '04 things, well loved.');
+    assert.equal(
+      h.label.textContent,
+      normalized
+        ? `${normalized} — ${String(visible.length).padStart(2, '0')} things`
+        : '04 things, well loved.',
+    );
     if (normalized) assert.ok(h.scrolls.length > 0, 'the selected category must still be revealed');
   });
 }
 
 test('missing inline preparation falls back to an immediate initial filter', (t) => {
   const h = setup(t, 'ski', { inline: false });
-  assert.deepEqual(h.items.map((item) => item.hidden), [true, false, false, true]);
+  assert.deepEqual(
+    h.items.map((item) => item.hidden),
+    [true, false, false, true],
+  );
   assert.equal(h.label.textContent, 'ski — 02 things');
   assert.equal(h.writes.items, 4);
   assert.equal(h.writes.label, 1);
@@ -215,7 +301,10 @@ test('missing inline preparation falls back to an immediate initial filter', (t)
 
 test('URL changes before module initialization override a previously prepared category', (t) => {
   const h = setup(t, 'ski', { nextCategory: 'mountain' });
-  assert.deepEqual(h.items.map((item) => item.hidden), [false, true, false, true]);
+  assert.deepEqual(
+    h.items.map((item) => item.hidden),
+    [false, true, false, true],
+  );
   assert.equal(h.label.textContent, 'mountain — 02 things');
   assert.equal(h.writes.items, 4);
   assert.equal(h.grid.dataset.initialFilter, undefined);
@@ -231,14 +320,20 @@ test('clicks and history traversal still filter after the initial state is consu
   assert.equal(h.historyEntries.length, 0);
 
   h.buttons[1].emit('click');
-  assert.deepEqual(h.items.map((item) => item.hidden), [false, true, false, true]);
+  assert.deepEqual(
+    h.items.map((item) => item.hidden),
+    [false, true, false, true],
+  );
   assert.equal(h.window.location.search, '?category=mountain');
   assert.equal(h.historyEntries.length, 1);
   assert.equal(h.label.textContent, 'mountain — 02 things');
   h.clearStats();
   h.setCategory('ski');
   h.window.emit('popstate');
-  assert.deepEqual(h.items.map((item) => item.hidden), [true, false, false, true]);
+  assert.deepEqual(
+    h.items.map((item) => item.hidden),
+    [true, false, false, true],
+  );
   assert.equal(h.label.textContent, 'ski — 02 things');
   assert.equal(h.historyEntries.length, 0);
   assert.deepEqual(h.notifications, ['picks:filter-change']);
@@ -257,7 +352,9 @@ test('selecting all cleans an unknown category URL without rewriting the already
 test('IME commits once and a newer search keeps its rank even when the previous request finishes later', async (t) => {
   t.mock.timers.enable({ apis: ['setTimeout'] });
   const requests = new Map<string, (results: Map<string, PickSearchHit>) => void>();
-  const h = setup(t, '', { search: (term) => new Promise((resolve) => requests.set(term, resolve)) });
+  const h = setup(t, '', {
+    search: (term) => new Promise((resolve) => requests.set(term, resolve)),
+  });
   const firstUrl = h.window.location.href;
   h.input.emit('compositionstart');
   h.input.value = 'alpha';
@@ -283,7 +380,10 @@ test('IME commits once and a newer search keeps its rank even when the previous 
   requests.get('beta')!(matches(['/picks/things/2', '/picks/things/1', '/picks/things/0']));
   await Promise.resolve();
   assert.deepEqual(h.visible(), [2, 1]);
-  assert.deepEqual(h.badges.map((badge) => badge.textContent), ['3', '2', '2', '0', '0']);
+  assert.deepEqual(
+    h.badges.map((badge) => badge.textContent),
+    ['3', '2', '2', '0', '0'],
+  );
   assert.equal(h.label.textContent, 'ski — 02 things');
   assert.equal(h.grid.attributes.has('aria-busy'), false);
   requests.get('alpha')!(matches(['/picks/things/1']));
@@ -294,14 +394,23 @@ test('IME commits once and a newer search keeps its rank even when the previous 
   h.input.emit('input');
   assert.equal(h.window.location.search, '?category=ski');
   assert.deepEqual(h.visible(), [1, 2]);
-  assert.deepEqual(h.badges.map((badge) => badge.textContent), ['4', '2', '2', '0', '1']);
+  assert.deepEqual(
+    h.badges.map((badge) => badge.textContent),
+    ['4', '2', '2', '0', '1'],
+  );
   assert.equal(h.controls.dataset.counts, 'total');
   assert.equal(h.historyEntries.length, 1);
 });
 
 test('clearing an initial URL query releases navigation readiness and ignores its late response', async (t) => {
   let finish!: (results: Map<string, PickSearchHit>) => void;
-  const h = setup(t, '', { query: 'alpha', search: () => new Promise((resolve) => { finish = resolve; }) });
+  const h = setup(t, '', {
+    query: 'alpha',
+    search: () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  });
   assert.ok(h.ready);
   assert.equal(h.input.value, 'alpha');
   h.input.value = '';
@@ -315,7 +424,9 @@ test('clearing an initial URL query releases navigation readiness and ignores it
 });
 
 test('history traversal restores the search text, category and ranking from the URL', async (t) => {
-  const h = setup(t, '', { search: async () => matches(['/picks/things/2', '/picks/things/1', '/picks/things/0']) });
+  const h = setup(t, '', {
+    search: async () => matches(['/picks/things/2', '/picks/things/1', '/picks/things/0']),
+  });
   h.setCategory('ski', 'alpha');
   h.window.emit('popstate');
   await Promise.resolve();
@@ -333,7 +444,10 @@ test('empty category searches can show every match while keeping the query and b
   const h = setup(t, 'empty', { query: 'alpha', search });
   await h.ready;
   assert.deepEqual(h.visible(), []);
-  assert.deepEqual(h.badges.map((badge) => badge.textContent), ['2', '2', '1', '0', '0']);
+  assert.deepEqual(
+    h.badges.map((badge) => badge.textContent),
+    ['2', '2', '1', '0', '0'],
+  );
   assert.equal(h.controls.dataset.counts, 'matches');
   assert.equal(h.searchAll.hidden, false);
   assert.equal(h.searchAll.textContent, 'View 2 things across all categories');
@@ -361,10 +475,13 @@ test('an empty category search offers a single match with a singular label', asy
 
 test('a failed initial search keeps the category visible and can be retried without changing history', async (t) => {
   let attempts = 0;
-  const h = setup(t, 'ski', { query: 'alpha', search: async () => {
-    if (++attempts === 1) throw new Error('Index unavailable');
-    return matches([]);
-  } });
+  const h = setup(t, 'ski', {
+    query: 'alpha',
+    search: async () => {
+      if (++attempts === 1) throw new Error('Index unavailable');
+      return matches([]);
+    },
+  });
   await h.ready;
   assert.equal(h.error.hidden, false);
   assert.deepEqual(h.visible(), [1, 2]);
@@ -378,7 +495,10 @@ test('a failed initial search keeps the category visible and can be retried with
   assert.equal(h.empty.hidden, false);
   assert.equal(h.emptyMessage.textContent, 'No matching things.');
   assert.equal(h.searchAll.hidden, true);
-  assert.deepEqual(h.badges.map((badge) => badge.textContent), ['0', '0', '0', '0', '0']);
+  assert.deepEqual(
+    h.badges.map((badge) => badge.textContent),
+    ['0', '0', '0', '0', '0'],
+  );
   assert.equal(h.label.textContent, 'ski — 00 things');
   assert.equal(h.historyEntries.length, 0);
 });

@@ -44,7 +44,9 @@ const shareImage = Astro.site && image ? new URL(image, Astro.site) : undefined;
     {canonical && <link rel="canonical" href={canonical} />}
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta property="og:type" content={type} />
-    {type === 'article' && publishedAt && <meta property="article:published_time" content={publishedAt} />}
+    {type === 'article' && publishedAt && (
+      <meta property="article:published_time" content={publishedAt} />
+    )}
     <meta property="og:site_name" content={siteName} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
@@ -58,7 +60,9 @@ const shareImage = Astro.site && image ? new URL(image, Astro.site) : undefined;
     <title>{title}</title>
   </head>
   <body>
-    <a class="skip-link" href="#main">Skip to content</a>
+    <a class="skip-link" href="#main">
+      Skip to content
+    </a>
     <slot />
   </body>
 </html>

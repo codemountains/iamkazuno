@@ -16,20 +16,33 @@ async function firstNote(page: Page) {
   return { link, title, href: href! };
 }
 
-test('home opens the notes list, readers can open an article with the keyboard and return', async ({ page }) => {
+test('home opens the notes list, readers can open an article with the keyboard and return', async ({
+  page,
+}) => {
   await page.goto('/');
   await page.getByRole('link', { name: '/notes', exact: true }).click();
   await expect(page).toHaveURL('/notes');
   await expect(page.getByRole('main').getByRole('heading', { level: 1 })).toBeVisible();
-  await expect(page.getByRole('banner').getByRole('link', { name: '/notes ホーム' })).toHaveAttribute('href', '/notes');
-  await expect(page.locator('.note-list .note-entry')).toHaveCount(Math.min(sampleNotes.length, 10));
-  await expect(page.locator('.notes-count')).toHaveAttribute('aria-label', `${sampleNotes.length}件`);
-  await expect(page.getByRole('navigation', { name: 'ノート一覧のページ送り' })).toHaveCount(sampleNotes.length > 10 ? 1 : 0);
+  await expect(
+    page.getByRole('banner').getByRole('link', { name: '/notes ホーム' }),
+  ).toHaveAttribute('href', '/notes');
+  await expect(page.locator('.note-list .note-entry')).toHaveCount(
+    Math.min(sampleNotes.length, 10),
+  );
+  await expect(page.locator('.notes-count')).toHaveAttribute(
+    'aria-label',
+    `${sampleNotes.length}件`,
+  );
+  await expect(page.getByRole('navigation', { name: 'ノート一覧のページ送り' })).toHaveCount(
+    sampleNotes.length > 10 ? 1 : 0,
+  );
   await expect(page.getByRole('heading', { level: 2, name: sampleNotes[0].title! })).toBeVisible();
 
-  const dates = await page.locator('.note-list time').evaluateAll((elements) =>
-    elements.map((element) => Date.parse(element.getAttribute('datetime') ?? '')),
-  );
+  const dates = await page
+    .locator('.note-list time')
+    .evaluateAll((elements) =>
+      elements.map((element) => Date.parse(element.getAttribute('datetime') ?? '')),
+    );
   expect(dates.length).toBeGreaterThan(0);
   expect(dates.every(Number.isFinite)).toBe(true);
   expect(dates).toEqual([...dates].sort((a, b) => b - a));
@@ -44,9 +57,15 @@ test('home opens the notes list, readers can open an article with the keyboard a
   await expect(page.locator('main article').getByRole('heading', { level: 1 })).toHaveText(title);
   await expect(page.locator('.note-heading time')).toHaveText('2026.11.17');
   await expect(page.locator('.note-body')).not.toBeEmpty();
-  await expect(page.locator('.note-body').getByRole('heading', { name: '書きながら、考える' })).toBeVisible();
-  await expect(page.locator('.note-body blockquote')).toContainText('とりとめのないことにも、書き留める場所を。');
-  await expect(page.locator('.note-body').getByRole('link', { name: 'お気に入りのもの' })).toHaveAttribute('href', '/picks');
+  await expect(
+    page.locator('.note-body').getByRole('heading', { name: '書きながら、考える' }),
+  ).toBeVisible();
+  await expect(page.locator('.note-body blockquote')).toContainText(
+    'とりとめのないことにも、書き留める場所を。',
+  );
+  await expect(
+    page.locator('.note-body').getByRole('link', { name: 'お気に入りのもの' }),
+  ).toHaveAttribute('href', '/picks');
 
   await page.getByRole('link', { name: 'Back to notes', exact: true }).click();
   await expect(page).toHaveURL('/notes');
@@ -55,15 +74,24 @@ test('home opens the notes list, readers can open an article with the keyboard a
 
 test('notes have their own canonical URLs and article metadata', async ({ page }) => {
   await page.goto('/notes');
-  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://iamkaz.uno/notes');
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    'href',
+    'https://iamkaz.uno/notes',
+  );
   await expect(page.locator('meta[property="og:site_name"]')).toHaveAttribute('content', '/notes');
   await expect(page.locator('meta[property="og:type"]')).toHaveAttribute('content', 'website');
 
   const { link, title, href } = await firstNote(page);
   await link.click();
   await expect(page).toHaveTitle(`${title} — /notes`);
-  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', `https://iamkaz.uno${href}`);
-  await expect(page.locator('meta[property="og:url"]')).toHaveAttribute('content', `https://iamkaz.uno${href}`);
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    'href',
+    `https://iamkaz.uno${href}`,
+  );
+  await expect(page.locator('meta[property="og:url"]')).toHaveAttribute(
+    'content',
+    `https://iamkaz.uno${href}`,
+  );
   await expect(page.locator('meta[property="og:type"]')).toHaveAttribute('content', 'article');
   await expect(page.locator('meta[property="og:site_name"]')).toHaveAttribute('content', '/notes');
   const description = await page.locator('meta[name="description"]').getAttribute('content');
@@ -101,9 +129,13 @@ test('the list and article stay within a narrow viewport', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 720 });
   await page.goto('/notes');
   await page.evaluate(() => document.fonts.ready);
-  await expect.poll(() => page.evaluate(() =>
-    document.documentElement.scrollWidth - document.documentElement.clientWidth,
-  )).toBeLessThanOrEqual(1);
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      ),
+    )
+    .toBeLessThanOrEqual(1);
 
   const { link } = await firstNote(page);
   await link.click();
@@ -111,12 +143,18 @@ test('the list and article stay within a narrow viewport', async ({ page }) => {
   await expect(page.locator('.note-body')).toBeVisible();
   await expect(page.locator('.note-body pre code')).not.toBeEmpty();
   await expect(page.locator('.note-body table')).toBeVisible();
-  await expect.poll(() => page.evaluate(() =>
-    document.documentElement.scrollWidth - document.documentElement.clientWidth,
-  )).toBeLessThanOrEqual(1);
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      ),
+    )
+    .toBeLessThanOrEqual(1);
 });
 
-test('note photos advance in view and support stopping, restarting, and manual navigation', async ({ page }) => {
+test('note photos advance in view and support stopping, restarting, and manual navigation', async ({
+  page,
+}) => {
   await page.clock.install();
   await page.goto(photoPath);
   const gallery = page.locator('.note-photos');
@@ -158,7 +196,9 @@ test('note photos advance in view and support stopping, restarting, and manual n
   await expect(count).toHaveText(`2 / ${total}`);
 });
 
-test('reduced motion starts paused and keyboard navigation wraps at both ends', async ({ page }) => {
+test('reduced motion starts paused and keyboard navigation wraps at both ends', async ({
+  page,
+}) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.clock.install();
   await page.goto(photoPath);
@@ -179,18 +219,25 @@ test('reduced motion starts paused and keyboard navigation wraps at both ends', 
 });
 
 test('portrait photos fit inside the slide without cropping', async ({ page }) => {
-  await page.route(`**${photos[0].url}`, (route) => route.fulfill({
-    contentType: 'image/svg+xml',
-    body: '<svg xmlns="http://www.w3.org/2000/svg" width="240" height="480"><rect width="240" height="480" fill="teal"/></svg>',
-  }));
+  await page.route(`**${photos[0].url}`, (route) =>
+    route.fulfill({
+      contentType: 'image/svg+xml',
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="240" height="480"><rect width="240" height="480" fill="teal"/></svg>',
+    }),
+  );
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto(photoPath);
   const track = page.locator('.note-photos-track');
   const portrait = track.locator('img').first();
   await track.scrollIntoViewIfNeeded();
-  await expect.poll(() => portrait.evaluate((image: HTMLImageElement) =>
-    image.complete && image.naturalHeight > image.naturalWidth && image.naturalWidth > 0,
-  )).toBe(true);
+  await expect
+    .poll(() =>
+      portrait.evaluate(
+        (image: HTMLImageElement) =>
+          image.complete && image.naturalHeight > image.naturalWidth && image.naturalWidth > 0,
+      ),
+    )
+    .toBe(true);
   await expect(portrait).toHaveCSS('object-fit', 'contain');
   const frame = (await track.boundingBox())!;
   const image = (await portrait.boundingBox())!;
@@ -212,7 +259,9 @@ test.describe('without JavaScript', () => {
     await track.scrollIntoViewIfNeeded();
     await expect(images.first()).toBeInViewport();
     await expect(images.last()).not.toBeInViewport();
-    await track.evaluate((element) => element.scrollTo({ left: element.scrollWidth, behavior: 'instant' }));
+    await track.evaluate((element) =>
+      element.scrollTo({ left: element.scrollWidth, behavior: 'instant' }),
+    );
     await expect(images.last()).toBeInViewport();
     await expect(images.first()).not.toBeInViewport();
   });

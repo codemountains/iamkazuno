@@ -11,14 +11,21 @@ import { collectionSize } from '../../lib/collection-size';
 
 const { things, categories, source } = await getContent();
 const sample = source === 'sample';
-const preconnectImageCdn = things.some((thing) => thing.image?.url.startsWith('https://images.microcms-assets.io/'));
-const count = (id: string) => things.filter((thing) => thing.categories.some((category) => category.id === id)).length;
+const preconnectImageCdn = things.some((thing) =>
+  thing.image?.url.startsWith('https://images.microcms-assets.io/'),
+);
+const count = (id: string) =>
+  things.filter((thing) => thing.categories.some((category) => category.id === id)).length;
 // URIエンコードしたキーなら、空白を含むIDもCSSの属性トークンで安全に照合できる。
 const categoryKeys = categories.map((category) => encodeURIComponent(category.id));
 // CSSはビルド時に確定させ、CSPで内容のハッシュを許可できるようにする。
-const initialFilterStyles = categoryKeys.map((key) =>
-  `html[data-initial-category="${key}"] [data-item]:not([data-category-keys~="${key}"]) { display: none !important; }`,
-).join('\n') + '\nhtml[data-initial-category] [data-results-label] { visibility: hidden; }';
+const initialFilterStyles =
+  categoryKeys
+    .map(
+      (key) =>
+        `html[data-initial-category="${key}"] [data-item]:not([data-category-keys~="${key}"]) { display: none !important; }`,
+    )
+    .join('\n') + '\nhtml[data-initial-category] [data-results-label] { visibility: hidden; }';
 ---
 
 <BaseLayout noindex={sample} preconnectImageCdn={preconnectImageCdn}>
@@ -33,19 +40,31 @@ const initialFilterStyles = categoryKeys.map((key) =>
           let size = collectionSize.initial;
           try {
             const saved = Number(sessionStorage.getItem(collectionSize.storageKey));
-            if (Number.isInteger(saved) && saved >= collectionSize.min && saved <= collectionSize.max
-              && (saved - collectionSize.min) % collectionSize.step === 0) size = saved;
-          } catch { /* ストレージが使えない場合も既定サイズで表示する。 */ }
+            if (
+              Number.isInteger(saved) &&
+              saved >= collectionSize.min &&
+              saved <= collectionSize.max &&
+              (saved - collectionSize.min) % collectionSize.step === 0
+            )
+              size = saved;
+          } catch {
+            /* ストレージが使えない場合も既定サイズで表示する。 */
+          }
           document.documentElement.style.setProperty('--collection-item-size', `${size}px`);
           const progress = (size - collectionSize.min) / (collectionSize.max - collectionSize.min);
           const columns = Math.round(progress <= 0.5 ? 6 - progress * 6 : 5 - progress * 4);
-          document.documentElement.style.setProperty('--collection-mobile-columns', String(columns));
+          document.documentElement.style.setProperty(
+            '--collection-mobile-columns',
+            String(columns),
+          );
         })();
       </script>
       <style is:inline id="picks-initial-filter" set:html={initialFilterStyles} />
       <script define:vars={{ categoryKeys }} data-filter-prepare>
         (() => {
-          const key = encodeURIComponent(new URLSearchParams(window.location.search).get('category') || '');
+          const key = encodeURIComponent(
+            new URLSearchParams(window.location.search).get('category') || '',
+          );
           if (!key || !categoryKeys.includes(key)) return;
           // カードがHTMLから読み込まれる前に非対象を隠す。lazy画像の不要な取得も防ぐ。
           document.documentElement.dataset.initialCategory = key;
@@ -54,56 +73,186 @@ const initialFilterStyles = categoryKeys.map((key) =>
       <section class="collection" id="collection" aria-label="持ち物一覧">
         <div class="collection-toolbar">
           <div class="filter-navigation" hidden data-filter-navigation>
-            <div class="filters" id="category-filters" role="group" aria-label="カテゴリで絞り込む" data-filters>
-              <button type="button" class="filter-button" data-filter="" data-filter-label="all" aria-pressed="true"><span class="filter-button-label">all</span><span class="filter-count">{things.length}</span></button>
+            <div
+              class="filters"
+              id="category-filters"
+              role="group"
+              aria-label="カテゴリで絞り込む"
+              data-filters
+            >
+              <button
+                type="button"
+                class="filter-button"
+                data-filter=""
+                data-filter-label="all"
+                aria-pressed="true"
+              >
+                <span class="filter-button-label">all</span>
+                <span class="filter-count">{things.length}</span>
+              </button>
               {categories.map((category) => (
-                <button type="button" class="filter-button" data-filter={category.id} data-filter-label={category.name} aria-pressed="false" title={category.name}><span class="filter-button-label">{category.name}</span><span class="filter-count">{count(category.id)}</span></button>
+                <button
+                  type="button"
+                  class="filter-button"
+                  data-filter={category.id}
+                  data-filter-label={category.name}
+                  aria-pressed="false"
+                  title={category.name}
+                >
+                  <span class="filter-button-label">{category.name}</span>
+                  <span class="filter-count">{count(category.id)}</span>
+                </button>
               ))}
             </div>
-            <button type="button" class="filter-scroll-button filter-scroll-button--previous" aria-label="前のカテゴリを表示" aria-controls="category-filters" data-filter-scroll="previous" disabled>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m14 6-6 6 6 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            <button
+              type="button"
+              class="filter-scroll-button filter-scroll-button--previous"
+              aria-label="前のカテゴリを表示"
+              aria-controls="category-filters"
+              data-filter-scroll="previous"
+              disabled
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="m14 6-6 6 6 6"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
             </button>
-            <button type="button" class="filter-scroll-button filter-scroll-button--next" aria-label="次のカテゴリを表示" aria-controls="category-filters" data-filter-scroll="next" disabled>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m10 6 6 6-6 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            <button
+              type="button"
+              class="filter-scroll-button filter-scroll-button--next"
+              aria-label="次のカテゴリを表示"
+              aria-controls="category-filters"
+              data-filter-scroll="next"
+              disabled
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="m10 6 6 6-6 6"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
             </button>
           </div>
-          <noscript><p class="no-script-note">Showing all items.</p></noscript>
-          <p class="results-label" role="status" aria-live="polite" aria-atomic="true" data-results-label><span data-count-prefix></span><span data-result-count>{String(things.length).padStart(2, '0')} things</span><span data-count-suffix>, well loved.</span></p>
+          <noscript>
+            <p class="no-script-note">Showing all items.</p>
+          </noscript>
+          <p
+            class="results-label"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            data-results-label
+          >
+            <span data-count-prefix></span>
+            <span data-result-count>{String(things.length).padStart(2, '0')} things</span>
+            <span data-count-suffix>, well loved.</span>
+          </p>
           <div class="picks-search-field">
-            <svg class="picks-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false">
-              <circle cx="10.5" cy="10.5" r="6.5" /><path d="m15.5 15.5 5 5" />
+            <svg
+              class="picks-search-icon"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <circle cx="10.5" cy="10.5" r="6.5" />
+              <path d="m15.5 15.5 5 5" />
             </svg>
-            <input class="picks-search" type="text" role="combobox" aria-label="Search picks" placeholder="Search picks…"
-              aria-autocomplete="list" aria-expanded="false" aria-controls="picks-suggestions"
-              autocomplete="off" autocapitalize="none" enterkeyhint="search" hidden data-picks-search />
-            <button class="picks-search-clear" type="button" aria-label="Clear search" data-picks-search-clear>
-              <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8" /></svg>
+            <input
+              class="picks-search"
+              type="text"
+              role="combobox"
+              aria-label="Search picks"
+              placeholder="Search picks…"
+              aria-autocomplete="list"
+              aria-expanded="false"
+              aria-controls="picks-suggestions"
+              autocomplete="off"
+              autocapitalize="none"
+              enterkeyhint="search"
+              hidden
+              data-picks-search
+            />
+            <button
+              class="picks-search-clear"
+              type="button"
+              aria-label="Clear search"
+              data-picks-search-clear
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="m6 6 12 12M18 6 6 18"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-width="1.8"
+                />
+              </svg>
             </button>
             <div class="picks-suggestions" hidden data-picks-suggestions>
               <ul id="picks-suggestions" role="listbox" aria-label="Matching picks"></ul>
-              <button class="picks-suggestions-more" id="picks-suggestions-more" type="button" hidden>
-                <span id="picks-suggestions-more-count"></span><span class="sr-only">Close suggestions</span>
+              <button
+                class="picks-suggestions-more"
+                id="picks-suggestions-more"
+                type="button"
+                hidden
+              >
+                <span id="picks-suggestions-more-count"></span>
+                <span class="sr-only">Close suggestions</span>
               </button>
             </div>
           </div>
         </div>
         <div class="search-error" data-search-error hidden>
           <span role="alert">Search is unavailable. Showing the selected category.</span>
-          <button type="button" data-search-retry>Retry search</button>
+          <button type="button" data-search-retry>
+            Retry search
+          </button>
         </div>
         <ul class="item-grid item-grid--adjustable" id="picks-grid" data-item-grid>
           <CollectionImages />
-          {things.map((thing, index) => <ItemCard thing={thing} index={index} />)}
+          {things.map((thing, index) => (
+            <ItemCard thing={thing} index={index} />
+          ))}
         </ul>
         <div class="empty-state" data-empty-state hidden={things.length !== 0}>
           <span aria-hidden="true">↳</span>
-          <svg class="empty-state-search-icon" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true" focusable="false">
+          <svg
+            class="empty-state-search-icon"
+            width="36"
+            height="36"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            aria-hidden="true"
+            focusable="false"
+          >
             <circle cx="10" cy="10" r="6.5" />
             <path d="m14.75 14.75 5.75 5.75" />
             <path d="m8.2 8.2 3.6 3.6m0-3.6-3.6 3.6" stroke-width="1.45" />
           </svg>
           <p data-empty-message>No items yet.</p>
-          <button type="button" class="empty-state-action" hidden data-search-all-categories></button>
+          <button
+            type="button"
+            class="empty-state-action"
+            hidden
+            data-search-all-categories
+          ></button>
         </div>
         <script is:inline data-filter-apply>
           (() => {
@@ -112,7 +261,8 @@ const initialFilterStyles = categoryKeys.map((key) =>
             if (!grid) return;
             const buttons = Array.from(document.querySelectorAll('[data-filter]'));
             const requested = new URLSearchParams(window.location.search).get('category') || '';
-            const selected = buttons.find((button) => button.dataset.filter === requested) || buttons[0];
+            const selected =
+              buttons.find((button) => button.dataset.filter === requested) || buttons[0];
             const category = selected?.dataset.filter || '';
             const key = encodeURIComponent(category);
             let visible = 0;
@@ -121,10 +271,16 @@ const initialFilterStyles = categoryKeys.map((key) =>
               if (item.hidden) continue;
               visible++;
             }
-            for (const button of buttons) button.setAttribute('aria-pressed', String(button === selected));
-            document.querySelector('[data-count-prefix]').textContent = category ? `${selected.dataset.filterLabel} — ` : '';
-            document.querySelector('[data-result-count]').textContent = `${String(visible).padStart(2, '0')} things`;
-            document.querySelector('[data-count-suffix]').textContent = category ? '' : ', well loved.';
+            for (const button of buttons)
+              button.setAttribute('aria-pressed', String(button === selected));
+            document.querySelector('[data-count-prefix]').textContent = category
+              ? `${selected.dataset.filterLabel} — `
+              : '';
+            document.querySelector('[data-result-count]').textContent =
+              `${String(visible).padStart(2, '0')} things`;
+            document.querySelector('[data-count-suffix]').textContent = category
+              ? ''
+              : ', well loved.';
             const empty = document.querySelector('[data-empty-state]');
             if (empty) empty.hidden = visible !== 0;
             document.getElementById('picks-initial-filter')?.remove();
@@ -133,7 +289,6 @@ const initialFilterStyles = categoryKeys.map((key) =>
           })();
         </script>
       </section>
-
     </main>
 
     <SiteFooter />

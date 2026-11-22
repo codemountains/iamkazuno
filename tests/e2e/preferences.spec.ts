@@ -2,11 +2,15 @@ import type { Locator } from '@playwright/test';
 import { test, expect, expectCollectionReady } from './fixtures';
 
 async function columnCount(grid: Locator) {
-  return grid.evaluate((element) => getComputedStyle(element).gridTemplateColumns.split(' ').length);
+  return grid.evaluate(
+    (element) => getComputedStyle(element).gridTemplateColumns.split(' ').length,
+  );
 }
 
 for (const initialTheme of ['light', 'dark'] as const) {
-  test(`theme follows the ${initialTheme} system preference until manually selected`, async ({ page }) => {
+  test(`theme follows the ${initialTheme} system preference until manually selected`, async ({
+    page,
+  }) => {
     await page.emulateMedia({ colorScheme: initialTheme });
     await page.goto('/picks');
     await expectCollectionReady(page);
@@ -23,7 +27,9 @@ for (const initialTheme of ['light', 'dark'] as const) {
   });
 }
 
-test('manual theme choice survives navigation and reload, independently of OS changes', async ({ page }) => {
+test('manual theme choice survives navigation and reload, independently of OS changes', async ({
+  page,
+}) => {
   await page.emulateMedia({ colorScheme: 'light' });
   await page.goto('/picks');
   await expectCollectionReady(page);
@@ -54,7 +60,10 @@ test('manual theme choice survives navigation and reload, independently of OS ch
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 });
 
-test('image size controls the actual grid and persists through detail navigation and reload', async ({ page, isMobile }) => {
+test('image size controls the actual grid and persists through detail navigation and reload', async ({
+  page,
+  isMobile,
+}) => {
   await page.goto('/picks');
   await expectCollectionReady(page);
 
@@ -69,7 +78,9 @@ test('image size controls the actual grid and persists through detail navigation
   // Exercise the native range control's input/change events with keyboard and touch.
   await slider.press('Home');
   await expect(slider).toHaveValue('88');
-  await expect.poll(() => firstCard.evaluate((element) => element.getBoundingClientRect().width)).toBeLessThan(initialWidth);
+  await expect
+    .poll(() => firstCard.evaluate((element) => element.getBoundingClientRect().width))
+    .toBeLessThan(initialWidth);
   if (isMobile) await expect.poll(() => columnCount(grid)).toBe(6);
   else await expect.poll(() => columnCount(grid)).toBeGreaterThan(initialColumns);
   const smallWidth = await firstCard.evaluate((element) => element.getBoundingClientRect().width);
@@ -98,7 +109,9 @@ test('image size controls the actual grid and persists through detail navigation
   }
 
   await expect(slider).toHaveValue('280');
-  await expect.poll(() => firstCard.evaluate((element) => element.getBoundingClientRect().width)).toBeGreaterThan(smallWidth);
+  await expect
+    .poll(() => firstCard.evaluate((element) => element.getBoundingClientRect().width))
+    .toBeGreaterThan(smallWidth);
   if (isMobile) await expect.poll(() => columnCount(grid)).toBe(1);
   else await expect.poll(() => columnCount(grid)).toBeLessThan(smallColumns);
   const largeColumns = await columnCount(grid);
@@ -115,15 +128,20 @@ test('image size controls the actual grid and persists through detail navigation
   await expect.poll(() => columnCount(grid)).toBe(largeColumns);
 });
 
-test('image size control becomes usable after scrolling and stays visible for keyboard input', async ({ page, browserName, isMobile }) => {
+test('image size control becomes usable after scrolling and stays visible for keyboard input', async ({
+  page,
+  browserName,
+  isMobile,
+}) => {
   await page.goto('/picks');
   await expectCollectionReady(page);
 
   const control = page.locator('[data-size-control]');
   const slider = page.getByRole('slider', { name: '画像サイズ' });
-  const scroll = (top: number) => browserName === 'webkit' && isMobile
-    ? page.evaluate((distance) => window.scrollBy({ top: distance, behavior: 'instant' }), top)
-    : page.mouse.wheel(0, top);
+  const scroll = (top: number) =>
+    browserName === 'webkit' && isMobile
+      ? page.evaluate((distance) => window.scrollBy({ top: distance, behavior: 'instant' }), top)
+      : page.mouse.wheel(0, top);
   await scroll(600);
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
   await expect(control).toHaveAttribute('data-scroll-hidden', '');

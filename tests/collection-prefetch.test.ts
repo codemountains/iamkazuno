@@ -8,7 +8,8 @@ class Target {
     this.listeners.set(type, [...(this.listeners.get(type) ?? []), listener]);
   }
   emit(type: string, event: Record<string, unknown> = {}) {
-    for (const listener of this.listeners.get(type) ?? []) listener({ type, target: this, ...event });
+    for (const listener of this.listeners.get(type) ?? [])
+      listener({ type, target: this, ...event });
   }
 }
 
@@ -17,19 +18,26 @@ class Element extends Target {}
 class Anchor extends Element {
   item = { hidden: false };
   rect = { width: 160, height: 200, top: 100, bottom: 300, left: 32, right: 192 };
-  constructor(public href: string) { super(); }
+  constructor(public href: string) {
+    super();
+  }
   closest(selector: string) {
     if (selector === '[data-item]') return this.item;
     if (selector === 'a[data-picks-prefetch]') return this;
     throw new Error(`Unexpected selector: ${selector}`);
   }
-  getBoundingClientRect() { return this.rect; }
+  getBoundingClientRect() {
+    return this.rect;
+  }
 }
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
   let reject!: (reason: Error) => void;
-  const promise = new Promise<T>((yes, no) => { resolve = yes; reject = no; });
+  const promise = new Promise<T>((yes, no) => {
+    resolve = yes;
+    reject = no;
+  });
   return { promise, resolve, reject };
 }
 
@@ -38,18 +46,22 @@ const settle = async () => {
   for (let turn = 0; turn < 6; turn++) await Promise.resolve();
 };
 
-function setup(t: TestContext, options: {
-  ready?: boolean;
-  hidden?: boolean;
-  online?: boolean;
-  saveData?: boolean;
-  effectiveType?: string;
-  hrefs?: string[];
-  automaticAbort?: boolean;
-  navigation?: boolean;
-} = {}) {
-  const anchors = (options.hrefs ?? ['one', 'two', 'three', 'four', 'five'].map((id) => `/picks/things/${id}`))
-    .map((href) => new Anchor(new URL(href, 'https://example.test/picks').href));
+function setup(
+  t: TestContext,
+  options: {
+    ready?: boolean;
+    hidden?: boolean;
+    online?: boolean;
+    saveData?: boolean;
+    effectiveType?: string;
+    hrefs?: string[];
+    automaticAbort?: boolean;
+    navigation?: boolean;
+  } = {},
+) {
+  const anchors = (
+    options.hrefs ?? ['one', 'two', 'three', 'four', 'five'].map((id) => `/picks/things/${id}`)
+  ).map((href) => new Anchor(new URL(href, 'https://example.test/picks').href));
   const grid = Object.assign(new Target(), {
     querySelectorAll(selector: string) {
       assert.equal(selector, 'a[data-picks-prefetch]');
@@ -97,19 +109,32 @@ function setup(t: TestContext, options: {
     finishAbort: () => void;
   }> = [];
   const globals = {
-    document, window, navigator, Element,
+    document,
+    window,
+    navigator,
+    Element,
     location: new URL('https://example.test/picks'),
     IntersectionObserver: class {
-      constructor(callback: typeof notify) { notify = callback; }
-      observe(anchor: Anchor) { observed.add(anchor); }
-      unobserve(anchor: Anchor) { observed.delete(anchor); }
-      disconnect() { observed.clear(); }
+      constructor(callback: typeof notify) {
+        notify = callback;
+      }
+      observe(anchor: Anchor) {
+        observed.add(anchor);
+      }
+      unobserve(anchor: Anchor) {
+        observed.delete(anchor);
+      }
+      disconnect() {
+        observed.clear();
+      }
     },
     setTimeout(callback: () => void, milliseconds: number) {
       timers.set(++timerId, { at: now + milliseconds, callback });
       return timerId;
     },
-    clearTimeout(id: number) { timers.delete(id); },
+    clearTimeout(id: number) {
+      timers.delete(id);
+    },
     fetch(url: string, options: RequestInit) {
       const headers = deferred<{ arrayBuffer: () => Promise<ArrayBuffer> }>();
       const body = deferred<ArrayBuffer>();
@@ -119,14 +144,22 @@ function setup(t: TestContext, options: {
         else headers.reject(new Error(message));
       };
       const request = {
-        url, options,
+        url,
+        options,
         headers() {
           receivedHeaders = true;
           headers.resolve({ arrayBuffer: () => body.promise });
         },
-        finish() { this.headers(); body.resolve(new ArrayBuffer(0)); },
-        fail() { reject('Network failed'); },
-        finishAbort() { reject('Aborted'); },
+        finish() {
+          this.headers();
+          body.resolve(new ArrayBuffer(0));
+        },
+        fail() {
+          reject('Network failed');
+        },
+        finishAbort() {
+          reject('Aborted');
+        },
       };
       requests.push(request);
       if (automaticAbort) options.signal?.addEventListener('abort', request.finishAbort);
@@ -150,17 +183,38 @@ function setup(t: TestContext, options: {
   });
   initCollectionPrefetch();
   return {
-    anchors, grid, document, window, navigator, connection, observed, requests, timers, advance,
+    anchors,
+    grid,
+    document,
+    window,
+    navigator,
+    connection,
+    observed,
+    requests,
+    timers,
+    advance,
     intersect(indices = anchors.map((_, index) => index), visible = true) {
-      notify(indices.map((index) => ({ target: anchors[index], isIntersecting: visible }))
-        .filter((entry) => observed.has(entry.target)));
+      notify(
+        indices
+          .map((index) => ({ target: anchors[index], isIntersecting: visible }))
+          .filter((entry) => observed.has(entry.target)),
+      );
     },
-    load() { document.readyState = 'complete'; window.emit('load'); },
+    load() {
+      document.readyState = 'complete';
+      window.emit('load');
+    },
     visibility(hidden: boolean) {
       document.visibilityState = hidden ? 'hidden' : 'visible';
       document.emit('visibilitychange');
     },
-    navigate(options: { sameDocument?: boolean; downloadRequest?: string; defaultPrevented?: boolean } = {}) {
+    navigate(
+      options: {
+        sameDocument?: boolean;
+        downloadRequest?: string;
+        defaultPrevented?: boolean;
+      } = {},
+    ) {
       const controller = new AbortController();
       navigation.emit('navigate', {
         signal: controller.signal,
@@ -185,7 +239,10 @@ test('viewport prefetch waits for page load and 300ms, cancelling cards that lea
   assert.equal(h.requests.length, 0);
   h.intersect([1], false);
   h.advance(1);
-  assert.deepEqual(h.requests.map((request) => request.url), [h.anchors[0].href]);
+  assert.deepEqual(
+    h.requests.map((request) => request.url),
+    [h.anchors[0].href],
+  );
 });
 
 test('two slots remain occupied until response bodies finish, and failures release a slot', async (t) => {
@@ -221,19 +278,29 @@ test('queued cards are rechecked when filters or scroll change before observer n
   h.intersect([5], false);
   h.requests[0].finish();
   await settle();
-  assert.deepEqual(h.requests.map((request) => request.url), [0, 1, 6].map((index) => h.anchors[index].href));
+  assert.deepEqual(
+    h.requests.map((request) => request.url),
+    [0, 1, 6].map((index) => h.anchors[index].href),
+  );
 });
 
 test('URL hashes are deduplicated and external/current-page links are excluded', async (t) => {
-  const h = setup(t, { hrefs: [
-    '/picks/things/one#first', '/picks/things/one#second', 'https://other.test/picks/things/two',
-    '/picks#top', '/picks?category=ski', '/picks/things/two',
-  ] });
+  const h = setup(t, {
+    hrefs: [
+      '/picks/things/one#first',
+      '/picks/things/one#second',
+      'https://other.test/picks/things/two',
+      '/picks#top',
+      '/picks?category=ski',
+      '/picks/things/two',
+    ],
+  });
   h.intersect();
   h.advance(300);
-  assert.deepEqual(h.requests.map((request) => request.url), [
-    'https://example.test/picks/things/one', 'https://example.test/picks?category=ski',
-  ]);
+  assert.deepEqual(
+    h.requests.map((request) => request.url),
+    ['https://example.test/picks/things/one', 'https://example.test/picks?category=ski'],
+  );
   h.requests[0].finish();
   await settle();
   assert.equal(h.requests[2].url, 'https://example.test/picks/things/two');
@@ -269,7 +336,10 @@ for (const network of [{ saveData: true }, { effectiveType: '2g' }, { effectiveT
     h.advance(300);
     assert.equal(h.requests.length, 0);
     h.grid.emit('pointerdown', { target: h.anchors[3] });
-    assert.deepEqual(h.requests.map((request) => request.url), [h.anchors[3].href]);
+    assert.deepEqual(
+      h.requests.map((request) => request.url),
+      [h.anchors[3].href],
+    );
     h.requests[0].finish();
     await settle();
     assert.equal(h.requests.length, 1);
@@ -365,7 +435,10 @@ test('canceling document navigation resumes prefetch for the current page', asyn
   h.intersect();
   h.advance(300);
   assert.equal(h.requests.length, 4);
-  assert.deepEqual(h.requests.slice(2).map((request) => request.url), h.anchors.slice(0, 2).map((anchor) => anchor.href));
+  assert.deepEqual(
+    h.requests.slice(2).map((request) => request.url),
+    h.anchors.slice(0, 2).map((anchor) => anchor.href),
+  );
 });
 
 for (const navigation of [

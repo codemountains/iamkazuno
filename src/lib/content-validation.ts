@@ -30,11 +30,15 @@ export function resolveContentConfiguration(env: ContentEnvironment): ContentCon
   }
 
   if (!serviceDomain || !apiKey) {
-    return fail('DATA_SOURCE=microcms には MICROCMS_SERVICE_DOMAIN と MICROCMS_API_KEY が必要です。');
+    return fail(
+      'DATA_SOURCE=microcms には MICROCMS_SERVICE_DOMAIN と MICROCMS_API_KEY が必要です。',
+    );
   }
 
   if (!/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(serviceDomain)) {
-    return fail('MICROCMS_SERVICE_DOMAIN は https:// や .microcms.io を除いたサービスIDを指定してください。');
+    return fail(
+      'MICROCMS_SERVICE_DOMAIN は https:// や .microcms.io を除いたサービスIDを指定してください。',
+    );
   }
 
   return { source: 'microcms', serviceDomain, apiKey };
@@ -42,7 +46,8 @@ export function resolveContentConfiguration(env: ContentEnvironment): ContentCon
 
 function searchAliases(data: Record<string, unknown>, path: string): Pick<Thing, 'searchAliases'> {
   const entries = data.search_aliases ?? [];
-  if (!Array.isArray(entries)) throw new Error(`${path}.search_aliases は繰り返しフィールドである必要があります。`);
+  if (!Array.isArray(entries))
+    throw new Error(`${path}.search_aliases は繰り返しフィールドである必要があります。`);
   const aliases = new Set<string>();
   for (const [index, entry] of entries.entries()) {
     const entryPath = `${path}.search_aliases[${index}]`;
@@ -52,7 +57,11 @@ function searchAliases(data: Record<string, unknown>, path: string): Pick<Thing,
   return aliases.size ? { searchAliases: [...aliases] } : {};
 }
 
-function namedContents(input: unknown, endpoint: 'brands' | 'categories', fallbackName: string): Array<Brand | Category> {
+function namedContents(
+  input: unknown,
+  endpoint: 'brands' | 'categories',
+  fallbackName: string,
+): Array<Brand | Category> {
   if (!Array.isArray(input)) return fail(`${endpoint} API はリスト形式で作成してください。`);
   const seen = new Set<string>();
   return input.map((entry, index) => {
@@ -62,7 +71,8 @@ function namedContents(input: unknown, endpoint: 'brands' | 'categories', fallba
     if (seen.has(id)) throw new Error(`${path}.id が重複しています。`);
     seen.add(id);
     return {
-      id, name: optionalText(data.name, `${path}.name`) || fallbackName,
+      id,
+      name: optionalText(data.name, `${path}.name`) || fallbackName,
       ...(endpoint === 'brands' && searchAliases(data, path)),
     };
   });
@@ -100,7 +110,8 @@ export function validateThings(
     seen.add(id);
     const brandId = referenceId(data.ref_brand, `${path}.ref_brand`);
     const references = data.ref_categories ?? [];
-    if (!Array.isArray(references)) throw new Error(`${path}.ref_categories は複数コンテンツ参照である必要があります。`);
+    if (!Array.isArray(references))
+      throw new Error(`${path}.ref_categories は複数コンテンツ参照である必要があります。`);
     const selectedCategories = new Map<string, Category>();
     for (const [referenceIndex, reference] of references.entries()) {
       const categoryId = referenceId(reference, `${path}.ref_categories[${referenceIndex}]`);
@@ -109,7 +120,8 @@ export function validateThings(
       if (category) selectedCategories.set(category.id, category);
     }
     const morePicks = data.more_picks ?? [];
-    if (!Array.isArray(morePicks)) throw new Error(`${path}.more_picks は複数コンテンツ参照である必要があります。`);
+    if (!Array.isArray(morePicks))
+      throw new Error(`${path}.more_picks は複数コンテンツ参照である必要があります。`);
     const morePickIds = new Set<string>();
     for (const [referenceIndex, reference] of morePicks.entries()) {
       const pickId = referenceId(reference, `${path}.more_picks[${referenceIndex}]`);
@@ -120,8 +132,11 @@ export function validateThings(
       id,
       name: optionalText(data.name, `${path}.name`) || 'Unnamed item',
       ...searchAliases(data, path),
-      brand: brandId ? knownBrands.get(brandId) ?? null : null,
-      image: data.main_image == null ? null : validateImage(data.main_image, `${path}.main_image`, options.allowLocalImages ?? false),
+      brand: brandId ? (knownBrands.get(brandId) ?? null) : null,
+      image:
+        data.main_image == null
+          ? null
+          : validateImage(data.main_image, `${path}.main_image`, options.allowLocalImages ?? false),
       descriptionHtml: sanitizeDescription(optionalText(data.description, `${path}.description`)),
       categories: [...selectedCategories.values()],
       morePickIds: [...morePickIds],

@@ -19,7 +19,12 @@ function mockCMS(t: TestContext, notes: unknown[]) {
     assert.equal(url.pathname, '/api/v1/notes');
     const limit = Number(url.searchParams.get('limit') ?? 10);
     const offset = Number(url.searchParams.get('offset') ?? 0);
-    return Response.json({ contents: notes.slice(offset, offset + limit), totalCount: notes.length, limit, offset });
+    return Response.json({
+      contents: notes.slice(offset, offset + limit),
+      totalCount: notes.length,
+      limit,
+      offset,
+    });
   });
   return requests;
 }
@@ -30,21 +35,31 @@ async function loadNotesModule(t: TestContext, production: boolean) {
   t.after(() => rm(directory, { recursive: true, force: true }));
   const file = join(directory, 'notes.mjs');
   const result = await build({
-    entryPoints: ['src/lib/notes.ts'], bundle: true, platform: 'node', format: 'esm', packages: 'external', write: false,
+    entryPoints: ['src/lib/notes.ts'],
+    bundle: true,
+    platform: 'node',
+    format: 'esm',
+    packages: 'external',
+    write: false,
     define: {
       'import.meta.env.PROD': String(production),
       'import.meta.env.DATA_SOURCE': JSON.stringify('microcms'),
-      'import.meta.env.MICROCMS_SERVICE_DOMAIN': JSON.stringify(credentials.MICROCMS_SERVICE_DOMAIN),
+      'import.meta.env.MICROCMS_SERVICE_DOMAIN': JSON.stringify(
+        credentials.MICROCMS_SERVICE_DOMAIN,
+      ),
       'import.meta.env.MICROCMS_API_KEY': JSON.stringify(credentials.MICROCMS_API_KEY),
     },
   });
   await writeFile(file, result.outputFiles[0].text);
-  return await import(pathToFileURL(file).href) as typeof import('../src/lib/notes');
+  return (await import(pathToFileURL(file).href)) as typeof import('../src/lib/notes');
 }
 
 test('notes tolerate optional fields and preserve an empty published collection', () => {
   assert.deepEqual(validateNotes([]), []);
-  for (const note of validateNotes([{ id: 'absent' }, { id: 'null', title: ' ', note: null, publishedAt: null, note_photo: null }])) {
+  for (const note of validateNotes([
+    { id: 'absent' },
+    { id: 'null', title: ' ', note: null, publishedAt: null, note_photo: null },
+  ])) {
     assert.equal(note.title, '無題');
     assert.equal(note.bodyHtml, '');
     assert.equal(note.excerpt, '');
@@ -54,34 +69,61 @@ test('notes tolerate optional fields and preserve an empty published collection'
 });
 
 test('photo sections preserve image order, dimensions and optional titles', () => {
-  const landscape = { url: 'https://images.microcms-assets.io/assets/landscape.jpeg', width: 1818, height: 1228 };
-  const portrait = { url: 'https://images.microcms-assets.io/assets/portrait.jpeg', width: 1228, height: 1818, alt: '雨上がりの山' };
+  const landscape = {
+    url: 'https://images.microcms-assets.io/assets/landscape.jpeg',
+    width: 1818,
+    height: 1228,
+  };
+  const portrait = {
+    url: 'https://images.microcms-assets.io/assets/portrait.jpeg',
+    width: 1228,
+    height: 1818,
+    alt: '雨上がりの山',
+  };
   const [several, single, empty, titleOnly] = validateNotes([
-    { id: 'several', note_photo: { fieldId: 'photo_section', photo_title: ' 雨乞岳、イブネ・クラシ ', photo_list: [portrait, landscape] } },
+    {
+      id: 'several',
+      note_photo: {
+        fieldId: 'photo_section',
+        photo_title: ' 雨乞岳、イブネ・クラシ ',
+        photo_list: [portrait, landscape],
+      },
+    },
     { id: 'single', note_photo: { photo_list: [landscape] } },
     { id: 'empty', note_photo: { photo_list: [] } },
     { id: 'title-only', note_photo: { photo_title: '山', photo_list: null } },
   ]);
-  assert.deepEqual(several.photoSection, { title: '雨乞岳、イブネ・クラシ', photos: [portrait, landscape] });
+  assert.deepEqual(several.photoSection, {
+    title: '雨乞岳、イブネ・クラシ',
+    photos: [portrait, landscape],
+  });
   assert.deepEqual(single.photoSection, { title: '', photos: [landscape] });
   assert.equal(empty.photoSection, null);
   assert.equal(titleOnly.photoSection, null);
   for (const url of ['javascript:alert(1)', '/og-notes.png']) {
-    assert.throws(() => validateNotes([{ id: 'invalid', note_photo: { photo_list: [{ ...portrait, url }] } }]),
-      /\[notes\] notes\[0\]\.note_photo\.photo_list\[0\]\.url/);
+    assert.throws(
+      () => validateNotes([{ id: 'invalid', note_photo: { photo_list: [{ ...portrait, url }] } }]),
+      /\[notes\] notes\[0\]\.note_photo\.photo_list\[0\]\.url/,
+    );
   }
 });
 
 test('notes sanitize rich text and create a readable, entity-decoded plain-text excerpt', () => {
-  const [note] = validateNotes([{
-    id: 'rich-text', title: ' 一つの記録 ',
-    note: '<h1>考えたこと</h1><p>山と<strong>日常</strong> &amp; &lt;余白&gt;&nbsp;&#x1F3D4;</p><p>次の段落<br>続き。</p><script>secret()</script><a href="javascript:alert(1)">リンク</a>',
-  }]);
+  const [note] = validateNotes([
+    {
+      id: 'rich-text',
+      title: ' 一つの記録 ',
+      note: '<h1>考えたこと</h1><p>山と<strong>日常</strong> &amp; &lt;余白&gt;&nbsp;&#x1F3D4;</p><p>次の段落<br>続き。</p><script>secret()</script><a href="javascript:alert(1)">リンク</a>',
+    },
+  ]);
   assert.equal(note.title, '一つの記録');
   assert.match(note.bodyHtml, /<h2>考えたこと<\/h2>/);
   assert.doesNotMatch(note.bodyHtml, /script|javascript|secret/);
   assert.equal(note.excerpt, '考えたこと 山と日常 & <余白> 🏔 次の段落 続き。 リンク');
-  assert.equal(validateNotes([{ id: 'double-encoded', note: '<p>&amp;lt;still text&amp;gt;</p>' }])[0].excerpt, '&lt;still text&gt;');
+  assert.equal(
+    validateNotes([{ id: 'double-encoded', note: '<p>&amp;lt;still text&amp;gt;</p>' }])[0].excerpt,
+    '&lt;still text&gt;',
+  );
 });
 
 test('excerpt truncation preserves complete graphemes and only adds ellipsis when needed', () => {
@@ -101,16 +143,33 @@ test('publication order uses normalized instants, keeps ties stable, and puts un
     { id: 'newer', publishedAt: '2026-11-16T22:30:00Z' },
     { id: 'same-time', publishedAt: '2026-11-16T22:30:00Z' },
   ]);
-  assert.deepEqual(notes.map((note) => note.id), ['newer', 'same-time', 'older', 'undated']);
+  assert.deepEqual(
+    notes.map((note) => note.id),
+    ['newer', 'same-time', 'older', 'undated'],
+  );
   assert.equal(notes[2].publishedAt, '2026-11-16T14:30:00.000Z');
 });
 
 test('notes pagination keeps the index for an empty collection and preserves order across ten-note pages', () => {
-  for (const [count, pageSizes] of [[0, [0]], [10, [10]], [11, [10, 1]], [20, [10, 10]], [21, [10, 10, 1]]] as const) {
-    const notes = validateNotes(Array.from({ length: count }, (_, index) => ({ id: `note-${index}` })));
+  for (const [count, pageSizes] of [
+    [0, [0]],
+    [10, [10]],
+    [11, [10, 1]],
+    [20, [10, 10]],
+    [21, [10, 10, 1]],
+  ] as const) {
+    const notes = validateNotes(
+      Array.from({ length: count }, (_, index) => ({ id: `note-${index}` })),
+    );
     const pages = paginateNotes(notes);
-    assert.deepEqual(pages.map((page) => page.notes.length), pageSizes);
-    assert.deepEqual(pages.flatMap((page) => page.notes), notes);
+    assert.deepEqual(
+      pages.map((page) => page.notes.length),
+      pageSizes,
+    );
+    assert.deepEqual(
+      pages.flatMap((page) => page.notes),
+      notes,
+    );
     for (const [index, page] of pages.entries()) {
       assert.equal(page.currentPage, index + 1);
       assert.equal(page.totalPages, pageSizes.length);
@@ -126,13 +185,20 @@ test('malformed API values, invalid dates and duplicate IDs fail with field cont
   assert.throws(() => validateNotes([{ id: 'a' }, { id: 'a' }]), /重複/);
   assert.throws(() => validateNotes([{ id: 'a', title: 12 }]), /title/);
   assert.throws(() => validateNotes([{ id: 'a', note: {} }]), /note/);
-  for (const publishedAt of ['yesterday', '2026-11-17', '2026-02-30T00:00:00Z', '2026-13-10T00:00:00Z']) {
+  for (const publishedAt of [
+    'yesterday',
+    '2026-11-17',
+    '2026-02-30T00:00:00Z',
+    '2026-13-10T00:00:00Z',
+  ]) {
     assert.throws(() => validateNotes([{ id: 'a', publishedAt }]), /publishedAt/);
   }
 });
 
 test('explicit sample mode remains offline and identifies its content source', async (t) => {
-  const fetchMock = t.mock.method(globalThis, 'fetch', () => { throw new Error('Sample mode must not fetch'); });
+  const fetchMock = t.mock.method(globalThis, 'fetch', () => {
+    throw new Error('Sample mode must not fetch');
+  });
   const content = await getNotes({ ...credentials, DATA_SOURCE: 'sample' });
   assert.equal(content.source, 'sample');
   assert.ok(content.notes.length > 0);
@@ -141,12 +207,19 @@ test('explicit sample mode remains offline and identifies its content source', a
 });
 
 test('CMS loading fetches every page from notes in publication order without draft keys', async (t) => {
-  const requests = mockCMS(t, Array.from({ length: 101 }, (_, index) => ({ id: `note-${index}` })));
+  const requests = mockCMS(
+    t,
+    Array.from({ length: 101 }, (_, index) => ({ id: `note-${index}` })),
+  );
   const content = await getNotes(credentials);
   assert.equal(content.source, 'microcms');
   assert.equal(content.notes.length, 101);
   assert.ok(requests.some((url) => Number(url.searchParams.get('offset')) > 0));
-  assert.ok(requests.every((url) => url.searchParams.get('fields') === 'id,title,note,publishedAt,note_photo'));
+  assert.ok(
+    requests.every(
+      (url) => url.searchParams.get('fields') === 'id,title,note,publishedAt,note_photo',
+    ),
+  );
   assert.ok(requests.every((url) => url.searchParams.get('orders') === '-publishedAt'));
   assert.ok(requests.every((url) => !url.searchParams.has('draftKey')));
 });
@@ -174,7 +247,9 @@ test('build route loads share a snapshot while dev and explicit loads see CMS up
 });
 
 test('CMS failures hide credentials, never fall back, and can retry the build snapshot', async (t) => {
-  t.mock.method(globalThis, 'fetch', async () => Response.json({ message: credentials.MICROCMS_API_KEY }, { status: 403 }));
+  t.mock.method(globalThis, 'fetch', async () =>
+    Response.json({ message: credentials.MICROCMS_API_KEY }, { status: 403 }),
+  );
   const production = await loadNotesModule(t, true);
   await assert.rejects(production.getNotes(), (error: unknown) => {
     assert.ok(error instanceof Error);

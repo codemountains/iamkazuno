@@ -21,9 +21,18 @@ test('AVIF and WebP offer matching widths, including small cards, without densit
   assert.ok(sources);
   const avif = candidates(sources.avifSrcset);
   const webp = candidates(sources.webpSrcset);
-  assert.deepEqual(avif.map(({ width }) => width), webp.map(({ width }) => width));
-  assert.deepEqual(avif.map(({ width }) => width), [80, 120, 160, 240, 320, 400, 480, 640, 960]);
-  for (const [format, variants] of [['avif', avif], ['webp', webp]] as const) {
+  assert.deepEqual(
+    avif.map(({ width }) => width),
+    webp.map(({ width }) => width),
+  );
+  assert.deepEqual(
+    avif.map(({ width }) => width),
+    [80, 120, 160, 240, 320, 400, 480, 640, 960],
+  );
+  for (const [format, variants] of [
+    ['avif', avif],
+    ['webp', webp],
+  ] as const) {
     for (const { url, width } of variants) {
       assert.equal(Number(url.searchParams.get('w')), width);
       assert.equal(url.searchParams.get('fm'), format);
@@ -39,11 +48,18 @@ test('listing images use quality 80 while detail images retain quality 85 across
     const sources = getThingImageSources({ ...image, url: `${image.url}?q=10` }, detail);
     assert.ok(sources);
     const quality = detail ? '85' : '80';
-    const urls = [new URL(sources.src), ...candidates(sources.avifSrcset).map(({ url }) => url), ...candidates(sources.webpSrcset).map(({ url }) => url)];
+    const urls = [
+      new URL(sources.src),
+      ...candidates(sources.avifSrcset).map(({ url }) => url),
+      ...candidates(sources.webpSrcset).map(({ url }) => url),
+    ];
     assert.ok(urls.every((url) => url.searchParams.get('q') === quality));
     if (detail) {
       for (const srcset of [sources.avifSrcset, sources.webpSrcset]) {
-        assert.deepEqual(candidates(srcset).map(({ width }) => width), [480, 640, 960, 1280]);
+        assert.deepEqual(
+          candidates(srcset).map(({ width }) => width),
+          [480, 640, 960, 1280],
+        );
       }
     }
   }

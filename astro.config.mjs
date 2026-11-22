@@ -18,7 +18,12 @@ if (site) {
 export default defineConfig({
   output: 'static',
   site,
-  integrations: [minifyInlineScripts(), optimizeStaticAssets(), contentSecurityPolicy(), indexableSitemap()],
+  integrations: [
+    minifyInlineScripts(),
+    optimizeStaticAssets(),
+    contentSecurityPolicy(),
+    indexableSitemap(),
+  ],
   // Cloudflareの_redirectsで転送するため、旧URLごとのHTMLは出力しない。
   build: { redirects: false },
   // 主要なサイト内リンクだけを先読みする。通常のページ遷移・履歴復元は維持する。

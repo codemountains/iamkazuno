@@ -1,4 +1,4 @@
 interface:
-  display_name: "OG 画像生成"
-  short_description: "iamkaz.uno と notes・picks の文字中心の OG 画像を生成"
-  default_prompt: "$generate-og を使って、iamkaz.uno・iamkaz.uno/notes・iamkaz.uno/picks の OG 画像を再生成してください。"
+  display_name: 'OG 画像生成'
+  short_description: 'iamkaz.uno と notes・picks の文字中心の OG 画像を生成'
+  default_prompt: '$generate-og を使って、iamkaz.uno・iamkaz.uno/notes・iamkaz.uno/picks の OG 画像を再生成してください。'

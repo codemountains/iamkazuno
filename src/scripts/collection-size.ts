@@ -1,4 +1,8 @@
-import { collectionSize, mobileCollectionColumns, parseCollectionSize } from '../lib/collection-size';
+import {
+  collectionSize,
+  mobileCollectionColumns,
+  parseCollectionSize,
+} from '../lib/collection-size';
 
 export function initCollectionSize() {
   const gridElement = document.querySelector<HTMLElement>('[data-item-grid]');
@@ -10,14 +14,18 @@ export function initCollectionSize() {
   const root = document.documentElement;
   const mobile = window.matchMedia('(max-width: 600px)');
   const images = Array.from(grid.querySelectorAll<HTMLImageElement>('img'));
-  const pictures = Array.from(grid.querySelectorAll<HTMLImageElement | HTMLSourceElement>('img, source'));
+  const pictures = Array.from(
+    grid.querySelectorAll<HTMLImageElement | HTMLSourceElement>('img, source'),
+  );
   const items = Array.from(grid.querySelectorAll<HTMLElement>('[data-item]'));
   const gridStyle = getComputedStyle(grid);
   const columnGap = parseFloat(gridStyle.getPropertyValue('--collection-column-gap'));
   const maxColumns = parseInt(gridStyle.getPropertyValue('--collection-max-columns'), 10);
   let gridWidth = grid.getBoundingClientRect().width;
   let gridWidthDirty = false;
-  let size = parseCollectionSize(root.style.getPropertyValue('--collection-item-size').replace('px', ''));
+  let size = parseCollectionSize(
+    root.style.getPropertyValue('--collection-item-size').replace('px', ''),
+  );
   let layoutInitialized = false;
   let mobileLayout = mobile.matches;
   let pendingSize: number | undefined;
@@ -31,7 +39,10 @@ export function initCollectionSize() {
     if (mobile.matches) return mobileCollectionColumns(value);
     // 幅が未確定なら省略せず、従来どおりサイズ変更として扱う。
     if (!(gridWidth > 0 && columnGap >= 0 && maxColumns > 0)) return value;
-    return Math.max(1, Math.min(maxColumns, Math.floor((gridWidth + columnGap) / (value + columnGap))));
+    return Math.max(
+      1,
+      Math.min(maxColumns, Math.floor((gridWidth + columnGap) / (value + columnGap))),
+    );
   }
 
   function updateImageSizes() {
@@ -62,7 +73,10 @@ export function initCollectionSize() {
     const previousColumns = layoutColumns(size);
     size = parseCollectionSize(value);
     const columns = mobileCollectionColumns(size);
-    const layoutChanged = !layoutInitialized || previousColumns !== layoutColumns(size) || mobileLayout !== mobile.matches;
+    const layoutChanged =
+      !layoutInitialized ||
+      previousColumns !== layoutColumns(size) ||
+      mobileLayout !== mobile.matches;
     let anchor: HTMLElement | undefined;
     let anchorTop = 0;
     if (layoutChanged) {
@@ -92,7 +106,10 @@ export function initCollectionSize() {
       root.style.setProperty('--collection-mobile-columns', String(columns));
     }
     slider.value = String(size);
-    slider.style.setProperty('--size-progress', `${(size - collectionSize.min) / (collectionSize.max - collectionSize.min) * 100}%`);
+    slider.style.setProperty(
+      '--size-progress',
+      `${((size - collectionSize.min) / (collectionSize.max - collectionSize.min)) * 100}%`,
+    );
     slider.setAttribute('aria-valuetext', mobile.matches ? `横に${columns}列` : `${size}ピクセル`);
     // 同じ幅・列数ならカード幅も同じ。PCの18列上限中も計測と位置補正を省く。
     if (!layoutChanged) return;
@@ -101,7 +118,10 @@ export function initCollectionSize() {
     imageSizesPending = true;
     if (anchor) {
       // 並び直しで見ていた道具を見失わないよう、画面内の縦位置を保つ。
-      window.scrollTo({ top: Math.max(0, window.scrollY + anchor.getBoundingClientRect().top - anchorTop), behavior: 'instant' });
+      window.scrollTo({
+        top: Math.max(0, window.scrollY + anchor.getBoundingClientRect().top - anchorTop),
+        behavior: 'instant',
+      });
     }
   }
 
@@ -137,7 +157,9 @@ export function initCollectionSize() {
     try {
       sessionStorage.setItem(collectionSize.storageKey, String(size));
       unsaved = false;
-    } catch { /* 保存不可でも調整できる。 */ }
+    } catch {
+      /* 保存不可でも調整できる。 */
+    }
   }
 
   function commit() {
@@ -178,7 +200,13 @@ export function initCollectionSize() {
     flush(false);
   });
   // ResizeObserver通知より先に入力のrAFが走る場合だけ、最新幅を取り直す。
-  window.addEventListener('resize', () => { gridWidthDirty = true; }, { passive: true });
+  window.addEventListener(
+    'resize',
+    () => {
+      gridWidthDirty = true;
+    },
+    { passive: true },
+  );
   new ResizeObserver(([entry]) => {
     if (entry) {
       gridWidth = entry.contentRect.width;

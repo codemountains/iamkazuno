@@ -2,15 +2,22 @@ import type { Note, NotePhotoSection } from '../types/notes';
 import { optionalText, record, requiredText, validateImage } from './cms-fields';
 import { plainTextFromHtml, sanitizeDescription } from './rich-text';
 
-function photoSection(value: unknown, path: string, allowLocalImages: boolean): NotePhotoSection | null {
+function photoSection(
+  value: unknown,
+  path: string,
+  allowLocalImages: boolean,
+): NotePhotoSection | null {
   if (value == null) return null;
   const data = record(value, path);
   const list = data.photo_list ?? [];
-  if (!Array.isArray(list)) throw new Error(`${path}.photo_list は画像の配列である必要があります。`);
+  if (!Array.isArray(list))
+    throw new Error(`${path}.photo_list は画像の配列である必要があります。`);
   if (list.length === 0) return null;
   return {
     title: optionalText(data.photo_title, `${path}.photo_title`),
-    photos: list.map((image, index) => validateImage(image, `${path}.photo_list[${index}]`, allowLocalImages)),
+    photos: list.map((image, index) =>
+      validateImage(image, `${path}.photo_list[${index}]`, allowLocalImages),
+    ),
   };
 }
 
@@ -31,11 +38,17 @@ function publicationDate(value: unknown, path: string): string | null {
 
 function excerptFromHtml(html: string): string {
   const normalized = plainTextFromHtml(html);
-  const characters = Array.from(new Intl.Segmenter('ja', { granularity: 'grapheme' }).segment(normalized), (part) => part.segment);
+  const characters = Array.from(
+    new Intl.Segmenter('ja', { granularity: 'grapheme' }).segment(normalized),
+    (part) => part.segment,
+  );
   return characters.length > 140 ? `${characters.slice(0, 140).join('').trimEnd()}…` : normalized;
 }
 
-export function validateNotes(input: unknown, options: { allowLocalImages?: boolean } = {}): Note[] {
+export function validateNotes(
+  input: unknown,
+  options: { allowLocalImages?: boolean } = {},
+): Note[] {
   if (!Array.isArray(input)) throw new Error('[notes] notes API はリスト形式で作成してください。');
   const seen = new Set<string>();
   const notes = input.map((entry, index): Note => {
@@ -51,7 +64,11 @@ export function validateNotes(input: unknown, options: { allowLocalImages?: bool
       bodyHtml,
       excerpt: excerptFromHtml(bodyHtml),
       publishedAt: publicationDate(data.publishedAt, `${path}.publishedAt`),
-      photoSection: photoSection(data.note_photo, `${path}.note_photo`, options.allowLocalImages ?? false),
+      photoSection: photoSection(
+        data.note_photo,
+        `${path}.note_photo`,
+        options.allowLocalImages ?? false,
+      ),
     };
   });
   return notes.sort((a, b) => {

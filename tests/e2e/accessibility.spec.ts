@@ -1,7 +1,9 @@
 import { sampleThings } from '../../src/data/sample';
 import { test, expect, expectCollectionReady } from './fixtures';
 
-test('keyboard users can skip the header, filter, open a detail, and return focus to the item', async ({ page }) => {
+test('keyboard users can skip the header, filter, open a detail, and return focus to the item', async ({
+  page,
+}) => {
   await page.goto('/picks');
   await expectCollectionReady(page);
 
@@ -38,7 +40,10 @@ for (const [name, path] of [
   ['collection', '/picks'],
   ['detail', '/picks/things/mountain-boots'],
 ] as const) {
-  test(`Back to top returns from the ${name} without outlining the header`, async ({ page, isMobile }) => {
+  test(`Back to top returns from the ${name} without outlining the header`, async ({
+    page,
+    isMobile,
+  }) => {
     const viewport = page.viewportSize()!;
     await page.setViewportSize({ ...viewport, height: 550 });
     await page.goto(path);
@@ -66,7 +71,9 @@ for (const [name, path] of [
 test.describe('without JavaScript', () => {
   test.use({ javaScriptEnabled: false });
 
-  test('all items and their detail pages remain available while interactive controls stay hidden', async ({ page }) => {
+  test('all items and their detail pages remain available while interactive controls stay hidden', async ({
+    page,
+  }) => {
     await page.goto('/picks?category=ski');
     await expect(page.locator('[data-item]:visible')).toHaveCount(sampleThings.length);
     await expect(page.getByText('Showing all items.', { exact: true })).toBeVisible();
@@ -77,8 +84,12 @@ test.describe('without JavaScript', () => {
     await page.getByRole('link', { name: 'ブーツ', exact: true }).click();
     await expect(page).toHaveURL(/\/picks\/things\/mountain-boots\/?$/);
     await expect(page.getByRole('heading', { name: 'ブーツ', exact: true })).toBeVisible();
-    await expect(page.getByText('いつもの登山道から、まだ歩いたことのない稜線へ。', { exact: true })).toBeVisible();
-    await expect(page.locator('.detail-image-wrap').getByRole('img', { name: 'サンプル画像' })).toBeVisible();
+    await expect(
+      page.getByText('いつもの登山道から、まだ歩いたことのない稜線へ。', { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.locator('.detail-image-wrap').getByRole('img', { name: 'サンプル画像' }),
+    ).toBeVisible();
     await page.getByRole('link', { name: 'Back to picks', exact: true }).click();
     await expect(page).toHaveURL(/\/picks\/?$/);
     await expect(page.locator('[data-item]:visible')).toHaveCount(sampleThings.length);

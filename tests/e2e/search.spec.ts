@@ -4,10 +4,14 @@ import { test, expect, expectCollectionReady } from './fixtures';
 
 const visibleLinks = (page: Page) => page.locator('[data-item]:visible .item-card-link');
 
-test('the grid resolves without fragments and only open suggestions load details, tolerating a missing fragment', async ({ page }) => {
+test('the grid resolves without fragments and only open suggestions load details, tolerating a missing fragment', async ({
+  page,
+}) => {
   const fragments: string[] = [];
   let release!: () => void;
-  const gate = new Promise<void>((resolve) => { release = resolve; });
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
   await page.route('**/*.pf_fragment', async (route) => {
     fragments.push(route.request().url());
     const fail = fragments.length === 1;
@@ -20,7 +24,9 @@ test('the grid resolves without fragments and only open suggestions load details
   try {
     await page.goto('/picks?q=' + encodeURIComponent(query));
     await expect(visibleLinks(page)).toHaveCount(total);
-    await expect(page.locator('[data-result-count]')).toHaveText(`${String(total).padStart(2, '0')} things`);
+    await expect(page.locator('[data-result-count]')).toHaveText(
+      `${String(total).padStart(2, '0')} things`,
+    );
     expect(fragments).toHaveLength(0);
     await page.getByRole('combobox').focus();
     await expect(page.getByRole('option')).toHaveCount(5);
@@ -35,10 +41,14 @@ test('the grid resolves without fragments and only open suggestions load details
   expect(fragments).toHaveLength(5);
 });
 
-test('search is laid out with the filters and count, and is loaded on demand', async ({ page, isMobile }) => {
+test('search is laid out with the filters and count, and is loaded on demand', async ({
+  page,
+  isMobile,
+}) => {
   const searchRequests: string[] = [];
   page.on('request', (request) => {
-    if (new URL(request.url()).pathname.startsWith('/pagefind/')) searchRequests.push(request.url());
+    if (new URL(request.url()).pathname.startsWith('/pagefind/'))
+      searchRequests.push(request.url());
   });
   await page.goto('/picks');
   await expectCollectionReady(page);
@@ -46,7 +56,11 @@ test('search is laid out with the filters and count, and is loaded on demand', a
   const input = page.getByRole('combobox');
   const count = page.getByRole('status');
   await expect(input).toHaveAccessibleName(/.+/);
-  const [filterRect, inputRect, countRect] = await Promise.all([filters.boundingBox(), input.boundingBox(), count.boundingBox()]);
+  const [filterRect, inputRect, countRect] = await Promise.all([
+    filters.boundingBox(),
+    input.boundingBox(),
+    count.boundingBox(),
+  ]);
   if (isMobile) {
     const toolbarRect = await page.locator('.collection-toolbar').boundingBox();
     expect(filterRect!.y + filterRect!.height).toBeLessThanOrEqual(inputRect!.y);
@@ -57,7 +71,9 @@ test('search is laid out with the filters and count, and is loaded on demand', a
     await expect.poll(() => count.ariaSnapshot()).toContain(`${sampleThings.length} things`);
   } else {
     await expect(count).toBeInViewport();
-    expect(Math.abs((inputRect!.y + inputRect!.height / 2) - (countRect!.y + countRect!.height / 2))).toBeLessThan(5);
+    expect(
+      Math.abs(inputRect!.y + inputRect!.height / 2 - (countRect!.y + countRect!.height / 2)),
+    ).toBeLessThan(5);
     expect(filterRect!.x + filterRect!.width).toBeLessThanOrEqual(countRect!.x + 1);
     expect(countRect!.x + countRect!.width).toBeLessThanOrEqual(inputRect!.x + 1);
   }
@@ -78,7 +94,10 @@ test('search is laid out with the filters and count, and is loaded on demand', a
   await expect(page).toHaveURL(href!);
 });
 
-test('tapping a suggestion opens its product even if the keyboard dismisses during the tap', async ({ page, isMobile }) => {
+test('tapping a suggestion opens its product even if the keyboard dismisses during the tap', async ({
+  page,
+  isMobile,
+}) => {
   test.skip(!isMobile, 'Requires touch input');
   await page.goto('/picks');
   const input = page.getByRole('combobox');
@@ -95,7 +114,9 @@ test('tapping a suggestion opens its product even if the keyboard dismisses duri
   await expect(page).toHaveURL(href!);
 });
 
-test('name and description matches rank and filter existing cards, then restore their original order', async ({ page }) => {
+test('name and description matches rank and filter existing cards, then restore their original order', async ({
+  page,
+}) => {
   await page.goto('/picks?q=' + encodeURIComponent('カメラ'));
   await expectCollectionReady(page);
   const cards = visibleLinks(page);
@@ -105,10 +126,14 @@ test('name and description matches rank and filter existing cards, then restore 
   await expect(page.getByRole('link', { name: 'ブーツ', exact: true })).toBeHidden();
   await expect(page.getByRole('link', { name: 'カメラ', exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'バックパック', exact: true })).toBeVisible();
-  const matches = await cards.evaluateAll((links) => links.map((link) => link.getAttribute('href')));
+  const matches = await cards.evaluateAll((links) =>
+    links.map((link) => link.getAttribute('href')),
+  );
   expect(matches).toContain('/picks/things/other-camera');
   expect(matches).toContain('/picks/things/mountain-backpack');
-  expect(matches.indexOf('/picks/things/other-camera')).toBeLessThan(matches.indexOf('/picks/things/mountain-backpack'));
+  expect(matches.indexOf('/picks/things/other-camera')).toBeLessThan(
+    matches.indexOf('/picks/things/mountain-backpack'),
+  );
   await expect(page.locator('[data-results-label]')).toContainText(String(matches.length));
 
   await page.locator('[data-filter="mountain"]').click();
@@ -123,12 +148,18 @@ test('name and description matches rank and filter existing cards, then restore 
   await input.fill('');
   await expect(page).toHaveURL('/picks?category=mountain');
   await expect(input).toHaveAttribute('aria-expanded', 'false');
-  const mountainPaths = sampleThings.filter((thing) => thing.ref_categories?.some((cat) => cat?.id === 'mountain'))
+  const mountainPaths = sampleThings
+    .filter((thing) => thing.ref_categories?.some((cat) => cat?.id === 'mountain'))
     .map((thing) => `/picks/things/${thing.id}`);
-  await expect.poll(() => cards.evaluateAll((links) => links.map((link) => link.getAttribute('href')))).toEqual(mountainPaths);
+  await expect
+    .poll(() => cards.evaluateAll((links) => links.map((link) => link.getAttribute('href'))))
+    .toEqual(mountainPaths);
 });
 
-test('the remaining results button closes suggestions and preserves the filtered grid', async ({ page, isMobile }) => {
+test('the remaining results button closes suggestions and preserves the filtered grid', async ({
+  page,
+  isMobile,
+}) => {
   await page.goto('/picks');
   const input = page.getByRole('combobox');
   const list = page.getByRole('listbox');
@@ -164,7 +195,10 @@ test('the remaining results button closes suggestions and preserves the filtered
   await expect(more).toBeFocused();
   await page.keyboard.press('ArrowDown');
   await expect(input).toBeFocused();
-  await expect(input).toHaveAttribute('aria-activedescendant', (await list.getByRole('option').first().getAttribute('id'))!);
+  await expect(input).toHaveAttribute(
+    'aria-activedescendant',
+    (await list.getByRole('option').first().getAttribute('id'))!,
+  );
   await page.keyboard.press('ArrowUp');
   await expect(more).toBeFocused();
   await page.keyboard.press('Enter');
@@ -184,7 +218,10 @@ test('the remaining results button closes suggestions and preserves the filtered
   await expect(more).toBeHidden();
 });
 
-test('keyboard selection opens the selected suggestion and returns to a visible focused result', async ({ page, isMobile }) => {
+test('keyboard selection opens the selected suggestion and returns to a visible focused result', async ({
+  page,
+  isMobile,
+}) => {
   await page.goto('/picks');
   await expectCollectionReady(page);
   if (isMobile) {
@@ -202,9 +239,15 @@ test('keyboard selection opens the selected suggestion and returns to a visible 
   await expect(options.first()).toContainText('SAMPLE OBJECTS');
   await expect(input).toHaveAttribute('aria-controls', (await list.getAttribute('id'))!);
   await input.press('ArrowDown');
-  await expect(input).toHaveAttribute('aria-activedescendant', (await options.nth(0).getAttribute('id'))!);
+  await expect(input).toHaveAttribute(
+    'aria-activedescendant',
+    (await options.nth(0).getAttribute('id'))!,
+  );
   await input.press('ArrowDown');
-  await expect(input).toHaveAttribute('aria-activedescendant', (await options.nth(1).getAttribute('id'))!);
+  await expect(input).toHaveAttribute(
+    'aria-activedescendant',
+    (await options.nth(1).getAttribute('id'))!,
+  );
   await input.press('ArrowUp');
   await expect(options.first()).toHaveAttribute('aria-selected', 'true');
   await input.press('Escape');
@@ -218,7 +261,10 @@ test('keyboard selection opens the selected suggestion and returns to a visible 
   await expect(input).not.toHaveAttribute('aria-activedescendant');
   await page.keyboard.press('ArrowUp');
   await expect(input).toBeFocused();
-  await expect(input).toHaveAttribute('aria-activedescendant', (await options.last().getAttribute('id'))!);
+  await expect(input).toHaveAttribute(
+    'aria-activedescendant',
+    (await options.last().getAttribute('id'))!,
+  );
   await expect(options.last()).toHaveAttribute('aria-selected', 'true');
   const result = visibleLinks(page).nth(4);
   const resultPath = await result.getAttribute('href');
@@ -235,7 +281,9 @@ test('keyboard selection opens the selected suggestion and returns to a visible 
   await expect(result).toBeInViewport();
 });
 
-test('arrow keys wrap between products when all matches fit in the suggestions', async ({ page }) => {
+test('arrow keys wrap between products when all matches fit in the suggestions', async ({
+  page,
+}) => {
   await page.goto('/picks');
   const input = page.getByRole('combobox');
   const options = page.getByRole('option');
@@ -274,7 +322,10 @@ test('IME confirmation cannot activate a stale suggestion', async ({ page }) => 
   await expect(visibleLinks(page).first()).toBeFocused();
 });
 
-test('Tab from search focuses the first result and preserves keyboard navigation', async ({ page, browserName }) => {
+test('Tab from search focuses the first result and preserves keyboard navigation', async ({
+  page,
+  browserName,
+}) => {
   await page.goto('/picks?category=mountain');
   const input = page.getByRole('combobox');
   const options = page.getByRole('option');
@@ -301,11 +352,16 @@ test('Tab from search focuses the first result and preserves keyboard navigation
   await expect(page.getByRole('button', { name: 'Clear search' })).toBeFocused();
 });
 
-test('Tab immediately after typing focuses the first result of the pending search', async ({ page, isMobile }) => {
+test('Tab immediately after typing focuses the first result of the pending search', async ({
+  page,
+  isMobile,
+}) => {
   await page.goto('/picks');
   const input = page.getByRole('combobox');
   let release!: () => void;
-  const gate = new Promise<void>((resolve) => { release = resolve; });
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
   await page.route('**/pagefind-entry.json*', async (route) => {
     await gate;
     await route.continue();
@@ -337,10 +393,14 @@ test('a full-width model number and hiragana brand alias find their products', a
   await expect(first.locator('[data-match-kind="alias"] mark')).toHaveText('SC-35');
 
   await input.fill('さんぷるおぶじぇくつ');
-  const brandedCount = sampleThings.filter((thing) => thing.ref_brand?.id === 'sample-objects').length;
+  const brandedCount = sampleThings.filter(
+    (thing) => thing.ref_brand?.id === 'sample-objects',
+  ).length;
   await expect(cards).toHaveCount(brandedCount);
   await expect(first.locator('[data-match-kind="alias"] mark')).toHaveText('サンプルオブジェクツ');
-  await expect(page.getByRole('link', { name: 'ブランド未設定のサンプル', exact: true })).toBeHidden();
+  await expect(
+    page.getByRole('link', { name: 'ブランド未設定のサンプル', exact: true }),
+  ).toBeHidden();
   await expect(page.getByRole('listbox')).toBeVisible();
   await page.getByRole('button', { name: 'Clear search' }).click();
   await expect(input).toHaveValue('');
@@ -358,18 +418,24 @@ test('fuzzy matches show the registered model and the matching brand', async ({ 
   await expect(first.locator('.picks-suggestion-brand mark')).toHaveText('SAMPLE');
 });
 
-test('description-only matches show a single-line excerpt with the original wording', async ({ page }) => {
+test('description-only matches show a single-line excerpt with the original wording', async ({
+  page,
+}) => {
   await page.goto('/picks');
   await expectCollectionReady(page);
   await page.getByRole('combobox').fill('行動食');
-  const pack = page.getByRole('option').filter({ has: page.locator('.picks-suggestion-title', { hasText: /^バックパック$/ }) });
+  const pack = page
+    .getByRole('option')
+    .filter({ has: page.locator('.picks-suggestion-title', { hasText: /^バックパック$/ }) });
   const excerpt = pack.locator('[data-match-kind="description"]');
   await expect(excerpt).toContainText('行動食と飲み物');
   await expect(excerpt.locator('mark')).toHaveText('行動食');
   await expect(excerpt).toHaveCSS('white-space', 'nowrap');
 });
 
-test('query, category and focus are restored after returning from a search result', async ({ page }) => {
+test('query, category and focus are restored after returning from a search result', async ({
+  page,
+}) => {
   const listUrl = '/picks?category=mountain&q=' + encodeURIComponent('カメラ');
   await page.goto(listUrl);
   await expectCollectionReady(page);
@@ -387,10 +453,14 @@ test('query, category and focus are restored after returning from a search resul
   await expect(page.getByRole('link', { name: 'ブーツ', exact: true })).toBeHidden();
 });
 
-test('browser Back restores the focused result and its scroll position after a search', async ({ page }) => {
+test('browser Back restores the focused result and its scroll position after a search', async ({
+  page,
+}) => {
   await page.goto('/picks?q=sample');
   const results = visibleLinks(page);
-  await expect(results).toHaveCount(sampleThings.filter((thing) => thing.ref_brand !== null).length);
+  await expect(results).toHaveCount(
+    sampleThings.filter((thing) => thing.ref_brand !== null).length,
+  );
   const link = results.nth(45);
   await link.focus();
   await link.scrollIntoViewIfNeeded();
@@ -409,7 +479,9 @@ for (const [asset, requestUrl] of [
   ['entry manifest', /\/pagefind-entry\.json(?:\?|$)/],
   ['index chunk', /\.pf_index(?:\?|$)/],
 ] as const) {
-  test(`a failed ${asset} keeps category browsing available and can be retried`, async ({ page }) => {
+  test(`a failed ${asset} keeps category browsing available and can be retried`, async ({
+    page,
+  }) => {
     await page.route(requestUrl, (route) => route.abort());
     await page.goto('/picks?category=mountain&q=' + encodeURIComponent('カメラ'));
     const retry = page.getByRole('button', { name: 'Retry search' });
@@ -426,12 +498,16 @@ for (const [asset, requestUrl] of [
   });
 }
 
-test('category counts follow the query and a category with zero results can show all matches', async ({ page }) => {
+test('category counts follow the query and a category with zero results can show all matches', async ({
+  page,
+}) => {
   const query = '行動食';
   await page.goto('/picks?category=ski');
   const categories = page.getByRole('group', { name: 'カテゴリで絞り込む' });
   const count = (id: string) => categories.locator(`[data-filter="${id}"] .filter-count`);
-  const skiTotal = sampleThings.filter((thing) => thing.ref_categories?.some((category) => category?.id === 'ski')).length;
+  const skiTotal = sampleThings.filter((thing) =>
+    thing.ref_categories?.some((category) => category?.id === 'ski'),
+  ).length;
   async function expectTotals() {
     for (const [id, total] of Object.entries({ '': sampleThings.length, ski: skiTotal })) {
       await expect(count(id)).toBeVisible();
@@ -440,7 +516,10 @@ test('category counts follow the query and a category with zero results can show
   }
   await expectTotals();
   await page.getByRole('combobox').fill(query);
-  const showAll = page.getByRole('button', { name: 'View 9 things across all categories', exact: true });
+  const showAll = page.getByRole('button', {
+    name: 'View 9 things across all categories',
+    exact: true,
+  });
   await expect(showAll).toBeVisible();
   await expect.poll(() => page.getByRole('status').ariaSnapshot()).toMatch(/ski.*00 things/s);
   await expect(visibleLinks(page)).toHaveCount(0);

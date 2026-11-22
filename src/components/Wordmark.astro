@@ -1,10 +1,23 @@
 ---
 import { collectionPath, notesPath } from '../lib/paths';
 
-interface Props { small?: boolean; section?: 'picks' | 'notes' }
+interface Props {
+  small?: boolean;
+  section?: 'picks' | 'notes';
+}
 const { small = false, section = 'picks' } = Astro.props;
 const href = section === 'notes' ? notesPath : collectionPath;
 ---
-<a href={href} data-astro-prefetch class:list={['wordmark', { 'wordmark--small': small }]} aria-label={`/${section} ホーム`}>
-  <span class="wordmark-slash">/</span>{section}<span class="wordmark-dot" aria-hidden="true">.</span>
+
+<a
+  href={href}
+  data-astro-prefetch
+  class:list={['wordmark', { 'wordmark--small': small }]}
+  aria-label={`/${section} ホーム`}
+>
+  <span class="wordmark-slash">/</span>
+  {section}
+  <span class="wordmark-dot" aria-hidden="true">
+    .
+  </span>
 </a>

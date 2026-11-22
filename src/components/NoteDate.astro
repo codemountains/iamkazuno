@@ -1,8 +1,18 @@
 ---
-interface Props { date: string | null }
+interface Props {
+  date: string | null;
+}
 const { date } = Astro.props;
-const label = date ? new Intl.DateTimeFormat('ja-JP', {
-  timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit',
-}).format(new Date(date)).replaceAll('/', '.') : null;
+const label = date
+  ? new Intl.DateTimeFormat('ja-JP', {
+      timeZone: 'Asia/Tokyo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    })
+      .format(new Date(date))
+      .replaceAll('/', '.')
+  : null;
 ---
+
 {date && <time datetime={date}>{label}</time>}

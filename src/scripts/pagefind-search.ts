@@ -11,7 +11,10 @@ interface SearchEngine {
 }
 
 interface SearchBundle {
-  createInstance(options: { noWorker: boolean; ranking: { metaWeights: Record<string, number> } }): SearchEngine;
+  createInstance(options: {
+    noWorker: boolean;
+    ranking: { metaWeights: Record<string, number> };
+  }): SearchEngine;
 }
 
 interface SearchPaths {
@@ -41,14 +44,19 @@ async function loadPaths(): Promise<SearchPaths> {
 
 async function loadEngine() {
   const [bundle, { paths, aliasFieldCount }] = await Promise.all([loadBundle(), loadPaths()]);
-  const metaWeights: Record<string, number> = { title: 10, brand: 8, description: 0, alias_labels: 0 };
+  const metaWeights: Record<string, number> = {
+    title: 10,
+    brand: 8,
+    description: 0,
+    alias_labels: 0,
+  };
   for (let i = 0; i < aliasFieldCount; i++) metaWeights[`alias_${i}`] = 3;
   const client = bundle.createInstance({ noWorker: true, ranking: { metaWeights } });
   return { client, paths };
 }
 
 export async function searchPicks(term: string): Promise<Map<string, PickSearchHit>> {
-  const loading = engine ??= loadEngine();
+  const loading = (engine ??= loadEngine());
   try {
     const { client, paths } = await loading;
     const { results } = await client.search(term);
@@ -62,7 +70,12 @@ export async function searchPicks(term: string): Promise<Map<string, PickSearchH
         async loadEvidence() {
           try {
             const { meta, excerpt } = await result.data();
-            return { matchedMetaFields, description: meta.description, aliases: meta.alias_labels?.split('\n'), excerpt };
+            return {
+              matchedMetaFields,
+              description: meta.description,
+              aliases: meta.alias_labels?.split('\n'),
+              excerpt,
+            };
           } catch {
             // 候補の補足が取得できない場合も、商品名やブランドと一覧は利用できる。
             return { matchedMetaFields };

@@ -10,7 +10,9 @@ const variants = {
 };
 const [target, requestedOutput, ...extra] = process.argv.slice(2);
 if (!Object.hasOwn(variants, target) || extra.length) {
-  throw new Error('Usage: node generate.mjs <home|notes|picks> [output.png] (run from the repository root)');
+  throw new Error(
+    'Usage: node generate.mjs <home|notes|picks> [output.png] (run from the repository root)',
+  );
 }
 const output = resolve(requestedOutput ?? `public/og-${target}.png`);
 if (!output.endsWith('.png')) throw new Error('Output must have a .png extension.');
@@ -22,7 +24,9 @@ function color(name) {
   if (!value) throw new Error(`Missing light-theme color: --${name}`);
   return value;
 }
-const font = await readFile(new URL(import.meta.resolve('@fontsource/dm-mono/files/dm-mono-latin-400-normal.woff2')));
+const font = await readFile(
+  new URL(import.meta.resolve('@fontsource/dm-mono/files/dm-mono-latin-400-normal.woff2')),
+);
 const html = `<!doctype html>
 <html lang="en">
 <meta charset="utf-8">
@@ -59,7 +63,10 @@ await mkdir('.tmp/og', { recursive: true });
 await writeFile(`.tmp/og/${target}.html`, html);
 const browser = await chromium.launch();
 try {
-  const page = await browser.newPage({ viewport: { width: 1200, height: 630 }, deviceScaleFactor: 1 });
+  const page = await browser.newPage({
+    viewport: { width: 1200, height: 630 },
+    deviceScaleFactor: 1,
+  });
   await page.setContent(html);
   await page.evaluate(() => document.fonts.ready);
   const png = await page.screenshot({ type: 'png' });

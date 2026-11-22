@@ -8,8 +8,10 @@ import { plainTextFromHtml } from './rich-text';
 
 const segmenter = new Intl.Segmenter('ja', { granularity: 'word' });
 function normalizedWords(text: string): string {
-  return Array.from(segmenter.segment(text)).filter((part) => part.isWordLike)
-    .map((part) => normalizeSearchQuery(part.segment)).join(' ');
+  return Array.from(segmenter.segment(text))
+    .filter((part) => part.isWordLike)
+    .map((part) => normalizeSearchQuery(part.segment))
+    .join(' ');
 }
 
 // 型番の区切り方は入力によって異なる。SC-35 / SC35 の両方から引けるようにする。
@@ -31,7 +33,8 @@ function indexedName(value: string): string {
 export function picksSearchRecord(thing: Thing): CustomRecord {
   const description = plainTextFromHtml(thing.descriptionHtml);
   // Pagefind は本文が空のレコードを索引に含めない。
-  const text = [description, ...thing.categories.map(({ name }) => name)].join(' ').trim() || thing.name;
+  const text =
+    [description, ...thing.categories.map(({ name }) => name)].join(' ').trim() || thing.name;
   // 検索窓と同じ順序で、分かち書きの前に文全体のかな・英数を正規化する。
   const foldedText = normalizeSearchQuery(text);
   const aliases = [...(thing.searchAliases ?? []), ...(thing.brand?.searchAliases ?? [])];
@@ -63,7 +66,9 @@ export async function buildPicksSearch(things: Thing[]) {
     let aliasFieldCount = 0;
     for (const thing of things) {
       const record = picksSearchRecord(thing);
-      const aliasFields = Object.keys(record.meta ?? {}).filter((field) => /^alias_\d+$/.test(field));
+      const aliasFields = Object.keys(record.meta ?? {}).filter((field) =>
+        /^alias_\d+$/.test(field),
+      );
       aliasFieldCount = Math.max(aliasFieldCount, aliasFields.length);
       const result = await index.addCustomRecord(record);
       checkErrors(result.errors);
@@ -76,18 +81,24 @@ export async function buildPicksSearch(things: Thing[]) {
       const fragment = /^fragment\/(.+)\.pf_fragment$/.exec(path);
       if (!fragment) continue;
       const json = gunzipSync(content).toString('utf8');
-      if (!json.startsWith('pagefind_dcd')) throw new Error(`[picks] Unknown Pagefind fragment format: ${path}`);
+      if (!json.startsWith('pagefind_dcd'))
+        throw new Error(`[picks] Unknown Pagefind fragment format: ${path}`);
       const { url } = JSON.parse(json.slice('pagefind_dcd'.length));
-      if (typeof url !== 'string') throw new Error(`[picks] Missing Pagefind fragment URL: ${path}`);
+      if (typeof url !== 'string')
+        throw new Error(`[picks] Missing Pagefind fragment URL: ${path}`);
       paths[fragment[1]] = url;
     }
     // Picks は独自の UI とメインスレッド検索を使うため、標準 UI と Worker は配信対象外。
     const files = result.files
       .filter(({ path }) => path === 'pagefind.js' || !/\.(?:js|css)$/.test(path))
       .map(({ path, content }) => ({
-        path, content: path === 'pagefind.js' ? preparePagefindModule(content) : content,
+        path,
+        content: path === 'pagefind.js' ? preparePagefindModule(content) : content,
       }));
-    files.push({ path: 'picks-paths.json', content: new TextEncoder().encode(JSON.stringify({ paths, aliasFieldCount })) });
+    files.push({
+      path: 'picks-paths.json',
+      content: new TextEncoder().encode(JSON.stringify({ paths, aliasFieldCount })),
+    });
     return files;
   } finally {
     await index.deleteIndex();

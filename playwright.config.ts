@@ -19,10 +19,27 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   projects: [
-    { name: 'desktop-chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 800 } } },
-    { name: 'mobile-chromium', use: { ...devices['Pixel 7'], viewport: { width: 390, height: 844 } } },
+    {
+      name: 'desktop-chromium',
+      use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 800 } },
+    },
+    {
+      name: 'mobile-chromium',
+      use: { ...devices['Pixel 7'], viewport: { width: 390, height: 844 } },
+    },
     // Safari系の画像デコード・先読み・CSP・詳細間の巡回も継続検証する。
-    { name: 'mobile-webkit', testMatch: ['images.spec.ts', 'image-preload.spec.ts', 'prefetch.spec.ts', 'search.spec.ts', 'security.spec.ts', 'more-picks.spec.ts'], use: { ...devices['iPhone 16'] } },
+    {
+      name: 'mobile-webkit',
+      testMatch: [
+        'images.spec.ts',
+        'image-preload.spec.ts',
+        'prefetch.spec.ts',
+        'search.spec.ts',
+        'security.spec.ts',
+        'more-picks.spec.ts',
+      ],
+      use: { ...devices['iPhone 16'] },
+    },
   ],
   webServer: {
     // 開発用.envや起動済みサーバーによらず、同じ静的成果物を検証する。

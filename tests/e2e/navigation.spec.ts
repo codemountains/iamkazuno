@@ -4,14 +4,17 @@ import { test, expect, expectCollectionReady } from './fixtures';
 
 async function expectImageLoaded(image: Locator) {
   await expect(image).toBeVisible();
-  await expect.poll(() => image.evaluate((element: HTMLImageElement) =>
-    element.complete && element.naturalWidth > 0,
-  )).toBe(true);
+  await expect
+    .poll(() =>
+      image.evaluate((element: HTMLImageElement) => element.complete && element.naturalWidth > 0),
+    )
+    .toBe(true);
 }
 
 async function openScrolledDetail(page: Page) {
   const mountainThings = sampleThings.filter((thing) =>
-    thing.ref_categories?.some((category) => category?.id === 'mountain'));
+    thing.ref_categories?.some((category) => category?.id === 'mountain'),
+  );
   // PCでもモバイルでも、先頭viewport外の末尾の商品まで実際にスクロールする。
   const thing = mountainThings.at(-1)!;
   const detailPath = `/picks/things/${thing.id}`;
@@ -28,7 +31,10 @@ async function openScrolledDetail(page: Page) {
   await link.click();
   await expect(page).toHaveURL(detailPath);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(thing.name || 'Unnamed item');
-  await expect(page.getByRole('link', { name: 'Back to picks' })).toHaveAttribute('href', '/picks?category=mountain');
+  await expect(page.getByRole('link', { name: 'Back to picks' })).toHaveAttribute(
+    'href',
+    '/picks?category=mountain',
+  );
   return { detailPath, itemTop };
 }
 
@@ -39,13 +45,17 @@ async function expectRestoredItem(page: Page, detailPath: string, itemTop: numbe
   await expect(page.locator('[data-filter="mountain"]')).toHaveAttribute('aria-pressed', 'true');
   const item = page.locator(`[data-item-grid] > [data-item]:has(a[href="${detailPath}"])`);
   await expect(item).toBeInViewport();
-  await expect.poll(async () => {
-    const box = await item.boundingBox();
-    return box ? Math.abs(box.y - itemTop) : Number.POSITIVE_INFINITY;
-  }).toBeLessThanOrEqual(4);
+  await expect
+    .poll(async () => {
+      const box = await item.boundingBox();
+      return box ? Math.abs(box.y - itemTop) : Number.POSITIVE_INFINITY;
+    })
+    .toBeLessThanOrEqual(4);
 }
 
-test('home links to the collection and item details with loaded images and descriptions', async ({ page }) => {
+test('home links to the collection and item details with loaded images and descriptions', async ({
+  page,
+}) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1, name: 'iamkaz.uno' })).toBeVisible();
   await page.getByRole('link', { name: '/picks', exact: true }).click();
@@ -58,7 +68,9 @@ test('home links to the collection and item details with loaded images and descr
   await expect(page).toHaveURL('/picks/things/mountain-boots');
   await expect(page.getByRole('heading', { level: 1, name: 'ブーツ', exact: true })).toBeVisible();
   await expectImageLoaded(page.locator('.detail-image-wrap img'));
-  await expect(page.getByText('いつもの登山道から、まだ歩いたことのない稜線へ。', { exact: true })).toBeVisible();
+  await expect(
+    page.getByText('いつもの登山道から、まだ歩いたことのない稜線へ。', { exact: true }),
+  ).toBeVisible();
 
   const categories = page.getByRole('list', { name: 'カテゴリ', exact: true });
   await expect(categories).toHaveText('mountain');
@@ -71,7 +83,9 @@ test('home links to the collection and item details with loaded images and descr
   await expect(page.locator('[data-filter=""]')).toHaveAttribute('aria-pressed', 'true');
 });
 
-test('returning after a detail reload restores the category and item position', async ({ page }) => {
+test('returning after a detail reload restores the category and item position', async ({
+  page,
+}) => {
   const { detailPath, itemTop } = await openScrolledDetail(page);
   await page.reload();
   const backLink = page.getByRole('link', { name: 'Back to picks' });
@@ -80,7 +94,9 @@ test('returning after a detail reload restores the category and item position', 
   await expectRestoredItem(page, detailPath, itemTop);
 });
 
-test('browser back and forward preserve the collection state across detail visits', async ({ page }) => {
+test('browser back and forward preserve the collection state across detail visits', async ({
+  page,
+}) => {
   const { detailPath, itemTop } = await openScrolledDetail(page);
   await page.goBack();
   await expectRestoredItem(page, detailPath, itemTop);
@@ -100,6 +116,8 @@ test('a direct detail visit returns to the top of the full collection', async ({
   await expect(page).toHaveURL('/picks');
   await expectCollectionReady(page);
   await expect(page.locator('[data-filter=""]')).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('[data-item-grid] > [data-item]:visible')).toHaveCount(sampleThings.length);
+  await expect(page.locator('[data-item-grid] > [data-item]:visible')).toHaveCount(
+    sampleThings.length,
+  );
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
 });

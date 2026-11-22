@@ -20,12 +20,19 @@ export function initCollectionPrefetch(): void {
   let pageActive = true;
   let pendingNavigation: AbortSignal | undefined;
 
-  const slowConnection = () => Boolean(connection?.saveData || /2g/.test(connection?.effectiveType ?? ''));
+  const slowConnection = () =>
+    Boolean(connection?.saveData || /2g/.test(connection?.effectiveType ?? ''));
   const isVisible = (anchor: HTMLAnchorElement) => {
     if (anchor.closest<HTMLElement>('[data-item]')?.hidden) return false;
     const rect = anchor.getBoundingClientRect();
-    return rect.width > 0 && rect.height > 0 && rect.bottom > 0 && rect.top < window.innerHeight
-      && rect.right > 0 && rect.left < window.innerWidth;
+    return (
+      rect.width > 0 &&
+      rect.height > 0 &&
+      rect.bottom > 0 &&
+      rect.top < window.innerHeight &&
+      rect.right > 0 &&
+      rect.left < window.innerWidth
+    );
   };
 
   function drain(): void {
@@ -37,8 +44,11 @@ export function initCollectionPrefetch(): void {
       queued.delete(anchor);
       const url = new URL(anchor.href, location.href);
       url.hash = '';
-      if (url.origin !== location.origin || (url.pathname === location.pathname && url.search === location.search)
-        || requested.has(url.href)) {
+      if (
+        url.origin !== location.origin ||
+        (url.pathname === location.pathname && url.search === location.search) ||
+        requested.has(url.href)
+      ) {
         observer.unobserve(anchor);
         continue;
       }
@@ -53,8 +63,9 @@ export function initCollectionPrefetch(): void {
           const response = await fetch(url.href, { priority: 'low', signal: controller.signal });
           // fetchの解決はヘッダー受信時。本文の転送終了まで同時数の枠を保持する。
           await response.arrayBuffer();
-        } catch { /* 先読みの失敗は通常のページ遷移に影響させない。 */ }
-        finally {
+        } catch {
+          /* 先読みの失敗は通常のページ遷移に影響させない。 */
+        } finally {
           active.delete(controller);
           if (controller.signal.aborted) {
             requested.delete(url.href);
@@ -76,17 +87,26 @@ export function initCollectionPrefetch(): void {
       clearTimeout(timers.get(anchor));
       timers.delete(anchor);
       if (running && entry.isIntersecting) {
-        timers.set(anchor, setTimeout(() => {
-          timers.delete(anchor);
-          queued.set(anchor, false);
-          drain();
-        }, viewportDelay));
+        timers.set(
+          anchor,
+          setTimeout(() => {
+            timers.delete(anchor);
+            queued.set(anchor, false);
+            drain();
+          }, viewportDelay),
+        );
       } else queued.delete(anchor);
     }
   });
 
   function start(): void {
-    if (running || !pageActive || document.readyState !== 'complete' || document.visibilityState === 'hidden') return;
+    if (
+      running ||
+      !pageActive ||
+      document.readyState !== 'complete' ||
+      document.visibilityState === 'hidden'
+    )
+      return;
     running = true;
     for (const anchor of anchors) observer.observe(anchor);
   }
@@ -116,16 +136,21 @@ export function initCollectionPrefetch(): void {
   // WebKitはpagehideより前の文書置換中にも新しいfetchを拒否する。
   // 遷移開始時に止め、取消し時だけ同じ文書の先読みを再開する。
   window.navigation?.addEventListener('navigate', (event) => {
-    if (event.defaultPrevented || event.destination.sameDocument || event.downloadRequest !== null) return;
+    if (event.defaultPrevented || event.destination.sameDocument || event.downloadRequest !== null)
+      return;
     pendingNavigation = event.signal;
     leavePage();
-    event.signal.addEventListener('abort', () => {
-      // 前の遷移の取消しで、新しい遷移中やpagehide後に再開しない。
-      if (pendingNavigation !== event.signal) return;
-      pendingNavigation = undefined;
-      pageActive = true;
-      start();
-    }, { once: true });
+    event.signal.addEventListener(
+      'abort',
+      () => {
+        // 前の遷移の取消しで、新しい遷移中やpagehide後に再開しない。
+        if (pendingNavigation !== event.signal) return;
+        pendingNavigation = undefined;
+        pageActive = true;
+        start();
+      },
+      { once: true },
+    );
   });
   window.addEventListener('pagehide', () => {
     pendingNavigation = undefined;
@@ -136,15 +161,19 @@ export function initCollectionPrefetch(): void {
     pageActive = true;
     start();
   });
-  grid.addEventListener('pointerdown', (event) => {
-    // データ節約・低速回線では、従来どおり実際の押下時だけ先読みする。
-    if (!slowConnection() || !(event.target instanceof Element)) return;
-    const anchor = event.target.closest<HTMLAnchorElement>('a[data-picks-prefetch]');
-    if (!anchor || !anchors.includes(anchor)) return;
-    clearTimeout(timers.get(anchor));
-    timers.delete(anchor);
-    queued.set(anchor, true);
-    drain();
-  }, { passive: true });
+  grid.addEventListener(
+    'pointerdown',
+    (event) => {
+      // データ節約・低速回線では、従来どおり実際の押下時だけ先読みする。
+      if (!slowConnection() || !(event.target instanceof Element)) return;
+      const anchor = event.target.closest<HTMLAnchorElement>('a[data-picks-prefetch]');
+      if (!anchor || !anchors.includes(anchor)) return;
+      clearTimeout(timers.get(anchor));
+      timers.delete(anchor);
+      queued.set(anchor, true);
+      drain();
+    },
+    { passive: true },
+  );
   start();
 }

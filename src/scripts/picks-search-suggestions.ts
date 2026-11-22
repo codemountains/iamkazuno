@@ -65,7 +65,11 @@ export function initSearchSuggestions(input: HTMLInputElement, panel: HTMLElemen
     refresh();
   }
 
-  function update(items: ReadonlySet<HTMLElement> | undefined, query: string, hits: ReadonlyMap<string, PickSearchHit>) {
+  function update(
+    items: ReadonlySet<HTMLElement> | undefined,
+    query: string,
+    hits: ReadonlyMap<string, PickSearchHit>,
+  ) {
     select(-1);
     options = [];
     pendingDetails = [];
@@ -112,12 +116,20 @@ export function initSearchSuggestions(input: HTMLInputElement, panel: HTMLElemen
     list.replaceChildren(rows);
     const remaining = (items?.size ?? 0) - options.length;
     more.hidden = remaining === 0;
-    moreCount.textContent = remaining ? `${remaining} more ${remaining === 1 ? 'thing' : 'things'}` : '';
+    moreCount.textContent = remaining
+      ? `${remaining} more ${remaining === 1 ? 'thing' : 'things'}`
+      : '';
     refresh();
   }
 
   function closeIfOutside(event: Event) {
-    if (requested && event.target !== input && event.target instanceof Node && !panel.contains(event.target)) close();
+    if (
+      requested &&
+      event.target !== input &&
+      event.target instanceof Node &&
+      !panel.contains(event.target)
+    )
+      close();
   }
 
   function dismissSuggestions() {
@@ -164,8 +176,14 @@ export function initSearchSuggestions(input: HTMLInputElement, panel: HTMLElemen
     if ((event as InputEvent).isComposing) close();
     else open();
   });
-  input.addEventListener('compositionstart', () => { composing = true; refresh(); });
-  input.addEventListener('compositionend', () => { composing = false; open(); });
+  input.addEventListener('compositionstart', () => {
+    composing = true;
+    refresh();
+  });
+  input.addEventListener('compositionend', () => {
+    composing = false;
+    open();
+  });
   input.addEventListener('keydown', onKeydown);
 
   // クリックやタップで候補を選ぶ間も、入力欄にフォーカスを保つ。

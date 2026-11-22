@@ -2,14 +2,33 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { runInNewContext } from 'node:vm';
-import { collectionSize, mobileCollectionColumns, parseCollectionSize } from '../src/lib/collection-size';
+import {
+  collectionSize,
+  mobileCollectionColumns,
+  parseCollectionSize,
+} from '../src/lib/collection-size';
 
 test('stored sizes accept only supported range steps, including both endpoints', () => {
   for (const value of [88, 128, 136, 160, 280]) {
     assert.equal(parseCollectionSize(value), value);
     assert.equal(parseCollectionSize(String(value)), value);
   }
-  for (const value of [null, undefined, {}, [], true, '', 'nope', 0, 80, 89, 127.9, 288, Infinity, NaN]) {
+  for (const value of [
+    null,
+    undefined,
+    {},
+    [],
+    true,
+    '',
+    'nope',
+    0,
+    80,
+    89,
+    127.9,
+    288,
+    Infinity,
+    NaN,
+  ]) {
     assert.equal(parseCollectionSize(value), 240);
   }
 });
@@ -24,7 +43,10 @@ test('mobile offers six to one columns, with three at the center and two by defa
     columns.push(mobileCollectionColumns(size));
   }
   assert.deepEqual([...new Set(columns)], [6, 5, 4, 3, 2, 1]);
-  assert.deepEqual(columns, [...columns].sort((a, b) => b - a));
+  assert.deepEqual(
+    columns,
+    [...columns].sort((a, b) => b - a),
+  );
 });
 
 const page = readFileSync(new URL('../src/pages/picks/index.astro', import.meta.url), 'utf8');
@@ -36,8 +58,21 @@ function initialLayout(saved: string | null, mobile = false, blocked = false) {
   runInNewContext(prepare!, {
     collectionSize,
     window: { matchMedia: () => ({ matches: mobile }) },
-    sessionStorage: { getItem: () => { if (blocked) throw new Error('Storage blocked'); return saved; } },
-    document: { documentElement: { style: { setProperty: (key: string, value: string) => { applied[key] = value; } } } },
+    sessionStorage: {
+      getItem: () => {
+        if (blocked) throw new Error('Storage blocked');
+        return saved;
+      },
+    },
+    document: {
+      documentElement: {
+        style: {
+          setProperty: (key: string, value: string) => {
+            applied[key] = value;
+          },
+        },
+      },
+    },
   });
   return applied;
 }
@@ -50,7 +85,7 @@ test('saved size is restored before first paint and navigation restoration', () 
     assert.equal(layout['--collection-mobile-columns'], String(mobileCollectionColumns(size)));
   }
   assert.ok(page.indexOf('data-size-prepare') < page.indexOf('data-item-grid'));
-  assert.match(page, /  initCollectionSize\(\);[\s\S]*?  initCollectionNavigation\(/);
+  assert.match(page, /\binitCollectionSize\(\);[\s\S]*?\binitCollectionNavigation\(/);
 });
 
 test('missing, invalid or blocked storage retains the shared default size', () => {

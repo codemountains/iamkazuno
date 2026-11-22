@@ -6,10 +6,12 @@ import { paginateNotes } from '../../../lib/notes-pagination';
 
 export const getStaticPaths = (async () => {
   const { notes, source } = await getNotes();
-  return paginateNotes(notes).slice(1).map((page) => ({
-    params: { page: String(page.currentPage) },
-    props: { page, source },
-  }));
+  return paginateNotes(notes)
+    .slice(1)
+    .map((page) => ({
+      params: { page: String(page.currentPage) },
+      props: { page, source },
+    }));
 }) satisfies GetStaticPaths;
 ---
 

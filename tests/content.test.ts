@@ -19,7 +19,11 @@ const credentials = { MICROCMS_SERVICE_DOMAIN: 'my-picks', MICROCMS_API_KEY: 'te
 
 test('credentials determine auto mode; partial configuration never silently falls back', () => {
   assert.deepEqual(resolveContentConfiguration({}), { source: 'sample' });
-  assert.deepEqual(resolveContentConfiguration(credentials), { source: 'microcms', serviceDomain: 'my-picks', apiKey: 'test-key' });
+  assert.deepEqual(resolveContentConfiguration(credentials), {
+    source: 'microcms',
+    serviceDomain: 'my-picks',
+    apiKey: 'test-key',
+  });
   assert.throws(() => resolveContentConfiguration({ MICROCMS_SERVICE_DOMAIN: 'my-picks' }), /両方/);
   assert.throws(() => resolveContentConfiguration({ MICROCMS_API_KEY: 'test-key' }), /両方/);
   assert.throws(() => resolveContentConfiguration({ DATA_SOURCE: 'microcms' }), /必要/);
@@ -27,7 +31,9 @@ test('credentials determine auto mode; partial configuration never silently fall
 });
 
 test('explicit sample mode works with complete credentials without contacting the CMS', async (t) => {
-  const fetchMock = t.mock.method(globalThis, 'fetch', () => { throw new Error('Sample mode must not fetch'); });
+  const fetchMock = t.mock.method(globalThis, 'fetch', () => {
+    throw new Error('Sample mode must not fetch');
+  });
   const content = await getContent({ ...credentials, DATA_SOURCE: 'sample' });
   assert.equal(content.source, 'sample');
   assert.equal(content.things.length, 100);
@@ -36,7 +42,10 @@ test('explicit sample mode works with complete credentials without contacting th
 
 test('service domain must be an ID, not a URL or arbitrary host', () => {
   for (const domain of ['https://my-picks.microcms.io', 'my-picks.microcms.io', 'host/path']) {
-    assert.throws(() => resolveContentConfiguration({ ...credentials, MICROCMS_SERVICE_DOMAIN: domain }), /サービスID/);
+    assert.throws(
+      () => resolveContentConfiguration({ ...credentials, MICROCMS_SERVICE_DOMAIN: domain }),
+      /サービスID/,
+    );
   }
 });
 
@@ -48,34 +57,66 @@ test('sample fixtures provide 100 unique local items', async () => {
   assert.equal(new Set(content.things.map((thing) => thing.name)).size, 100);
   assert.deepEqual(content.categories, categories);
   assert.deepEqual(content.brands, brands);
-  assert.ok(content.things.every((thing) => thing.image === null || thing.image.url === '/images/samples/sample.svg'));
-  assert.ok(content.things.every((thing) => thing.brand === null || thing.brand.id === 'sample-objects'));
+  assert.ok(
+    content.things.every(
+      (thing) => thing.image === null || thing.image.url === '/images/samples/sample.svg',
+    ),
+  );
+  assert.ok(
+    content.things.every((thing) => thing.brand === null || thing.brand.id === 'sample-objects'),
+  );
   assert.ok(content.things.some((thing) => thing.descriptionHtml.includes('<strong>')));
-  assert.deepEqual(content.categories.map((category) => category.id), ['mountain', 'ski', 'myog', 'other']);
-  assert.deepEqual(content.things.slice(0, 8).map((thing) => thing.id), [
-    'mountain-boots', 'mountain-backpack', 'mountain-watch', 'ski-skis',
-    'ski-goggles', 'myog-tote', 'myog-stuff-sack', 'other-camera',
-  ]);
+  assert.deepEqual(
+    content.categories.map((category) => category.id),
+    ['mountain', 'ski', 'myog', 'other'],
+  );
+  assert.deepEqual(
+    content.things.slice(0, 8).map((thing) => thing.id),
+    [
+      'mountain-boots',
+      'mountain-backpack',
+      'mountain-watch',
+      'ski-skis',
+      'ski-goggles',
+      'myog-tote',
+      'myog-stuff-sack',
+      'other-camera',
+    ],
+  );
   for (const category of categories) {
-    assert.ok(content.things.filter((thing) => thing.categories.some((reference) => reference.id === category.id)).length >= 20,
-      `${category.id} must have enough items to exercise scrolling after filtering`);
+    assert.ok(
+      content.things.filter((thing) =>
+        thing.categories.some((reference) => reference.id === category.id),
+      ).length >= 20,
+      `${category.id} must have enough items to exercise scrolling after filtering`,
+    );
   }
   const find = (id: string) => content.things.find((thing) => thing.id === id)!;
-  assert.deepEqual(find('sample-multi-category').categories.map((category) => category.id), ['mountain', 'myog']);
+  assert.deepEqual(
+    find('sample-multi-category').categories.map((category) => category.id),
+    ['mountain', 'myog'],
+  );
   assert.equal(find('sample-no-image').image, null);
   assert.equal(find('sample-no-brand').brand, null);
   assert.equal(find('sample-no-description').descriptionHtml, '');
   assert.deepEqual(find('sample-uncategorized').categories, []);
   assert.equal(find('mountain-boots').morePickIds.length, 9);
   assert.deepEqual(find('mountain-backpack').morePickIds, ['mountain-watch']);
-  assert.ok(content.things.filter((thing) => !['mountain-boots', 'mountain-backpack'].includes(thing.id))
-    .every((thing) => thing.morePickIds.length === 0));
+  assert.ok(
+    content.things
+      .filter((thing) => !['mountain-boots', 'mountain-backpack'].includes(thing.id))
+      .every((thing) => thing.morePickIds.length === 0),
+  );
 });
 
 function cmsThing() {
   return {
     ...sampleThings[0],
-    main_image: { url: 'https://images.microcms-assets.io/assets/image.webp', width: 640, height: 640 },
+    main_image: {
+      url: 'https://images.microcms-assets.io/assets/image.webp',
+      width: 640,
+      height: 640,
+    },
   };
 }
 
@@ -94,9 +135,17 @@ function mockCMS(t: TestContext, things: unknown[]) {
     assert.ok(all, `Unexpected endpoint: ${url.pathname}`);
     const limit = Number(url.searchParams.get('limit') ?? 10);
     const offset = Number(url.searchParams.get('offset') ?? 0);
-    return new Response(JSON.stringify({ contents: all.slice(offset, offset + limit), totalCount: all.length, limit, offset }), {
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({
+        contents: all.slice(offset, offset + limit),
+        totalCount: all.length,
+        limit,
+        offset,
+      }),
+      {
+        headers: { 'Content-Type': 'application/json' },
+      },
+    );
   });
   return requests;
 }
@@ -117,12 +166,14 @@ async function loadContentModule(t: TestContext, production: boolean) {
     define: {
       'import.meta.env.PROD': String(production),
       'import.meta.env.DATA_SOURCE': JSON.stringify('microcms'),
-      'import.meta.env.MICROCMS_SERVICE_DOMAIN': JSON.stringify(credentials.MICROCMS_SERVICE_DOMAIN),
+      'import.meta.env.MICROCMS_SERVICE_DOMAIN': JSON.stringify(
+        credentials.MICROCMS_SERVICE_DOMAIN,
+      ),
       'import.meta.env.MICROCMS_API_KEY': JSON.stringify(credentials.MICROCMS_API_KEY),
     },
   });
   await writeFile(file, result.outputFiles[0].text);
-  return await import(pathToFileURL(file).href) as typeof import('../src/lib/content');
+  return (await import(pathToFileURL(file).href)) as typeof import('../src/lib/content');
 }
 
 test('a build shares one CMS snapshot across concurrent and subsequent route loads', async (t) => {
@@ -170,13 +221,22 @@ test('a failed shared CMS request can be retried', async (t) => {
 
 test('things map main_image and resolve current brand and category names from their APIs', () => {
   const currentBrands = [{ id: 'brand', name: 'Current brand' }];
-  const currentCategories = [{ id: 'first', name: 'First category' }, { id: 'second', name: 'Second category' }];
-  const [thing] = validateThings([{
-    ...cmsThing(),
-    ref_brand: { id: 'brand', name: 'Old embedded brand' },
-    ref_categories: [{ id: 'second', name: 'Old category' }, { id: 'first' }, { id: 'second' }],
-    description: '<p>A <strong>favorite</strong>.</p><script>alert(1)</script>',
-  }], currentBrands, currentCategories);
+  const currentCategories = [
+    { id: 'first', name: 'First category' },
+    { id: 'second', name: 'Second category' },
+  ];
+  const [thing] = validateThings(
+    [
+      {
+        ...cmsThing(),
+        ref_brand: { id: 'brand', name: 'Old embedded brand' },
+        ref_categories: [{ id: 'second', name: 'Old category' }, { id: 'first' }, { id: 'second' }],
+        description: '<p>A <strong>favorite</strong>.</p><script>alert(1)</script>',
+      },
+    ],
+    currentBrands,
+    currentCategories,
+  );
   assert.equal(thing.image?.url, cmsThing().main_image.url);
   assert.deepEqual(thing.brand, currentBrands[0]);
   assert.deepEqual(thing.categories, [currentCategories[1], currentCategories[0]]);
@@ -186,7 +246,15 @@ test('things map main_image and resolve current brand and category names from th
 
 test('all optional fields may be absent, empty or null without blocking publication', () => {
   const empty = { id: 'missing-fields' };
-  const explicit = { id: 'null-fields', name: ' ', description: null, main_image: null, ref_brand: null, ref_categories: null, more_picks: null };
+  const explicit = {
+    id: 'null-fields',
+    name: ' ',
+    description: null,
+    main_image: null,
+    ref_brand: null,
+    ref_categories: null,
+    more_picks: null,
+  };
   for (const thing of validateThings([empty, explicit], [], [])) {
     assert.equal(thing.name, 'Unnamed item');
     assert.equal(thing.brand, null);
@@ -196,32 +264,60 @@ test('all optional fields may be absent, empty or null without blocking publicat
     assert.deepEqual(thing.morePickIds, []);
   }
   assert.deepEqual(validateBrands([{ id: 'brand' }]), [{ id: 'brand', name: 'Unnamed brand' }]);
-  assert.deepEqual(validateCategories([{ id: 'category', name: null }]), [{ id: 'category', name: 'Unnamed category' }]);
+  assert.deepEqual(validateCategories([{ id: 'category', name: null }]), [
+    { id: 'category', name: 'Unnamed category' },
+  ]);
 });
 
 test('product and brand aliases read repeater values, preserving order and multiword names', () => {
   const aliases = (values: string[]) => values.map((value) => ({ fieldId: 'search_alias', value }));
-  const [brand] = validateBrands([{ id: 'brand', search_aliases: aliases(['  Brand Name ', ' ', '別名', 'Brand Name']) }]);
-  const [thing] = validateThings([{
-    id: 'camera', ref_brand: { id: 'brand' }, search_aliases: aliases(['SC-35', ' エスシー ']),
-  }], [brand], []);
+  const [brand] = validateBrands([
+    { id: 'brand', search_aliases: aliases(['  Brand Name ', ' ', '別名', 'Brand Name']) },
+  ]);
+  const [thing] = validateThings(
+    [
+      {
+        id: 'camera',
+        ref_brand: { id: 'brand' },
+        search_aliases: aliases(['SC-35', ' エスシー ']),
+      },
+    ],
+    [brand],
+    [],
+  );
   assert.deepEqual(thing.searchAliases, ['SC-35', 'エスシー']);
   assert.deepEqual(thing.brand?.searchAliases, ['Brand Name', '別名']);
   for (const empty of [undefined, null, [], [{ fieldId: 'search_alias' }]]) {
-    assert.equal(validateBrands([{ id: 'brand', search_aliases: empty }])[0].searchAliases, undefined);
+    assert.equal(
+      validateBrands([{ id: 'brand', search_aliases: empty }])[0].searchAliases,
+      undefined,
+    );
   }
   assert.throws(() => validateBrands([{ id: 'brand', search_aliases: 42 }]), /search_aliases/);
-  assert.throws(() => validateThings([{ id: 'camera', search_aliases: [{ fieldId: 'search_alias', value: 42 }] }], [], []),
-    /search_aliases\[0\]\.value/);
+  assert.throws(
+    () =>
+      validateThings(
+        [{ id: 'camera', search_aliases: [{ fieldId: 'search_alias', value: 42 }] }],
+        [],
+        [],
+      ),
+    /search_aliases\[0\]\.value/,
+  );
 });
 
 test('missing or unpublished references are omitted without adding synthetic categories', () => {
   const actualCategories = [{ id: 'all', name: 'An actual category named all' }];
-  const [thing] = validateThings([{
-    id: 'references',
-    ref_brand: { id: 'unpublished-brand' },
-    ref_categories: [null, { id: 'unpublished-category' }, { id: 'all' }, { id: 'all' }],
-  }], [], actualCategories);
+  const [thing] = validateThings(
+    [
+      {
+        id: 'references',
+        ref_brand: { id: 'unpublished-brand' },
+        ref_categories: [null, { id: 'unpublished-category' }, { id: 'all' }, { id: 'all' }],
+      },
+    ],
+    [],
+    actualCategories,
+  );
   assert.equal(thing.brand, null);
   assert.deepEqual(thing.categories, actualCategories);
   assert.deepEqual(validateCategories([]), []);
@@ -230,23 +326,62 @@ test('missing or unpublished references are omitted without adding synthetic cat
 
 test('present malformed values still fail rather than silently displaying broken data', () => {
   const thing = cmsThing();
-  for (const url of ['javascript:alert(1)', 'data:text/html,hello', '//example.com', 'https://user:pass@example.com']) {
-    assert.throws(() => validateThings([{ ...thing, main_image: { ...thing.main_image, url } }], brands, categories), /URL/);
+  for (const url of [
+    'javascript:alert(1)',
+    'data:text/html,hello',
+    '//example.com',
+    'https://user:pass@example.com',
+  ]) {
+    assert.throws(
+      () =>
+        validateThings(
+          [{ ...thing, main_image: { ...thing.main_image, url } }],
+          brands,
+          categories,
+        ),
+      /URL/,
+    );
   }
-  assert.throws(() => validateThings([{ ...thing, main_image: { ...thing.main_image, width: 0 } }], brands, categories), /width/);
+  assert.throws(
+    () =>
+      validateThings(
+        [{ ...thing, main_image: { ...thing.main_image, width: 0 } }],
+        brands,
+        categories,
+      ),
+    /width/,
+  );
   assert.throws(() => validateThings(sampleThings, brands, categories), /URL/);
   assert.throws(() => validateThings([{ ...thing, name: 42 }], brands, categories), /name/);
-  assert.throws(() => validateThings([{ ...thing, description: {} }], brands, categories), /description/);
-  assert.throws(() => validateThings([{ ...thing, ref_categories: {} }], brands, categories), /複数コンテンツ参照/);
-  assert.throws(() => validateThings([{ ...thing, ref_brand: {} }], brands, categories), /ref_brand.id/);
-  assert.throws(() => validateThings([{ ...thing, more_picks: {} }], brands, categories), /more_picks.*複数コンテンツ参照/);
-  assert.throws(() => validateThings([{ ...thing, more_picks: [{}] }], brands, categories), /more_picks\[0\].id/);
+  assert.throws(
+    () => validateThings([{ ...thing, description: {} }], brands, categories),
+    /description/,
+  );
+  assert.throws(
+    () => validateThings([{ ...thing, ref_categories: {} }], brands, categories),
+    /複数コンテンツ参照/,
+  );
+  assert.throws(
+    () => validateThings([{ ...thing, ref_brand: {} }], brands, categories),
+    /ref_brand.id/,
+  );
+  assert.throws(
+    () => validateThings([{ ...thing, more_picks: {} }], brands, categories),
+    /more_picks.*複数コンテンツ参照/,
+  );
+  assert.throws(
+    () => validateThings([{ ...thing, more_picks: [{}] }], brands, categories),
+    /more_picks\[0\].id/,
+  );
 });
 
 test('API ordering is preserved and duplicate content IDs are rejected', () => {
   const first = { ...cmsThing(), id: 'first' };
   const second = { ...cmsThing(), id: 'second' };
-  assert.deepEqual(validateThings([first, second], brands, categories).map((thing) => thing.id), ['first', 'second']);
+  assert.deepEqual(
+    validateThings([first, second], brands, categories).map((thing) => thing.id),
+    ['first', 'second'],
+  );
   assert.throws(() => validateThings([first, first], brands, categories), /重複/);
   assert.throws(() => validateCategories([sampleCategories[0], sampleCategories[0]]), /重複/);
   assert.throws(() => validateBrands([sampleBrands[0], sampleBrands[0]]), /重複/);
@@ -254,7 +389,9 @@ test('API ordering is preserved and duplicate content IDs are rejected', () => {
 
 test('CMS retrieval uses only the three Content API endpoints and retrieves more than one page of things', async (t) => {
   const sourceThings = Array.from({ length: 101 }, (_, index) => ({
-    ...cmsThing(), id: `thing-${index}`, search_aliases: [{ fieldId: 'search_alias', value: `model-${index}` }],
+    ...cmsThing(),
+    id: `thing-${index}`,
+    search_aliases: [{ fieldId: 'search_alias', value: `model-${index}` }],
   }));
   const requests = mockCMS(t, sourceThings);
   const content = await getContent(credentials);
@@ -263,24 +400,40 @@ test('CMS retrieval uses only the three Content API endpoints and retrieves more
   assert.equal(content.things[100].id, 'thing-100');
   assert.deepEqual(content.things[100].searchAliases, ['model-100']);
   assert.deepEqual(content.things[100].brand?.searchAliases, ['サンプルオブジェクツ']);
-  assert.deepEqual(new Set(requests.map((url) => `${url.hostname}${url.pathname}`)), new Set([
-    'my-picks.microcms.io/api/v1/brands',
-    'my-picks.microcms.io/api/v1/categories',
-    'my-picks.microcms.io/api/v1/things',
-  ]));
+  assert.deepEqual(
+    new Set(requests.map((url) => `${url.hostname}${url.pathname}`)),
+    new Set([
+      'my-picks.microcms.io/api/v1/brands',
+      'my-picks.microcms.io/api/v1/categories',
+      'my-picks.microcms.io/api/v1/things',
+    ]),
+  );
   const thingRequests = requests.filter((url) => url.pathname === '/api/v1/things');
   assert.ok(thingRequests.some((url) => Number(url.searchParams.get('offset')) > 0));
   assert.ok(thingRequests.every((url) => url.searchParams.get('depth') === '1'));
-  assert.ok(thingRequests.every((url) => url.searchParams.get('fields') === 'id,name,search_aliases,description,main_image,ref_brand,ref_categories,more_picks'));
+  assert.ok(
+    thingRequests.every(
+      (url) =>
+        url.searchParams.get('fields') ===
+        'id,name,search_aliases,description,main_image,ref_brand,ref_categories,more_picks',
+    ),
+  );
   const brandRequests = requests.filter((url) => url.pathname === '/api/v1/brands');
-  assert.ok(brandRequests.every((url) => url.searchParams.get('fields') === 'id,name,search_aliases'));
+  assert.ok(
+    brandRequests.every((url) => url.searchParams.get('fields') === 'id,name,search_aliases'),
+  );
   assert.ok(requests.every((url) => !url.searchParams.has('draftKey')));
 });
 
 test('an empty CMS remains empty instead of receiving sample data or fixed categories', async (t) => {
-  t.mock.method(globalThis, 'fetch', async () => new Response(JSON.stringify({ contents: [], totalCount: 0, limit: 100, offset: 0 }), {
-    headers: { 'Content-Type': 'application/json' },
-  }));
+  t.mock.method(
+    globalThis,
+    'fetch',
+    async () =>
+      new Response(JSON.stringify({ contents: [], totalCount: 0, limit: 100, offset: 0 }), {
+        headers: { 'Content-Type': 'application/json' },
+      }),
+  );
   const content = await getContent(credentials);
   assert.deepEqual(content, { things: [], brands: [], categories: [], source: 'microcms' });
 });

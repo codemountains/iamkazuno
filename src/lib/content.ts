@@ -2,7 +2,12 @@
 import { createClient } from 'microcms-js-sdk';
 import { sampleBrands, sampleCategories, sampleThings } from '../data/sample';
 import type { Content, ContentEnvironment } from '../types/content';
-import { resolveContentConfiguration, validateBrands, validateCategories, validateThings } from './content-validation';
+import {
+  resolveContentConfiguration,
+  validateBrands,
+  validateCategories,
+  validateThings,
+} from './content-validation';
 
 let buildContent: Promise<Content> | undefined;
 
@@ -49,7 +54,11 @@ async function loadContent(env: ContentEnvironment): Promise<Content> {
       client.getAllContents({ endpoint: 'categories', queries: { fields: 'id,name' } }),
       client.getAllContents({
         endpoint: 'things',
-        queries: { fields: 'id,name,search_aliases,description,main_image,ref_brand,ref_categories,more_picks', depth: 1 },
+        queries: {
+          fields:
+            'id,name,search_aliases,description,main_image,ref_brand,ref_categories,more_picks',
+          depth: 1,
+        },
       }),
     ]);
   } catch {
@@ -61,5 +70,10 @@ async function loadContent(env: ContentEnvironment): Promise<Content> {
 
   const brands = validateBrands(rawBrands);
   const categories = validateCategories(rawCategories);
-  return { brands, categories, things: validateThings(rawThings, brands, categories), source: 'microcms' };
+  return {
+    brands,
+    categories,
+    things: validateThings(rawThings, brands, categories),
+    source: 'microcms',
+  };
 }

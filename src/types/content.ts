@@ -69,5 +69,4 @@ export interface ContentEnvironment {
 }
 
 export type ContentConfiguration =
-  | { source: 'sample' }
-  | { source: 'microcms'; serviceDomain: string; apiKey: string };
+  { source: 'sample' } | { source: 'microcms'; serviceDomain: string; apiKey: string };

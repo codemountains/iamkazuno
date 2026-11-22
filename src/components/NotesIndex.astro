@@ -8,7 +8,10 @@ import type { NotesContent } from '../types/notes';
 import { notePath, notesPagePath } from '../lib/paths';
 import '../styles/notes.css';
 
-interface Props { page: NotesPage; source: NotesContent['source'] }
+interface Props {
+  page: NotesPage;
+  source: NotesContent['source'];
+}
 const { page, source } = Astro.props;
 const { notes, currentPage, totalPages, totalNotes } = page;
 ---
@@ -27,13 +30,24 @@ const { notes, currentPage, totalPages, totalNotes } = page;
 
   <main id="main" class="notes-index">
     <header class="notes-intro">
-      <p class="notes-eyebrow"><span aria-hidden="true">/</span> A PERSONAL NOTEBOOK</p>
-      <h1>言葉にして、<br />残しておく。</h1>
+      <p class="notes-eyebrow">
+        <span aria-hidden="true">/</span> A PERSONAL NOTEBOOK
+      </p>
+      <h1>
+        言葉にして、
+        <br />
+        残しておく。
+      </h1>
     </header>
 
     <section class="notes-collection" aria-labelledby="notes-heading">
       <div class="notes-collection-heading">
-        <h2 id="notes-heading">All notes<span class="notes-count" aria-label={`${totalNotes}件`}>{String(totalNotes).padStart(2, '0')}</span></h2>
+        <h2 id="notes-heading">
+          All notes
+          <span class="notes-count" aria-label={`${totalNotes}件`}>
+            {String(totalNotes).padStart(2, '0')}
+          </span>
+        </h2>
         {totalNotes > 1 && <p>Newest first</p>}
       </div>
       {notes.length > 0 ? (
@@ -41,8 +55,15 @@ const { notes, currentPage, totalPages, totalNotes } = page;
           {notes.map((note) => (
             <li>
               <article>
-                <a class="note-entry" href={notePath(note.id)} data-astro-prefetch aria-labelledby={`note-${note.id}`}>
-                  <div class="note-entry-date"><NoteDate date={note.publishedAt} /></div>
+                <a
+                  class="note-entry"
+                  href={notePath(note.id)}
+                  data-astro-prefetch
+                  aria-labelledby={`note-${note.id}`}
+                >
+                  <div class="note-entry-date">
+                    <NoteDate date={note.publishedAt} />
+                  </div>
                   <div>
                     <h2 id={`note-${note.id}`}>{note.title}</h2>
                     {note.excerpt && <p class="note-excerpt">{note.excerpt}</p>}
@@ -60,9 +81,19 @@ const { notes, currentPage, totalPages, totalNotes } = page;
       )}
       {totalPages > 1 && (
         <nav class="notes-page-links" aria-label="ノート一覧のページ送り">
-          {currentPage > 1 && <a rel="prev" href={notesPagePath(currentPage - 1)} data-astro-prefetch><span aria-hidden="true">←</span> Previous</a>}
-          <span class="notes-page-count" aria-current="page">Page {currentPage} / {totalPages}</span>
-          {currentPage < totalPages && <a rel="next" href={notesPagePath(currentPage + 1)} data-astro-prefetch>Next <span aria-hidden="true">→</span></a>}
+          {currentPage > 1 && (
+            <a rel="prev" href={notesPagePath(currentPage - 1)} data-astro-prefetch>
+              <span aria-hidden="true">←</span> Previous
+            </a>
+          )}
+          <span class="notes-page-count" aria-current="page">
+            Page {currentPage} / {totalPages}
+          </span>
+          {currentPage < totalPages && (
+            <a rel="next" href={notesPagePath(currentPage + 1)} data-astro-prefetch>
+              Next <span aria-hidden="true">→</span>
+            </a>
+          )}
         </nav>
       )}
     </section>

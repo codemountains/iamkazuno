@@ -3,18 +3,52 @@ import type { Thing } from '../types/content';
 import ThingImage from './ThingImage.astro';
 import { thingPath } from '../lib/paths';
 
-interface Props { thing: Thing; index?: number; related?: boolean }
+interface Props {
+  thing: Thing;
+  index?: number;
+  related?: boolean;
+}
 const { thing, index = 0, related = false } = Astro.props;
 const Heading = related ? 'h3' : 'h2';
 ---
 
-<li class="item" data-item={related ? undefined : true} data-categories={related ? undefined : JSON.stringify(thing.categories.map((category) => category.id))} data-category-keys={related ? undefined : thing.categories.map((category) => encodeURIComponent(category.id)).join(' ')}>
+<li
+  class="item"
+  data-item={related ? undefined : true}
+  data-categories={
+    related ? undefined : JSON.stringify(thing.categories.map((category) => category.id))
+  }
+  data-category-keys={
+    related
+      ? undefined
+      : thing.categories.map((category) => encodeURIComponent(category.id)).join(' ')
+  }
+>
   <article class="item-card" aria-labelledby={`item-${thing.id}`}>
-    <a class="item-card-link" href={thingPath(thing.id)} data-picks-prefetch={related ? undefined : true} data-astro-prefetch={related ? 'hover' : undefined} aria-labelledby={`item-${thing.id}`}>
+    <a
+      class="item-card-link"
+      href={thingPath(thing.id)}
+      data-picks-prefetch={related ? undefined : true}
+      data-astro-prefetch={related ? 'hover' : undefined}
+      aria-labelledby={`item-${thing.id}`}
+    >
       <div class="item-image-wrap">
-        {!related && <span class="item-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>}
-        <ThingImage image={thing.image} name={thing.name} deferred={!related} sizes={related ? 'auto, (max-width: 600px) 160px, 192px' : undefined} />
-        {thing.categories.length > 0 && <span class="item-category">{thing.categories.map((category) => category.name).join(' / ')}</span>}
+        {!related && (
+          <span class="item-number" aria-hidden="true">
+            {String(index + 1).padStart(2, '0')}
+          </span>
+        )}
+        <ThingImage
+          image={thing.image}
+          name={thing.name}
+          deferred={!related}
+          sizes={related ? 'auto, (max-width: 600px) 160px, 192px' : undefined}
+        />
+        {thing.categories.length > 0 && (
+          <span class="item-category">
+            {thing.categories.map((category) => category.name).join(' / ')}
+          </span>
+        )}
       </div>
       <div class="item-copy">
         {thing.brand && <p class="item-brand">{thing.brand.name}</p>}
