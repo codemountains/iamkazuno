@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import test, { type TestContext } from 'node:test';
 import { runInNewContext } from 'node:vm';
 import { initFilters } from '../src/scripts/filters';
+import type { PickSearchHit } from '../src/lib/picks-search';
 
 const page = readFileSync(new URL('../src/pages/picks/index.astro', import.meta.url), 'utf8');
 const inlineApply = page.match(/<script[^>]*data-filter-apply>([\s\S]*?)<\/script>/)?.[1];
@@ -21,42 +22,67 @@ class Target {
 const unusualCategory = 'ski & "snow" </script>';
 const categories = ['', 'mountain', 'ski', 'empty', unusualCategory];
 
-function setup(t: TestContext, category = 'ski', options: { inline?: boolean; nextCategory?: string } = {}) {
+function matches(paths: string[]): Map<string, PickSearchHit> {
+  return new Map(paths.map((path) => [path, { loadEvidence: async () => ({}) }]));
+}
+
+function setup(t: TestContext, category = 'ski', options: {
+  inline?: boolean;
+  nextCategory?: string;
+  query?: string;
+  search?: (term: string) => Promise<Map<string, PickSearchHit>>;
+  emptyCollection?: boolean;
+} = {}) {
   const writes = { items: 0, buttons: 0, label: 0, empty: 0 };
   const notifications: string[] = [];
   const scrolls: number[] = [];
   const historyEntries: string[] = [];
   let currentUrl = new URL('https://picks.invalid/picks');
-  const setCategory = (value: string) => {
+  const setCategory = (value: string, query = '') => {
     currentUrl = new URL('https://picks.invalid/picks');
     if (value) currentUrl.searchParams.set('category', value);
+    if (query) currentUrl.searchParams.set('q', query);
   };
-  setCategory(category);
+  setCategory(category, options.query);
   let scrollLeft = 0;
+  const itemCategories = options.emptyCollection ? [] : [['mountain'], ['ski'], ['mountain', 'ski'], [unusualCategory]];
+  const badges = categories.map((id) => ({ textContent: String(itemCategories.filter((ids) => !id || ids.includes(id)).length) }));
   const buttons = categories.map((id, index) => Object.assign(new Target(), {
     dataset: { filter: id, filterLabel: id || 'all' },
     pressed: id === '',
+    focus() {},
+    querySelector: () => badges[index],
     setAttribute(_name: string, value: string) {
       writes.buttons++;
       this.pressed = value === 'true';
     },
     getBoundingClientRect() { return { left: index * 120 - scrollLeft, width: 100 }; },
   }));
-  const items = [['mountain'], ['ski'], ['mountain', 'ski'], [unusualCategory]].map((ids) => {
+  const items = itemCategories.map((ids, index) => {
     let hidden = false;
     return {
       dataset: { categories: JSON.stringify(ids), categoryKeys: ids.map(encodeURIComponent).join(' ') },
+      querySelector: () => ({ pathname: `/picks/things/${index}` }),
       get hidden() { return hidden; },
       set hidden(value: boolean) { writes.items++; hidden = value; },
     };
   });
   let labelText = '';
-  const label = {
+  const count = {
     get textContent() { return labelText; },
     set textContent(value: string) { writes.label++; labelText = value; },
   };
+  const prefix = { textContent: '' };
+  const suffix = { textContent: '' };
+  const label = { get textContent() { return prefix.textContent + count.textContent + suffix.textContent; } };
+  const input = Object.assign(new Target(), { value: '', hidden: true });
+  const retry = new Target();
+  const error = { hidden: true };
+  const emptyMessage = { textContent: '' };
+  const searchAll = Object.assign(new Target(), { textContent: '', hidden: true });
   let emptyHidden = true;
   const empty = {
+    dataset: { emptyState: '' },
     get hidden() { return emptyHidden; },
     set hidden(value: boolean) { writes.empty++; emptyHidden = value; },
   };
@@ -68,6 +94,7 @@ function setup(t: TestContext, category = 'ski', options: { inline?: boolean; ne
     querySelector: (selector: string) => selector.includes('previous') ? previous : next,
   };
   const controls = Object.assign(new Target(), {
+    dataset: {} as Record<string, string>,
     clientWidth: 160, clientLeft: 0, scrollWidth: 600,
     get scrollLeft() { return scrollLeft; },
     closest: () => navigation,
@@ -77,7 +104,16 @@ function setup(t: TestContext, category = 'ski', options: { inline?: boolean; ne
     scrollTo({ left }: { left: number }) { scrollLeft = left; scrolls.push(left); },
   });
   Object.defineProperty(controls, 'scrollLeft', { get: () => scrollLeft });
-  const grid = { dataset: {} as Record<string, string>, querySelectorAll: () => items };
+  let orderedItems = [...items];
+  const grid = {
+    dataset: {} as Record<string, string>, querySelectorAll: () => items,
+    attributes: new Map<string, string>(),
+    setAttribute(key: string, value: string) { this.attributes.set(key, value); },
+    removeAttribute(key: string) { this.attributes.delete(key); },
+    hasAttribute(key: string) { return this.attributes.has(key); },
+    append(...moved: typeof items) { orderedItems = [...orderedItems.filter((item) => !moved.includes(item)), ...moved]; },
+  };
+  const visible = () => orderedItems.filter((item) => !item.hidden).map((item) => items.indexOf(item));
   const documentTarget = new Target();
   const document = Object.assign(documentTarget, {
     documentElement: { dataset: {} as Record<string, string> },
@@ -85,7 +121,16 @@ function setup(t: TestContext, category = 'ski', options: { inline?: boolean; ne
     querySelector(selector: string) {
       if (selector === '[data-filters]') return controls;
       if (selector === '[data-item-grid]') return grid;
-      if (selector === '[data-results-label]') return label;
+      if (selector === '[data-count-prefix]') return prefix;
+      if (selector === '[data-result-count]') return count;
+      if (selector === '[data-count-suffix]') return suffix;
+      if (selector === '[data-picks-search]') return input;
+      if (selector === '[data-picks-suggestions]') return null;
+      if (selector === '[data-picks-search-clear]') return null;
+      if (selector === '[data-search-retry]') return retry;
+      if (selector === '[data-search-error]') return error;
+      if (selector === '[data-empty-message]') return emptyMessage;
+      if (selector === '[data-search-all-categories]') return searchAll;
       if (selector === '[data-empty-state]') return empty;
       throw new Error(`Unexpected selector: ${selector}`);
     },
@@ -101,6 +146,11 @@ function setup(t: TestContext, category = 'ski', options: { inline?: boolean; ne
     get location() { return currentUrl; },
     matchMedia: () => Object.assign(new Target(), { matches: true }),
     history: {
+      state: { saved: true },
+      replaceState(state: unknown, _unused: string, url: URL | string) {
+        assert.deepEqual(state, this.state);
+        currentUrl = new URL(String(url), currentUrl);
+      },
       pushState(_state: unknown, _unused: string, url: URL | string) {
         currentUrl = new URL(String(url), currentUrl);
         historyEntries.push(currentUrl.href);
@@ -131,8 +181,8 @@ function setup(t: TestContext, category = 'ski', options: { inline?: boolean; ne
     historyEntries.length = 0;
   };
   clearStats();
-  initFilters();
-  return { buttons, items, label, empty, grid, navigation, writes, notifications, scrolls, historyEntries, window, setCategory, clearStats };
+  const ready = initFilters(options.search);
+  return { buttons, badges, controls, items, input, error, retry, emptyMessage, searchAll, ready, visible, label, empty, grid, navigation, writes, notifications, scrolls, historyEntries, window, setCategory, clearStats };
 }
 
 for (const category of ['ski', '', 'missing', 'empty', unusualCategory]) {
@@ -202,4 +252,144 @@ test('selecting all cleans an unknown category URL without rewriting the already
   assert.equal(h.historyEntries.length, 1);
   assert.deepEqual(h.writes, { items: 0, buttons: 0, label: 0, empty: 0 });
   assert.equal(h.notifications.length, 0);
+});
+
+test('IME commits once and a newer search keeps its rank even when the previous request finishes later', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const requests = new Map<string, (results: Map<string, PickSearchHit>) => void>();
+  const h = setup(t, '', { search: (term) => new Promise((resolve) => requests.set(term, resolve)) });
+  const firstUrl = h.window.location.href;
+  h.input.emit('compositionstart');
+  h.input.value = 'alpha';
+  h.input.emit('input', { isComposing: true });
+  t.mock.timers.tick(200);
+  await Promise.resolve();
+  assert.equal(h.window.location.href, firstUrl);
+  assert.equal(requests.size, 0);
+  h.input.emit('compositionend');
+  h.input.emit('input');
+  t.mock.timers.tick(200);
+  await Promise.resolve();
+  assert.deepEqual([...requests.keys()], ['alpha']);
+
+  h.input.value = 'beta';
+  h.input.emit('input');
+  h.buttons[2].emit('click');
+  assert.equal(h.label.textContent, 'Searching…');
+  assert.equal(h.grid.attributes.get('aria-busy'), 'true');
+  assert.equal(h.controls.dataset.counts, 'pending');
+  t.mock.timers.tick(200);
+  await Promise.resolve();
+  requests.get('beta')!(matches(['/picks/things/2', '/picks/things/1', '/picks/things/0']));
+  await Promise.resolve();
+  assert.deepEqual(h.visible(), [2, 1]);
+  assert.deepEqual(h.badges.map((badge) => badge.textContent), ['3', '2', '2', '0', '0']);
+  assert.equal(h.label.textContent, 'ski — 02 things');
+  assert.equal(h.grid.attributes.has('aria-busy'), false);
+  requests.get('alpha')!(matches(['/picks/things/1']));
+  await Promise.resolve();
+  assert.deepEqual(h.visible(), [2, 1]);
+
+  h.input.value = '';
+  h.input.emit('input');
+  assert.equal(h.window.location.search, '?category=ski');
+  assert.deepEqual(h.visible(), [1, 2]);
+  assert.deepEqual(h.badges.map((badge) => badge.textContent), ['4', '2', '2', '0', '1']);
+  assert.equal(h.controls.dataset.counts, 'total');
+  assert.equal(h.historyEntries.length, 1);
+});
+
+test('clearing an initial URL query releases navigation readiness and ignores its late response', async (t) => {
+  let finish!: (results: Map<string, PickSearchHit>) => void;
+  const h = setup(t, '', { query: 'alpha', search: () => new Promise((resolve) => { finish = resolve; }) });
+  assert.ok(h.ready);
+  assert.equal(h.input.value, 'alpha');
+  h.input.value = '';
+  h.input.emit('input');
+  await h.ready;
+  assert.deepEqual(h.visible(), [0, 1, 2, 3]);
+  finish(matches([]));
+  await Promise.resolve();
+  assert.deepEqual(h.visible(), [0, 1, 2, 3]);
+  assert.equal(h.grid.attributes.has('aria-busy'), false);
+});
+
+test('history traversal restores the search text, category and ranking from the URL', async (t) => {
+  const h = setup(t, '', { search: async () => matches(['/picks/things/2', '/picks/things/1', '/picks/things/0']) });
+  h.setCategory('ski', 'alpha');
+  h.window.emit('popstate');
+  await Promise.resolve();
+  assert.equal(h.input.value, 'alpha');
+  assert.deepEqual(h.visible(), [2, 1]);
+  h.setCategory('mountain');
+  h.window.emit('popstate');
+  assert.equal(h.input.value, '');
+  assert.deepEqual(h.visible(), [0, 2]);
+  assert.equal(h.historyEntries.length, 0);
+});
+
+test('empty category searches can show every match while keeping the query and browser history', async (t) => {
+  const search = t.mock.fn(async () => matches(['/picks/things/2', '/picks/things/0']));
+  const h = setup(t, 'empty', { query: 'alpha', search });
+  await h.ready;
+  assert.deepEqual(h.visible(), []);
+  assert.deepEqual(h.badges.map((badge) => badge.textContent), ['2', '2', '1', '0', '0']);
+  assert.equal(h.controls.dataset.counts, 'matches');
+  assert.equal(h.searchAll.hidden, false);
+  assert.equal(h.searchAll.textContent, 'View 2 things across all categories');
+  h.searchAll.emit('click');
+  assert.equal(h.window.location.search, '?q=alpha');
+  assert.equal(h.buttons[0].pressed, true);
+  assert.deepEqual(h.visible(), [2, 0]);
+  assert.equal(h.searchAll.hidden, true);
+  assert.equal(h.historyEntries.length, 1);
+
+  h.setCategory('empty', 'alpha');
+  h.window.emit('popstate');
+  assert.equal(h.searchAll.hidden, false);
+  assert.equal(h.input.value, 'alpha');
+  assert.deepEqual(h.visible(), []);
+  assert.equal(search.mock.callCount(), 1);
+});
+
+test('an empty category search offers a single match with a singular label', async (t) => {
+  const h = setup(t, 'ski', { query: 'alpha', search: async () => matches(['/picks/things/0']) });
+  await h.ready;
+  assert.equal(h.searchAll.hidden, false);
+  assert.equal(h.searchAll.textContent, 'View 1 thing across all categories');
+});
+
+test('a failed initial search keeps the category visible and can be retried without changing history', async (t) => {
+  let attempts = 0;
+  const h = setup(t, 'ski', { query: 'alpha', search: async () => {
+    if (++attempts === 1) throw new Error('Index unavailable');
+    return matches([]);
+  } });
+  await h.ready;
+  assert.equal(h.error.hidden, false);
+  assert.deepEqual(h.visible(), [1, 2]);
+  assert.equal(h.empty.hidden, true);
+  assert.equal(h.searchAll.hidden, true);
+  assert.equal(h.controls.dataset.counts, 'total');
+  h.retry.emit('click');
+  await Promise.resolve();
+  assert.equal(attempts, 2);
+  assert.equal(h.error.hidden, true);
+  assert.equal(h.empty.hidden, false);
+  assert.equal(h.emptyMessage.textContent, 'No matching things.');
+  assert.equal(h.searchAll.hidden, true);
+  assert.deepEqual(h.badges.map((badge) => badge.textContent), ['0', '0', '0', '0', '0']);
+  assert.equal(h.label.textContent, 'ski — 00 things');
+  assert.equal(h.historyEntries.length, 0);
+});
+
+test('an empty collection shows zero results without requesting an index', async (t) => {
+  const search = t.mock.fn(async () => matches([]));
+  const h = setup(t, '', { emptyCollection: true, query: 'alpha', search });
+  await h.ready;
+  assert.equal(search.mock.callCount(), 0);
+  assert.equal(h.error.hidden, true);
+  assert.equal(h.empty.hidden, false);
+  assert.equal(h.emptyMessage.textContent, 'No matching things.');
+  assert.equal(h.grid.attributes.has('aria-busy'), false);
 });

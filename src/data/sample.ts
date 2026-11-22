@@ -1,8 +1,11 @@
-import type { MicroCMSNamedContent, MicroCMSThing, PickImage } from '../types/content';
+import type { MicroCMSBrand, MicroCMSNamedContent, MicroCMSThing, PickImage } from '../types/content';
 
 // These are illustrative objects, not the site owner's possessions or reviews.
-export const sampleBrands: MicroCMSNamedContent[] = [
-  { id: 'sample-objects', name: 'SAMPLE OBJECTS' },
+export const sampleBrands: MicroCMSBrand[] = [
+  {
+    id: 'sample-objects', name: 'SAMPLE OBJECTS',
+    search_aliases: [{ fieldId: 'search_alias', value: 'サンプルオブジェクツ' }],
+  },
 ];
 
 export const sampleCategories: MicroCMSNamedContent[] = [
@@ -118,8 +121,12 @@ const sampleMorePicks: Record<string, string[]> = {
 
 export const sampleThings: MicroCMSThing[] = [
   // 元テンプレートには設定せず、派生サンプルへ関連設定が広がるのを防ぐ。
-  ...sampleTemplates.map((thing) => ({
+  ...sampleTemplates.map((thing): MicroCMSThing => ({
     ...thing,
+    search_aliases: thing.id === 'other-camera' ? [
+      { fieldId: 'search_alias', value: 'SC-35' },
+      { fieldId: 'search_alias', value: 'コンパクトカメラ' },
+    ] : undefined,
     more_picks: sampleMorePicks[thing.id]?.map((id) => ({ id })),
   })),
   ...sampleVariations,

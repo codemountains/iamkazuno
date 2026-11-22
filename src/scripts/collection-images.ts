@@ -10,6 +10,7 @@ import { getThingImageSources } from '../lib/thing-image';
   const observed = new WeakSet<HTMLImageElement>();
   let frame: number | undefined;
   let adjusting = false;
+  let awaitingFilters = Boolean(new URLSearchParams(location.search).get('q')?.trim());
 
   function categoryKey() {
     const requested = new URLSearchParams(location.search).get('category') || '';
@@ -24,6 +25,7 @@ import { getThingImageSources } from '../lib/thing-image';
   }
 
   function loadImages(images: HTMLImageElement[], priority = false, nearbyOnly = true) {
+    if (awaitingFilters || grid.ariaBusy === 'true') return;
     const key = categoryKey();
     // 交差通知の後にカテゴリや位置が変わることもあるため、読み込み直前に再確認する。
     const ready = images.filter((image) => {
@@ -70,7 +72,7 @@ import { getThingImageSources } from '../lib/thing-image';
     const key = categoryKey();
     // HTMLの解析中から先頭4カードを優先し、全件の解析や外部moduleを待たない。
     const firstCards = Array.from(grid.querySelectorAll<HTMLElement>('[data-item]'))
-      .filter((item) => !key || item.dataset.categoryKeys?.split(' ').includes(key)).slice(0, 4);
+      .filter((item) => !item.hidden && (!key || item.dataset.categoryKeys?.split(' ').includes(key))).slice(0, 4);
     loadImages(firstCards.map((item) => item.querySelector<HTMLImageElement>('[data-collection-image]'))
       .filter((image): image is HTMLImageElement => image !== null), true, false);
     for (const image of grid.querySelectorAll<HTMLImageElement>('[data-collection-image][data-image-src]')) {
@@ -94,6 +96,8 @@ import { getThingImageSources } from '../lib/thing-image';
   const parser = new MutationObserver(discover);
   parser.observe(grid, { childList: true, subtree: true });
   document.addEventListener('DOMContentLoaded', () => {
+    // 初期検索中は aria-busy で待つ。操作用 module が失敗しても一覧の画像は読み込む。
+    awaitingFilters = false;
     parser.disconnect();
     discover();
     refresh();

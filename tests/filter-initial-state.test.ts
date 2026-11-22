@@ -25,7 +25,8 @@ function load(category: string) {
     dataset: { categoryKeys: ids.map(encodeURIComponent).join(' ') },
     hidden: false,
   }));
-  const label = { textContent: '' };
+  const prefix = { textContent: '' }, count = { textContent: '' }, suffix = { textContent: '' };
+  const label = { get textContent() { return prefix.textContent + count.textContent + suffix.textContent; } };
   const empty = { hidden: true };
   const style = { id: 'picks-initial-filter', removed: false, remove() { this.removed = true; } };
   const root = { dataset: {} as Record<string, string> };
@@ -34,7 +35,10 @@ function load(category: string) {
     querySelectorAll(selector: string) { return selector === '[data-filter]' ? buttons : items; },
     querySelector(selector: string) {
       if (selector === '[data-item-grid]') return grid;
-      return selector === '[data-results-label]' ? label : empty;
+      if (selector === '[data-count-prefix]') return prefix;
+      if (selector === '[data-result-count]') return count;
+      if (selector === '[data-count-suffix]') return suffix;
+      return empty;
     },
     getElementById(id: string) { return style.id === id ? style : null; },
   };

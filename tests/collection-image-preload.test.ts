@@ -16,12 +16,12 @@ const entries = getCollectionPreloadEntries([
 ], [{ id: 'mountain', name: 'Mountain' }, { id: unusualCategory, name: 'Ski' }, { id: 'empty', name: 'Empty' }]);
 const script = await bundleInlineScript('src/scripts/collection-image-preload.ts');
 
-function preload(category = '', saved: string | null = null, mobile = true, storageBlocked = false) {
+function preload(category = '', saved: string | null = null, mobile = true, storageBlocked = false, query = '') {
   const links: Array<Record<string, unknown>> = [];
   // head時点で本文やレイアウトAPIを利用できなくても実行できることを確認する。
   runInNewContext(script, {
     window: { matchMedia: () => ({ matches: mobile }), innerWidth: 412 },
-    location: { search: `?category=${encodeURIComponent(category)}` },
+    location: { search: `?category=${encodeURIComponent(category)}&q=${encodeURIComponent(query)}` },
     sessionStorage: { getItem: () => { if (storageBlocked) throw new Error('Blocked'); return saved; } },
     document: {
       currentScript: { dataset: { images: JSON.stringify(entries) } },
@@ -44,6 +44,7 @@ test('preload selects the first illustrated item of the actual category, includi
   assert.match(String(preload('__proto__')[0].imageSrcset), /\/tent\.png\?/);
   assert.equal(preload('empty').length, 0);
   assert.equal(preload('', null, false).length, 0);
+  assert.equal(preload(unusualCategory, null, true, false, 'スキー').length, 0);
 });
 
 test('preload uses stored two/three-column sizes and falls back when storage is invalid or unavailable', () => {

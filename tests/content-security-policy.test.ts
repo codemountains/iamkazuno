@@ -71,6 +71,25 @@ test('one shared CSP covers more than 100 pages while preserving existing header
   await assert.rejects(writeContentSecurityPolicy(directory), /generated once/);
 });
 
+test('the collection alone receives a Wasm policy with its own inline hashes', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'picks-csp-'));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  await mkdir(join(directory, 'picks'));
+  await writeFile(join(directory, 'index.html'), '<script>home()</script>');
+  await writeFile(join(directory, 'picks/index.html'), '<script>picks()</script>');
+  await writeFile(join(directory, '_headers'), '/*\n  X-Frame-Options: DENY\n\n/picks\n  Cache-Control: public\n');
+  await writeContentSecurityPolicy(directory);
+  const headers = await readFile(join(directory, '_headers'), 'utf8');
+  const [global, collection] = headers.split('\n/picks\n');
+  assert.ok(!global.includes("'wasm-unsafe-eval'"));
+  assert.ok(collection.startsWith('  ! Content-Security-Policy\n  Content-Security-Policy: '));
+  assert.ok(collection.includes("'wasm-unsafe-eval'"));
+  assert.ok(collection.includes("worker-src 'none'"));
+  assert.ok(collection.includes(hash('picks()')));
+  assert.ok(!collection.includes(hash('home()')));
+  assert.ok(collection.includes('  Cache-Control: public'));
+});
+
 test('Cloudflare limits fail the build before writing an ignored or conflicting policy', async (t) => {
   const directory = await mkdtemp(join(tmpdir(), 'picks-csp-'));
   t.after(() => rm(directory, { recursive: true, force: true }));

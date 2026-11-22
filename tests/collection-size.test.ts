@@ -50,7 +50,7 @@ test('saved size is restored before first paint and navigation restoration', () 
     assert.equal(layout['--collection-mobile-columns'], String(mobileCollectionColumns(size)));
   }
   assert.ok(page.indexOf('data-size-prepare') < page.indexOf('data-item-grid'));
-  assert.ok(page.indexOf('  initCollectionSize();') < page.indexOf('  initCollectionNavigation();'));
+  assert.match(page, /  initCollectionSize\(\);[\s\S]*?  initCollectionNavigation\(/);
 });
 
 test('missing, invalid or blocked storage retains the shared default size', () => {
