@@ -15,9 +15,9 @@ node .agents/skills/generate-og/scripts/generate.mjs picks
 
 依頼された対象だけを実行する。描画する文言と出力先は次のとおり。末尾にピリオドは付けない。notes のトップと各ノートは同じ画像を使う。
 
-| 対象 | 文言 | 出力先 |
-| --- | --- | --- |
-| `home` | `iamkaz.uno` | `public/og-home.png` |
+| 対象    | 文言               | 出力先                |
+| ------- | ------------------ | --------------------- |
+| `home`  | `iamkaz.uno`       | `public/og-home.png`  |
 | `notes` | `iamkaz.uno/notes` | `public/og-notes.png` |
 | `picks` | `iamkaz.uno/picks` | `public/og-picks.png` |
 

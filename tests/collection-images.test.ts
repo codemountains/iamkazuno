@@ -8,7 +8,7 @@ const script = await bundleInlineScript('src/scripts/collection-images.ts');
 function load(url: string, withSource: boolean) {
   const writes: string[] = [];
   const source = { sizes: '', srcset: '' };
-  const picture = { querySelectorAll: () => withSource ? [source] : [] };
+  const picture = { querySelectorAll: () => (withSource ? [source] : []) };
   const image = {
     dataset: { imageSrc: url } as Record<string, string>,
     sizes: 'auto, 240px',
@@ -19,9 +19,11 @@ function load(url: string, withSource: boolean) {
     // HTMLImageElement.width is the rendered width, not the original image width.
     width: 119,
     classList: { contains: () => false },
-    getAttribute: (name: string) => name === 'width' ? '1280' : null,
+    getAttribute: (name: string) => (name === 'width' ? '1280' : null),
     getBoundingClientRect: () => ({ width: 119, top: 181, bottom: 308 }),
-    closest(selector: string): unknown { return selector === 'picture' ? picture : item; },
+    closest(selector: string): unknown {
+      return selector === 'picture' ? picture : item;
+    },
   };
   const item = {
     hidden: false,
@@ -32,7 +34,10 @@ function load(url: string, withSource: boolean) {
     let value = target[property];
     Object.defineProperty(target, property, {
       get: () => value,
-      set: (next: T[K]) => { value = next; writes.push(name); },
+      set: (next: T[K]) => {
+        value = next;
+        writes.push(name);
+      },
     });
   }
   track('image sizes', image, 'sizes');
@@ -49,7 +54,8 @@ function load(url: string, withSource: boolean) {
   };
   let discover!: () => void;
   runInNewContext(script, {
-    URL, URLSearchParams,
+    URL,
+    URLSearchParams,
     location: { search: '' },
     innerHeight: 823,
     getComputedStyle: () => ({ paddingLeft: '10px', paddingRight: '10px' }),
@@ -60,7 +66,9 @@ function load(url: string, withSource: boolean) {
     },
     window: { addEventListener() {} },
     MutationObserver: class {
-      constructor(callback: () => void) { discover = callback; }
+      constructor(callback: () => void) {
+        discover = callback;
+      }
       observe() {}
     },
   });
@@ -69,16 +77,25 @@ function load(url: string, withSource: boolean) {
 }
 
 test('bundled inline image loader derives responsive sources from original metadata before fallback', () => {
-  const { image, source, writes } = load('https://images.microcms-assets.io/assets/product.png?dpr=3', true);
+  const { image, source, writes } = load(
+    'https://images.microcms-assets.io/assets/product.png?dpr=3',
+    true,
+  );
   assert.equal(image.sizes, '99px');
   assert.equal(source.sizes, '99px');
   assert.equal(image.loading, 'eager');
   assert.equal(image.fetchPriority, 'high');
   assert.equal(image.dataset.imageSrc, undefined);
   assert.deepEqual(writes, ['image sizes', 'source sizes', 'AVIF', 'WebP', 'fallback']);
-  for (const [srcset, format] of [[source.srcset, 'avif'], [image.srcset, 'webp']]) {
+  for (const [srcset, format] of [
+    [source.srcset, 'avif'],
+    [image.srcset, 'webp'],
+  ]) {
     const candidates = srcset.split(', ').map((candidate) => candidate.split(' '));
-    assert.deepEqual(candidates.map(([, width]) => width), ['80w', '120w', '160w', '240w', '320w', '400w', '480w', '640w', '960w']);
+    assert.deepEqual(
+      candidates.map(([, width]) => width),
+      ['80w', '120w', '160w', '240w', '320w', '400w', '480w', '640w', '960w'],
+    );
     assert.ok(candidates.every(([url]) => new URL(url).searchParams.get('fm') === format));
     assert.ok(candidates.every(([url]) => !new URL(url).searchParams.has('dpr')));
   }

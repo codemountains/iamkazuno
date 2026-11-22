@@ -14,8 +14,9 @@ import { getThingImageSources } from '../lib/thing-image';
 
   function categoryKey() {
     const requested = new URLSearchParams(location.search).get('category') || '';
-    const valid = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-filter]'))
-      .some((button) => button.dataset.filter === requested);
+    const valid = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-filter]')).some(
+      (button) => button.dataset.filter === requested,
+    );
     return valid ? encodeURIComponent(requested) : '';
   }
 
@@ -31,7 +32,10 @@ import { getThingImageSources } from '../lib/thing-image';
     const ready = images.filter((image) => {
       if (!image.dataset.imageSrc || !matchesCategory(image, key)) return false;
       const rect = image.getBoundingClientRect();
-      return rect.width > 0 && (!nearbyOnly || (rect.bottom > -margin && rect.top < innerHeight + margin));
+      return (
+        rect.width > 0 &&
+        (!nearbyOnly || (rect.bottom > -margin && rect.top < innerHeight + margin))
+      );
     });
     if (!ready.length) return;
 
@@ -46,7 +50,10 @@ import { getThingImageSources } from '../lib/thing-image';
     for (const image of ready) {
       const original = image.dataset.imageSrc!;
       // widthプロパティは表示幅を返すため、元画像幅を保持したHTML属性を使う。
-      const variants = getThingImageSources({ url: original, width: Number(image.getAttribute('width')) }, image.classList.contains('detail-image'));
+      const variants = getThingImageSources(
+        { url: original, width: Number(image.getAttribute('width')) },
+        image.classList.contains('detail-image'),
+      );
       image.sizes = sizes;
       image.loading = 'eager';
       image.fetchPriority = priority ? 'high' : 'auto';
@@ -64,18 +71,38 @@ import { getThingImageSources } from '../lib/thing-image';
     }
   }
 
-  const observer = typeof IntersectionObserver === 'undefined' ? null : new IntersectionObserver((entries) => {
-    loadImages(entries.filter((entry) => entry.isIntersecting).map((entry) => entry.target as HTMLImageElement));
-  }, { rootMargin: `${margin}px 0px` });
+  const observer =
+    typeof IntersectionObserver === 'undefined'
+      ? null
+      : new IntersectionObserver(
+          (entries) => {
+            loadImages(
+              entries
+                .filter((entry) => entry.isIntersecting)
+                .map((entry) => entry.target as HTMLImageElement),
+            );
+          },
+          { rootMargin: `${margin}px 0px` },
+        );
 
   function discover() {
     const key = categoryKey();
     // HTMLの解析中から先頭4カードを優先し、全件の解析や外部moduleを待たない。
     const firstCards = Array.from(grid.querySelectorAll<HTMLElement>('[data-item]'))
-      .filter((item) => !item.hidden && (!key || item.dataset.categoryKeys?.split(' ').includes(key))).slice(0, 4);
-    loadImages(firstCards.map((item) => item.querySelector<HTMLImageElement>('[data-collection-image]'))
-      .filter((image): image is HTMLImageElement => image !== null), true, false);
-    for (const image of grid.querySelectorAll<HTMLImageElement>('[data-collection-image][data-image-src]')) {
+      .filter(
+        (item) => !item.hidden && (!key || item.dataset.categoryKeys?.split(' ').includes(key)),
+      )
+      .slice(0, 4);
+    loadImages(
+      firstCards
+        .map((item) => item.querySelector<HTMLImageElement>('[data-collection-image]'))
+        .filter((image): image is HTMLImageElement => image !== null),
+      true,
+      false,
+    );
+    for (const image of grid.querySelectorAll<HTMLImageElement>(
+      '[data-collection-image][data-image-src]',
+    )) {
       pending.add(image);
       if (observer && !observed.has(image)) {
         observed.add(image);
@@ -95,16 +122,22 @@ import { getThingImageSources } from '../lib/thing-image';
 
   const parser = new MutationObserver(discover);
   parser.observe(grid, { childList: true, subtree: true });
-  document.addEventListener('DOMContentLoaded', () => {
-    // 初期検索中は aria-busy で待つ。操作用 module が失敗しても一覧の画像は読み込む。
-    awaitingFilters = false;
-    parser.disconnect();
-    discover();
-    refresh();
-  }, { once: true });
+  document.addEventListener(
+    'DOMContentLoaded',
+    () => {
+      // 初期検索中は aria-busy で待つ。操作用 module が失敗しても一覧の画像は読み込む。
+      awaitingFilters = false;
+      parser.disconnect();
+      discover();
+      refresh();
+    },
+    { once: true },
+  );
   document.addEventListener('picks:filter-change', refresh);
   document.addEventListener('picks:resize', refresh);
-  document.addEventListener('picks:size-start', () => { adjusting = true; });
+  document.addEventListener('picks:size-start', () => {
+    adjusting = true;
+  });
   document.addEventListener('picks:size-end', () => {
     adjusting = false;
     refresh();

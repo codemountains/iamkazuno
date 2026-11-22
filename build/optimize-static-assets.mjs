@@ -15,8 +15,12 @@ export async function pruneSampleImages(directory) {
     if (/** @type {NodeJS.ErrnoException} */ (error).code === 'ENOENT') return;
     throw error;
   }
-  const pages = (await readdir(directory, { recursive: true })).filter((path) => path.endsWith('.html'));
-  const html = (await Promise.all(pages.map((path) => readFile(join(directory, path), 'utf8')))).join('\n');
+  const pages = (await readdir(directory, { recursive: true })).filter((path) =>
+    path.endsWith('.html'),
+  );
+  const html = (
+    await Promise.all(pages.map((path) => readFile(join(directory, path), 'utf8')))
+  ).join('\n');
   for (const sample of samples) {
     if (!sample.isFile() || !sample.name.endsWith('.svg')) continue;
     if (!html.includes(`/images/samples/${sample.name}`)) {
@@ -43,7 +47,9 @@ export default function optimizeStaticAssets() {
         // Text-heavy artwork stays lossless PNG.
         const home = join(directory, 'og-home.png');
         const original = await readFile(home);
-        const optimized = await sharp(original).png({ compressionLevel: 9, adaptiveFiltering: true }).toBuffer();
+        const optimized = await sharp(original)
+          .png({ compressionLevel: 9, adaptiveFiltering: true })
+          .toBuffer();
         if (optimized.length < original.length) await writeFile(home, optimized);
 
         await pruneSampleImages(directory);

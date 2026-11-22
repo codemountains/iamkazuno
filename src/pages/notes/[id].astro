@@ -16,13 +16,22 @@ export const getStaticPaths = (async () => {
   return notes.map((note, index) => ({
     params: { id: note.id },
     props: {
-      note, newer: notes[index - 1] ?? null, older: notes[index + 1] ?? null, source,
+      note,
+      newer: notes[index - 1] ?? null,
+      older: notes[index + 1] ?? null,
+      source,
       listPage: Math.floor(index / NOTES_PER_PAGE) + 1,
     },
   }));
 }) satisfies GetStaticPaths;
 
-interface Props { note: Note; newer: Note | null; older: Note | null; source: 'sample' | 'microcms'; listPage: number }
+interface Props {
+  note: Note;
+  newer: Note | null;
+  older: Note | null;
+  source: 'sample' | 'microcms';
+  listPage: number;
+}
 const { note, newer, older, source, listPage } = Astro.props;
 ---
 
@@ -41,22 +50,46 @@ const { note, newer, older, source, listPage } = Astro.props;
   </div>
 
   <main id="main" class="note-detail">
-    <a class="collection-back" href={notesPagePath(listPage)} data-astro-prefetch><span aria-hidden="true">←</span> Back to notes</a>
+    <a class="collection-back" href={notesPagePath(listPage)} data-astro-prefetch>
+      <span aria-hidden="true">←</span> Back to notes
+    </a>
 
     <article aria-labelledby="note-title">
       <header class="note-heading">
-        {note.publishedAt && <p class="note-date"><NoteDate date={note.publishedAt} /></p>}
+        {note.publishedAt && (
+          <p class="note-date">
+            <NoteDate date={note.publishedAt} />
+          </p>
+        )}
         <h1 id="note-title">{note.title}</h1>
       </header>
       {note.bodyHtml && <div class="note-body rich-text" set:html={note.bodyHtml} />}
       {note.photoSection && <NotePhotos section={note.photoSection} />}
-      <div class="note-end" aria-label="本文終わり"><span></span><span></span><span></span></div>
+      <div class="note-end" aria-label="本文終わり">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
     </article>
 
     {(newer || older) && (
       <nav class="note-pagination" aria-label="ほかのノート">
-        {newer && <a class="note-neighbor" href={notePath(newer.id)} data-astro-prefetch><span>← Newer note</span><span>{newer.title}</span></a>}
-        {older && <a class="note-neighbor note-neighbor--older" href={notePath(older.id)} data-astro-prefetch><span>Older note →</span><span>{older.title}</span></a>}
+        {newer && (
+          <a class="note-neighbor" href={notePath(newer.id)} data-astro-prefetch>
+            <span>← Newer note</span>
+            <span>{newer.title}</span>
+          </a>
+        )}
+        {older && (
+          <a
+            class="note-neighbor note-neighbor--older"
+            href={notePath(older.id)}
+            data-astro-prefetch
+          >
+            <span>Older note →</span>
+            <span>{older.title}</span>
+          </a>
+        )}
       </nav>
     )}
   </main>

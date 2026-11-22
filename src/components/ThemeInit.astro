@@ -15,9 +15,8 @@
 
     const apply = () => {
       root.dataset.themePreference = preference;
-      root.dataset.theme = preference === 'system'
-        ? (systemTheme.matches ? 'dark' : 'light')
-        : preference;
+      root.dataset.theme =
+        preference === 'system' ? (systemTheme.matches ? 'dark' : 'light') : preference;
       document.dispatchEvent(new CustomEvent('picks:theme-updated'));
     };
 

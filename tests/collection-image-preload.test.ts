@@ -6,29 +6,54 @@ import { getCollectionPreloadEntries } from '../src/lib/collection-image-preload
 import type { Thing } from '../src/types/content';
 
 const thing = (id: string, category: string, image = true): Thing => ({
-  id, name: id, brand: null, descriptionHtml: '', morePickIds: [],
+  id,
+  name: id,
+  brand: null,
+  descriptionHtml: '',
+  morePickIds: [],
   categories: [{ id: category, name: category }],
-  image: image ? { url: `https://images.microcms-assets.io/assets/${id}.png`, width: 1280, height: 1280 } : null,
+  image: image
+    ? { url: `https://images.microcms-assets.io/assets/${id}.png`, width: 1280, height: 1280 }
+    : null,
 });
 const unusualCategory = 'ski & "snow" </script>';
-const entries = getCollectionPreloadEntries([
-  thing('no-image', 'mountain', false), thing('tent', 'mountain'), thing('ski', unusualCategory),
-], [{ id: 'mountain', name: 'Mountain' }, { id: unusualCategory, name: 'Ski' }, { id: 'empty', name: 'Empty' }]);
+const entries = getCollectionPreloadEntries(
+  [thing('no-image', 'mountain', false), thing('tent', 'mountain'), thing('ski', unusualCategory)],
+  [
+    { id: 'mountain', name: 'Mountain' },
+    { id: unusualCategory, name: 'Ski' },
+    { id: 'empty', name: 'Empty' },
+  ],
+);
 const script = await bundleInlineScript('src/scripts/collection-image-preload.ts');
 
-function preload(category = '', saved: string | null = null, mobile = true, storageBlocked = false, query = '') {
+function preload(
+  category = '',
+  saved: string | null = null,
+  mobile = true,
+  storageBlocked = false,
+  query = '',
+) {
   const links: Array<Record<string, unknown>> = [];
   // head時点で本文やレイアウトAPIを利用できなくても実行できることを確認する。
   runInNewContext(script, {
     window: { matchMedia: () => ({ matches: mobile }), innerWidth: 412 },
-    location: { search: `?category=${encodeURIComponent(category)}&q=${encodeURIComponent(query)}` },
-    sessionStorage: { getItem: () => { if (storageBlocked) throw new Error('Blocked'); return saved; } },
+    location: {
+      search: `?category=${encodeURIComponent(category)}&q=${encodeURIComponent(query)}`,
+    },
+    sessionStorage: {
+      getItem: () => {
+        if (storageBlocked) throw new Error('Blocked');
+        return saved;
+      },
+    },
     document: {
       currentScript: { dataset: { images: JSON.stringify(entries) } },
       createElement: () => ({ dataset: {} }),
       head: { append: (link: Record<string, unknown>) => links.push(link) },
     },
-    URL, URLSearchParams,
+    URL,
+    URLSearchParams,
   });
   return links;
 }

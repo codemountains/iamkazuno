@@ -9,17 +9,31 @@ class Target {
     this.listeners.set(type, [...(this.listeners.get(type) ?? []), listener]);
   }
   emit(type: string, event: Record<string, unknown> = {}) {
-    for (const listener of this.listeners.get(type) ?? []) listener({ type, target: this, ...event });
+    for (const listener of this.listeners.get(type) ?? [])
+      listener({ type, target: this, ...event });
   }
 }
 
 class Style {
   private values = new Map<string, string>();
-  setProperty(name: string, value: string) { this.values.set(name, value); }
-  getPropertyValue(name: string) { return this.values.get(name) ?? ''; }
+  setProperty(name: string, value: string) {
+    this.values.set(name, value);
+  }
+  getPropertyValue(name: string) {
+    return this.values.get(name) ?? '';
+  }
 }
 
-function setup(t: TestContext, options: { mobile?: boolean; blockedStorage?: boolean; width?: number; initial?: number; scrollY?: number } = {}) {
+function setup(
+  t: TestContext,
+  options: {
+    mobile?: boolean;
+    blockedStorage?: boolean;
+    width?: number;
+    initial?: number;
+    scrollY?: number;
+  } = {},
+) {
   const mobile = Object.assign(new Target(), { matches: options.mobile ?? false });
   // 操作テストの列数遷移は、製品の初期設定から独立した開始サイズで固定する。
   const initial = options.initial ?? (mobile.matches ? 184 : 160);
@@ -30,9 +44,18 @@ function setup(t: TestContext, options: { mobile?: boolean; blockedStorage?: boo
     value: String(initial),
     style: new Style(),
     attributes: new Map<string, string>(),
-    setAttribute(name: string, value: string) { this.attributes.set(name, value); },
+    setAttribute(name: string, value: string) {
+      this.attributes.set(name, value);
+    },
   });
-  const stats = { gridReads: 0, itemReads: 0, imageReads: 0, styleReads: 0, sizeWrites: 0, resizeEvents: 0 };
+  const stats = {
+    gridReads: 0,
+    itemReads: 0,
+    imageReads: 0,
+    styleReads: 0,
+    sizeWrites: 0,
+    resizeEvents: 0,
+  };
   const stored = new Map<string, string>();
   const saves: string[] = [];
   const scrolls: number[] = [];
@@ -42,13 +65,18 @@ function setup(t: TestContext, options: { mobile?: boolean; blockedStorage?: boo
     frames.set(++nextFrame, callback);
     return nextFrame;
   };
-  const cancelAnimationFrame = (id: number) => { frames.delete(id); };
+  const cancelAnimationFrame = (id: number) => {
+    frames.delete(id);
+  };
   const window = Object.assign(new Target(), {
     scrollY: 0,
     matchMedia: () => mobile,
     requestAnimationFrame,
     cancelAnimationFrame,
-    scrollTo({ top }: { top: number }) { this.scrollY = top; scrolls.push(top); },
+    scrollTo({ top }: { top: number }) {
+      this.scrollY = top;
+      scrolls.push(top);
+    },
   });
   let containerWidth = options.width ?? (mobile.matches ? 360 : 960);
   const layoutColumns = () => {
@@ -66,28 +94,39 @@ function setup(t: TestContext, options: { mobile?: boolean; blockedStorage?: boo
   // 先頭行の位置はサイズに依存せず、後続行だけが列数とカード幅に応じて移動する。
   // 既定では3行目の途中までスクロールしておき、位置補正を実際に必要とする。
   window.scrollY = options.scrollY ?? 200 + 2 * (imageWidth() + 24) + 20;
-  const items: Array<{ hidden: boolean; getBoundingClientRect(): { top: number; bottom: number; width: number } }> = Array.from({ length: 40 }, (_, index) => ({
+  const items: Array<{
+    hidden: boolean;
+    getBoundingClientRect(): { top: number; bottom: number; width: number };
+  }> = Array.from({ length: 40 }, (_, index) => ({
     hidden: index === 39,
     getBoundingClientRect() {
       stats.itemReads++;
       const visibleIndex = items.slice(0, index).filter((item) => !item.hidden).length;
-      const top = 200 + Math.floor(visibleIndex / layoutColumns()) * (imageWidth() + 24) - window.scrollY;
+      const top =
+        200 + Math.floor(visibleIndex / layoutColumns()) * (imageWidth() + 24) - window.scrollY;
       return { top, bottom: top + imageWidth(), width: imageWidth() };
     },
   }));
   function picture() {
     let sizes = 'auto, 160px';
     return {
-      get sizes() { return sizes; },
-      set sizes(value: string) { sizes = value; stats.sizeWrites++; },
+      get sizes() {
+        return sizes;
+      },
+      set sizes(value: string) {
+        sizes = value;
+        stats.sizeWrites++;
+      },
     };
   }
-  const images = items.map((item) => Object.assign(picture(), {
-    getBoundingClientRect() {
-      stats.imageReads++;
-      return { width: item.hidden ? 0 : imageWidth() };
-    },
-  }));
+  const images = items.map((item) =>
+    Object.assign(picture(), {
+      getBoundingClientRect() {
+        stats.imageReads++;
+        return { width: item.hidden ? 0 : imageWidth() };
+      },
+    }),
+  );
   const sources = items.map(() => picture());
   const pictures = [...images, ...sources];
   const grid = {
@@ -106,7 +145,7 @@ function setup(t: TestContext, options: { mobile?: boolean; blockedStorage?: boo
   const document = Object.assign(documentTarget, {
     documentElement: root,
     visibilityState: 'visible',
-    querySelector: (selector: string) => selector === '[data-item-grid]' ? grid : slider,
+    querySelector: (selector: string) => (selector === '[data-item-grid]' ? grid : slider),
     dispatchEvent(event: Event) {
       if (event.type === 'picks:resize') stats.resizeEvents++;
       documentTarget.emit(event.type);
@@ -115,7 +154,10 @@ function setup(t: TestContext, options: { mobile?: boolean; blockedStorage?: boo
   });
   const observers: Array<() => void> = [];
   const globals = {
-    document, window, requestAnimationFrame, cancelAnimationFrame,
+    document,
+    window,
+    requestAnimationFrame,
+    cancelAnimationFrame,
     sessionStorage: {
       getItem: (key: string) => stored.get(key) ?? null,
       setItem(key: string, value: string) {
@@ -126,18 +168,21 @@ function setup(t: TestContext, options: { mobile?: boolean; blockedStorage?: boo
     },
     getComputedStyle(target: unknown) {
       stats.styleReads++;
-      if (target === grid) return {
-        getPropertyValue(name: string) {
-          if (name === '--collection-column-gap') return '16px';
-          if (name === '--collection-max-columns') return '18';
-          throw new Error(`Unexpected grid property: ${name}`);
-        },
-      };
+      if (target === grid)
+        return {
+          getPropertyValue(name: string) {
+            if (name === '--collection-column-gap') return '16px';
+            if (name === '--collection-max-columns') return '18';
+            throw new Error(`Unexpected grid property: ${name}`);
+          },
+        };
       return { paddingLeft: '14px', paddingRight: '14px' };
     },
     ResizeObserver: class {
       constructor(callback: (entries: unknown[]) => void) {
-        observers.push(() => callback([{ target: grid, contentRect: { width: containerWidth, height: 900 } }]));
+        observers.push(() =>
+          callback([{ target: grid, contentRect: { width: containerWidth, height: 900 } }]),
+        );
       }
       observe() {}
     },
@@ -168,11 +213,32 @@ function setup(t: TestContext, options: { mobile?: boolean; blockedStorage?: boo
     for (const notify of observers) notify();
   };
   return {
-    root, slider, mobile, window, document, items, images, sources, stats, stored, saves, scrolls, frames,
-    flushFrame, clearStats, notifyResize,
-    visibleItem() { return items.find((item) => !item.hidden && item.getBoundingClientRect().bottom > 0)!; },
-    setContainerWidth(width: number) { containerWidth = width; },
-    input(value: number) { slider.value = String(value); slider.emit('input'); },
+    root,
+    slider,
+    mobile,
+    window,
+    document,
+    items,
+    images,
+    sources,
+    stats,
+    stored,
+    saves,
+    scrolls,
+    frames,
+    flushFrame,
+    clearStats,
+    notifyResize,
+    visibleItem() {
+      return items.find((item) => !item.hidden && item.getBoundingClientRect().bottom > 0)!;
+    },
+    setContainerWidth(width: number) {
+      containerWidth = width;
+    },
+    input(value: number) {
+      slider.value = String(value);
+      slider.emit('input');
+    },
     resize(width = containerWidth) {
       notifyResize(width);
       flushFrame();
@@ -291,7 +357,14 @@ test('mobile resize and pageshow notifications do not update image candidates be
   for (const picture of [...h.images, ...h.sources]) assert.equal(picture.sizes, '182px');
 });
 
-for (const reason of ['change', 'blur', 'pagehide', 'hidden', 'pointercancel', 'lostpointercapture'] as const) {
+for (const reason of [
+  'change',
+  'blur',
+  'pagehide',
+  'hidden',
+  'pointercancel',
+  'lostpointercapture',
+] as const) {
   test(`mobile ${reason} commits the latest pending value and image candidates once`, (t) => {
     const h = setup(t, { mobile: true });
     h.input(216);
@@ -359,8 +432,18 @@ for (const { width, lastCappedSize, cappedImageSize, nextImageSize } of [
     }
     assert.equal(h.root.style.getPropertyValue('--collection-item-size'), `${lastCappedSize}px`);
     assert.equal(h.slider.attributes.get('aria-valuetext'), `${lastCappedSize}ピクセル`);
-    assert.equal(h.slider.style.getPropertyValue('--size-progress'), `${(lastCappedSize - 88) / 192 * 100}%`);
-    assert.deepEqual(h.stats, { gridReads: 0, itemReads: 0, imageReads: 0, styleReads: 0, sizeWrites: 0, resizeEvents: 0 });
+    assert.equal(
+      h.slider.style.getPropertyValue('--size-progress'),
+      `${((lastCappedSize - 88) / 192) * 100}%`,
+    );
+    assert.deepEqual(h.stats, {
+      gridReads: 0,
+      itemReads: 0,
+      imageReads: 0,
+      styleReads: 0,
+      sizeWrites: 0,
+      resizeEvents: 0,
+    });
     assert.equal(h.scrolls.length, 0);
     for (const picture of [...h.images, ...h.sources]) assert.equal(picture.sizes, cappedImageSize);
     h.slider.emit('change');
@@ -381,7 +464,14 @@ test('desktop inputs within an uncapped column count also skip measuring and scr
   const h = setup(t);
   h.input(176);
   h.slider.emit('change');
-  assert.deepEqual(h.stats, { gridReads: 0, itemReads: 0, imageReads: 0, styleReads: 0, sizeWrites: 0, resizeEvents: 0 });
+  assert.deepEqual(h.stats, {
+    gridReads: 0,
+    itemReads: 0,
+    imageReads: 0,
+    styleReads: 0,
+    sizeWrites: 0,
+    resizeEvents: 0,
+  });
   assert.deepEqual(h.saves, ['176']);
   assert.equal(h.scrolls.length, 0);
 });

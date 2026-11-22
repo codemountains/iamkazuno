@@ -2,26 +2,51 @@
 import Wordmark from './Wordmark.astro';
 import { collectionPath, notesPath } from '../lib/paths';
 
-interface Props { section?: 'picks' | 'notes' }
+interface Props {
+  section?: 'picks' | 'notes';
+}
 const { section = 'picks' } = Astro.props;
 ---
+
 <footer class="site-footer">
   <div class="footer-main">
     <Wordmark small section={section} />
     <a href="#top" class="back-to-top">
       Back to top
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 16 16"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
         <path d="M8 13V3M4 7l4-4 4 4" />
       </svg>
     </a>
   </div>
   <div class="footer-links">
     <nav class="footer-destinations" aria-label="サイト内のページ">
-      <a href="/" class="footer-home-link" data-astro-prefetch aria-label="iamkaz.uno トップページに戻る">
+      <a
+        href="/"
+        class="footer-home-link"
+        data-astro-prefetch
+        aria-label="iamkaz.uno トップページに戻る"
+      >
         <span aria-hidden="true">←</span> iamkaz.uno
       </a>
-      <a href={section === 'notes' ? collectionPath : notesPath} class="footer-section-link" data-astro-prefetch>
-        /{section === 'notes' ? 'picks' : 'notes'}<span class="wordmark-dot" aria-hidden="true">.</span>
+      <a
+        href={section === 'notes' ? collectionPath : notesPath}
+        class="footer-section-link"
+        data-astro-prefetch
+      >
+        /{section === 'notes' ? 'picks' : 'notes'}
+        <span class="wordmark-dot" aria-hidden="true">
+          .
+        </span>
       </a>
     </nav>
     <a
@@ -32,7 +57,15 @@ const { section = 'picks' } = Astro.props;
       aria-label="Instagram @drop_in_com（新しいタブで開く）"
       title="Instagram @drop_in_com"
     >
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.6"
+        aria-hidden="true"
+      >
         <rect x="3" y="3" width="18" height="18" rx="5" />
         <circle cx="12" cy="12" r="4" />
         <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />

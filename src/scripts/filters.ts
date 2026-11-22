@@ -17,12 +17,17 @@ export function initFilters(search = searchPicks): Promise<void> | undefined {
     label: button.querySelector<HTMLElement>('.filter-count')!,
   }));
   const items = Array.from(grid.querySelectorAll<HTMLElement>('[data-item]'));
-  const categories = new Map(items.map((item) => [item, JSON.parse(item.dataset.categories ?? '[]') as string[]]));
-  const itemsByPath = new Map(items.map((item) => [item.querySelector<HTMLAnchorElement>('.item-card-link')?.pathname, item]));
+  const categories = new Map(
+    items.map((item) => [item, JSON.parse(item.dataset.categories ?? '[]') as string[]]),
+  );
+  const itemsByPath = new Map(
+    items.map((item) => [item.querySelector<HTMLAnchorElement>('.item-card-link')?.pathname, item]),
+  );
   const input = document.querySelector<HTMLInputElement>('[data-picks-search]');
   const clear = document.querySelector<HTMLButtonElement>('[data-picks-search-clear]');
   const suggestions = document.querySelector<HTMLElement>('[data-picks-suggestions]');
-  const updateSuggestions = input && suggestions ? initSearchSuggestions(input, suggestions) : undefined;
+  const updateSuggestions =
+    input && suggestions ? initSearchSuggestions(input, suggestions) : undefined;
   const prefix = document.querySelector<HTMLElement>('[data-count-prefix]');
   const count = document.querySelector<HTMLElement>('[data-result-count]');
   const suffix = document.querySelector<HTMLElement>('[data-count-suffix]');
@@ -42,7 +47,9 @@ export function initFilters(search = searchPicks): Promise<void> | undefined {
   let hits = new Map<string, PickSearchHit>();
 
   function firstSearchResult() {
-    return ranked && grid.querySelector<HTMLAnchorElement>('[data-item]:not([hidden]) .item-card-link');
+    return (
+      ranked && grid.querySelector<HTMLAnchorElement>('[data-item]:not([hidden]) .item-card-link')
+    );
   }
 
   function notify() {
@@ -61,16 +68,22 @@ export function initFilters(search = searchPicks): Promise<void> | undefined {
       // 検索時はバッジの桁数や表示が変わるため、選択中のカテゴリの横位置も合わせる。
       filterScroll.reveal(selected);
     }
-    if (prefix) prefix.textContent = visible !== undefined && category ? `${selected.dataset.filterLabel} — ` : '';
-    if (count) count.textContent = visible === undefined ? 'Searching…' : `${String(visible).padStart(2, '0')} things`;
-    if (suffix) suffix.textContent = visible !== undefined && !category && !ranked ? ', well loved.' : '';
+    if (prefix)
+      prefix.textContent =
+        visible !== undefined && category ? `${selected.dataset.filterLabel} — ` : '';
+    if (count)
+      count.textContent =
+        visible === undefined ? 'Searching…' : `${String(visible).padStart(2, '0')} things`;
+    if (suffix)
+      suffix.textContent = visible !== undefined && !category && !ranked ? ', well loved.' : '';
   }
 
   function select(button: HTMLButtonElement, prepared = false) {
     if (button === selected) return false;
     selected = button;
     if (!prepared) {
-      for (const option of buttons) option.setAttribute('aria-pressed', String(option === selected));
+      for (const option of buttons)
+        option.setAttribute('aria-pressed', String(option === selected));
     }
     filterScroll.reveal(selected);
     return true;
@@ -85,27 +98,32 @@ export function initFilters(search = searchPicks): Promise<void> | undefined {
       if (!category || ids.includes(category)) visible.add(item);
       for (const id of ids) counts.set(id, (counts.get(id) ?? 0) + 1);
     }
-    motion.update(() => {
-      if (order) grid.append(...order);
-      for (const item of items) item.hidden = !visible.has(item);
-      const pending = grid.hasAttribute('aria-busy');
-      if (empty) {
-        empty.hidden = pending || visible.size > 0;
-        empty.dataset.emptyState = ranked ? 'search' : '';
-      }
-      if (emptyMessage) emptyMessage.textContent = ranked ? 'No matching things.' : 'No items yet.';
-      if (searchAll) {
-        const matches = ranked?.size ?? 0;
-        searchAll.hidden = pending || !category || visible.size > 0 || matches === 0;
-        if (!searchAll.hidden) searchAll.textContent = `View ${matches} ${matches === 1 ? 'thing' : 'things'} across all categories`;
-      }
-      for (const badge of badges) {
-        const value = String(counts.get(badge.category) ?? 0);
-        if (badge.label.textContent !== value) badge.label.textContent = value;
-      }
-      showCount(pending ? undefined : visible.size);
-      updateSuggestions?.(ranked && !pending ? visible : undefined, term, hits);
-    }, { animate, pointerType });
+    motion.update(
+      () => {
+        if (order) grid.append(...order);
+        for (const item of items) item.hidden = !visible.has(item);
+        const pending = grid.hasAttribute('aria-busy');
+        if (empty) {
+          empty.hidden = pending || visible.size > 0;
+          empty.dataset.emptyState = ranked ? 'search' : '';
+        }
+        if (emptyMessage)
+          emptyMessage.textContent = ranked ? 'No matching things.' : 'No items yet.';
+        if (searchAll) {
+          const matches = ranked?.size ?? 0;
+          searchAll.hidden = pending || !category || visible.size > 0 || matches === 0;
+          if (!searchAll.hidden)
+            searchAll.textContent = `View ${matches} ${matches === 1 ? 'thing' : 'things'} across all categories`;
+        }
+        for (const badge of badges) {
+          const value = String(counts.get(badge.category) ?? 0);
+          if (badge.label.textContent !== value) badge.label.textContent = value;
+        }
+        showCount(pending ? undefined : visible.size);
+        updateSuggestions?.(ranked && !pending ? visible : undefined, term, hits);
+      },
+      { animate, pointerType },
+    );
     notify();
   }
 
@@ -161,10 +179,17 @@ export function initFilters(search = searchPicks): Promise<void> | undefined {
     if (category) url.searchParams.set('category', category);
     else url.searchParams.delete('category');
     if (url.href !== window.location.href) window.history.pushState(null, '', url);
-    if (select(button)) render(true, typeof PointerEvent !== 'undefined' && event instanceof PointerEvent ? event.pointerType : '');
+    if (select(button))
+      render(
+        true,
+        typeof PointerEvent !== 'undefined' && event instanceof PointerEvent
+          ? event.pointerType
+          : '',
+      );
   }
 
-  for (const button of buttons) button.addEventListener('click', (event) => applyCategory(button, event));
+  for (const button of buttons)
+    button.addEventListener('click', (event) => applyCategory(button, event));
   searchAll?.addEventListener('click', (event) => {
     applyCategory(buttons[0], event);
     buttons[0].focus({ preventScroll: true });
@@ -178,25 +203,43 @@ export function initFilters(search = searchPicks): Promise<void> | undefined {
       const raw = input.value.trim();
       if (raw) url.searchParams.set('q', raw);
       else url.searchParams.delete('q');
-      if (url.href !== window.location.href) window.history.replaceState(window.history.state, '', url);
+      if (url.href !== window.location.href)
+        window.history.replaceState(window.history.state, '', url);
       void updateQuery(raw, true);
     };
-    input.addEventListener('compositionstart', () => { composing = true; });
-    input.addEventListener('compositionend', () => { composing = false; onInput(); });
+    input.addEventListener('compositionstart', () => {
+      composing = true;
+    });
+    input.addEventListener('compositionend', () => {
+      composing = false;
+      onInput();
+    });
     input.addEventListener('input', (event) => {
       if (!composing && !(event as InputEvent).isComposing) onInput();
     });
     input.addEventListener('keydown', (event) => {
-      if (event.key !== 'Tab' || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey || composing || event.isComposing || !term) return;
+      if (
+        event.key !== 'Tab' ||
+        event.shiftKey ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        composing ||
+        event.isComposing ||
+        !term
+      )
+        return;
       const pending = grid.hasAttribute('aria-busy');
-      const target = pending ? clear : firstSearchResult() ?? clear;
+      const target = pending ? clear : (firstSearchResult() ?? clear);
       if (!target) return;
       event.preventDefault();
       target.focus();
       // 入力直後は古いカードを飛ばし、待機中に別の場所へ移動したらフォーカスを追わない。
       focusResultAfterSearch = pending && document.activeElement === clear;
     });
-    clear?.addEventListener('blur', () => { focusResultAfterSearch = false; });
+    clear?.addEventListener('blur', () => {
+      focusResultAfterSearch = false;
+    });
     clear?.addEventListener('click', () => {
       input.value = '';
       onInput();
@@ -228,8 +271,12 @@ export function initFilters(search = searchPicks): Promise<void> | undefined {
     return ready;
   }
 
-  window.addEventListener('popstate', () => { restoreFromUrl(false); });
+  window.addEventListener('popstate', () => {
+    restoreFromUrl(false);
+  });
   if (restoreFromUrl(true) && grid.hasAttribute('aria-busy')) {
-    return new Promise((resolve) => { resolveInitialSearch = resolve; });
+    return new Promise((resolve) => {
+      resolveInitialSearch = resolve;
+    });
   }
 }

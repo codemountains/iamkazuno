@@ -11,7 +11,10 @@ export function initSizeControl() {
   let pointerId: number | null = null;
 
   function render() {
-    control!.toggleAttribute('data-scroll-hidden', scrolling && pointerId === null && !keyboardFocused);
+    control!.toggleAttribute(
+      'data-scroll-hidden',
+      scrolling && pointerId === null && !keyboardFocused,
+    );
   }
 
   function clearTimer() {
@@ -28,30 +31,40 @@ export function initSizeControl() {
   }
 
   function updateAvailability() {
-    control!.hidden = !Array.from(grid!.querySelectorAll<HTMLElement>('[data-item]')).some((item) => !item.hidden);
+    control!.hidden = !Array.from(grid!.querySelectorAll<HTMLElement>('[data-item]')).some(
+      (item) => !item.hidden,
+    );
     if (control!.hidden) reset();
     else render();
   }
 
-  document.addEventListener('scroll', () => {
-    scrolling = true;
-    clearTimer();
-    render();
-    timer = setTimeout(() => {
-      timer = undefined;
-      scrolling = false;
+  document.addEventListener(
+    'scroll',
+    () => {
+      scrolling = true;
+      clearTimer();
       render();
-    }, 400);
-  }, { capture: true, passive: true });
+      timer = setTimeout(() => {
+        timer = undefined;
+        scrolling = false;
+        render();
+      }, 400);
+    },
+    { capture: true, passive: true },
+  );
 
-  document.addEventListener('pointerdown', (event) => {
-    keyboardInput = false;
-    keyboardFocused = false;
-    if (control.contains(event.target as Node | null) && event.isPrimary && event.button === 0) {
-      pointerId = event.pointerId;
-    }
-    render();
-  }, { passive: true });
+  document.addEventListener(
+    'pointerdown',
+    (event) => {
+      keyboardInput = false;
+      keyboardFocused = false;
+      if (control.contains(event.target as Node | null) && event.isPrimary && event.button === 0) {
+        pointerId = event.pointerId;
+      }
+      render();
+    },
+    { passive: true },
+  );
 
   function releasePointer(event: PointerEvent) {
     if (pointerId !== event.pointerId) return;

@@ -7,7 +7,8 @@ import { test, expect, expectCollectionReady } from './fixtures';
 const cdnOrigin = 'https://images.microcms-assets.io';
 const imageUrl = (id: string) => `${cdnOrigin}/assets/preload-test/${id}.png`;
 const imageBody = sharp({ create: { width: 640, height: 640, channels: 4, background: '#e7e7e5' } })
-  .avif().toBuffer();
+  .avif()
+  .toBuffer();
 
 function attribute(value: string) {
   return value.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;');
@@ -22,16 +23,24 @@ function withCdnImages(html: string) {
     onopentag(name, attributes) {
       const original = html.slice(parser.startIndex, parser.endIndex + 1);
       if (name === 'script' && Object.hasOwn(attributes, 'data-image-preload')) {
-        const entries = JSON.parse(attributes['data-images']) as Array<[string, { url: string; width: number } | null]>;
+        const entries = JSON.parse(attributes['data-images']) as Array<
+          [string, { url: string; width: number } | null]
+        >;
         const images = entries.map(([category, image]) => {
-          const thing = sampleThings.find((entry) => entry.main_image && (!category
-            || entry.ref_categories?.some((entry) => entry?.id === category)));
+          const thing = sampleThings.find(
+            (entry) =>
+              entry.main_image &&
+              (!category || entry.ref_categories?.some((entry) => entry?.id === category)),
+          );
           return [category, image && thing ? { ...image, url: imageUrl(thing.id) } : null];
         });
         edits.push({
           start: parser.startIndex,
           end: parser.endIndex + 1,
-          replacement: original.replace(/data-images=(?:"[^"]*"|'[^']*')/, `data-images="${attribute(JSON.stringify(images))}"`),
+          replacement: original.replace(
+            /data-images=(?:"[^"]*"|'[^']*')/,
+            `data-images="${attribute(JSON.stringify(images))}"`,
+          ),
         });
       }
       if (name === 'a' && attributes.href?.startsWith('/picks/things/')) {
@@ -41,14 +50,19 @@ function withCdnImages(html: string) {
         edits.push({
           start: parser.startIndex,
           end: parser.endIndex + 1,
-          replacement: '<source type="image/avif" sizes="auto, 240px">'
-            + original.replace(/data-image-src=(?:"[^"]*"|'[^']*')/, `data-image-src="${imageUrl(itemId)}"`),
+          replacement:
+            '<source type="image/avif" sizes="auto, 240px">' +
+            original.replace(
+              /data-image-src=(?:"[^"]*"|'[^']*')/,
+              `data-image-src="${imageUrl(itemId)}"`,
+            ),
         });
       }
     },
   });
   parser.end(html);
-  for (const edit of edits.reverse()) html = html.slice(0, edit.start) + edit.replacement + html.slice(edit.end);
+  for (const edit of edits.reverse())
+    html = html.slice(0, edit.start) + edit.replacement + html.slice(edit.end);
   return html;
 }
 
@@ -66,61 +80,102 @@ async function installCdnImages(page: Page) {
 }
 
 async function inputSizeWithoutCommit(page: Page, size: number) {
-  await page.getByRole('slider', { name: '画像サイズ' }).evaluate(async (element: HTMLInputElement, value) => {
-    element.value = String(value);
-    element.dispatchEvent(new Event('input', { bubbles: true }));
-    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
-  }, size);
+  await page
+    .getByRole('slider', { name: '画像サイズ' })
+    .evaluate(async (element: HTMLInputElement, value) => {
+      element.value = String(value);
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+        ),
+      );
+    }, size);
 }
 
 async function expectPreloadReused(page: Page, requests: string[], id: string) {
   const image = page.locator(`a[href="/picks/things/${id}"] [data-collection-image]`);
-  await expect.poll(() => image.evaluate((element: HTMLImageElement) =>
-    !element.hasAttribute('data-image-src') && element.complete && element.naturalWidth > 1,
-  )).toBe(true);
+  await expect
+    .poll(() =>
+      image.evaluate(
+        (element: HTMLImageElement) =>
+          !element.hasAttribute('data-image-src') && element.complete && element.naturalWidth > 1,
+      ),
+    )
+    .toBe(true);
   const currentSrc = await image.evaluate((element: HTMLImageElement) => element.currentSrc);
   const preload = page.locator('link[data-collection-preload]');
   await expect(preload).toHaveCount(1);
-  await expect(preload).toHaveAttribute('imagesizes', await image.getAttribute('sizes') ?? '');
-  await expect(preload).toHaveAttribute('imagesrcset', await image.locator('..').locator('source').getAttribute('srcset') ?? '');
+  await expect(preload).toHaveAttribute('imagesizes', (await image.getAttribute('sizes')) ?? '');
+  await expect(preload).toHaveAttribute(
+    'imagesrcset',
+    (await image.locator('..').locator('source').getAttribute('srcset')) ?? '',
+  );
   const measuredSizes = await image.evaluate((element) => {
     const style = getComputedStyle(element);
-    return `${Math.max(1, Math.ceil(element.getBoundingClientRect().width
-      - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)))}px`;
+    return `${Math.max(
+      1,
+      Math.ceil(
+        element.getBoundingClientRect().width -
+          parseFloat(style.paddingLeft) -
+          parseFloat(style.paddingRight),
+      ),
+    )}px`;
   });
   await expect(preload).toHaveAttribute('imagesizes', measuredSizes);
   expect(new URL(currentSrc).searchParams.get('fm')).toBe('avif');
-  expect(requests.filter((url) => new URL(url).pathname === new URL(imageUrl(id)).pathname))
-    .toEqual([currentSrc]);
+  expect(
+    requests.filter((url) => new URL(url).pathname === new URL(imageUrl(id)).pathname),
+  ).toEqual([currentSrc]);
 }
 
-for (const { size, columns } of [{ size: 232, columns: 2 }, { size: 176, columns: 3 }]) {
-  test(`${columns}-column saved layout fetches the LCP image before CSS and reuses that request`, async ({ page, isMobile }) => {
+for (const { size, columns } of [
+  { size: 232, columns: 2 },
+  { size: 176, columns: 3 },
+]) {
+  test(`${columns}-column saved layout fetches the LCP image before CSS and reuses that request`, async ({
+    page,
+    isMobile,
+  }) => {
     test.skip(!isMobile, 'モバイルの保存列数に応じた先読みを検証する。');
     const requests = await installCdnImages(page);
-    await page.addInitScript((saved) => sessionStorage.setItem('picks:image-size', String(saved)), size);
+    await page.addInitScript(
+      (saved) => sessionStorage.setItem('picks:image-size', String(saved)),
+      size,
+    );
     let releaseCss!: () => void;
-    const cssReady = new Promise<void>((resolve) => { releaseCss = resolve; });
+    const cssReady = new Promise<void>((resolve) => {
+      releaseCss = resolve;
+    });
     await page.route(/\/_astro\/[^/]+\.css(?:\?.*)?$/, async (route) => {
       await cssReady;
       await route.continue();
     });
     const navigation = page.goto('/picks');
     try {
-      await expect.poll(() => requests.some((url) => url.startsWith(imageUrl('mountain-boots')))).toBe(true);
+      await expect
+        .poll(() => requests.some((url) => url.startsWith(imageUrl('mountain-boots'))))
+        .toBe(true);
     } finally {
       releaseCss();
       await navigation;
     }
     await expectCollectionReady(page);
-    await expect.poll(() => page.locator('[data-item-grid]').evaluate((grid) =>
-      getComputedStyle(grid).gridTemplateColumns.split(' ').length,
-    )).toBe(columns);
+    await expect
+      .poll(() =>
+        page
+          .locator('[data-item-grid]')
+          .evaluate((grid) => getComputedStyle(grid).gridTemplateColumns.split(' ').length),
+      )
+      .toBe(columns);
     await expectPreloadReused(page, requests, 'mountain-boots');
   });
 }
 
-test('a category URL preloads its first image without fetching excluded items', async ({ page, isMobile }) => {
+test('a category URL preloads its first image without fetching excluded items', async ({
+  page,
+  isMobile,
+}) => {
   test.skip(!isMobile, 'モバイルのカテゴリ別先読みを検証する。');
   const requests = await installCdnImages(page);
   await page.goto('/picks?category=ski');
@@ -129,7 +184,10 @@ test('a category URL preloads its first image without fetching excluded items', 
   expect(requests.some((url) => url.startsWith(imageUrl('mountain-boots')))).toBe(false);
 });
 
-test('the preloaded CDN image remains available when external modules fail', async ({ page, isMobile }) => {
+test('the preloaded CDN image remains available when external modules fail', async ({
+  page,
+  isMobile,
+}) => {
   test.skip(!isMobile, 'モバイルのinline読み込み経路を検証する。');
   const requests = await installCdnImages(page);
   await page.route(/\/_astro\/[^/]+\.js(?:\?.*)?$/, (route) => route.abort());
@@ -137,43 +195,80 @@ test('the preloaded CDN image remains available when external modules fail', asy
   await expectPreloadReused(page, requests, 'mountain-boots');
 });
 
-test('desktop keeps measured image sizing without the mobile preload', async ({ page, isMobile }) => {
+test('desktop keeps measured image sizing without the mobile preload', async ({
+  page,
+  isMobile,
+}) => {
   test.skip(isMobile, 'PCでは実幅を測ってから取得する。');
   await page.setViewportSize({ width: 566, height: 800 });
   await page.goto('/picks');
   await expectCollectionReady(page);
   await expect(page.locator('link[data-collection-preload]')).toHaveCount(0);
-  await expect.poll(() => page.locator('[data-collection-image]').first().evaluate((element: HTMLImageElement) =>
-    !element.hasAttribute('data-image-src') && element.complete && element.naturalWidth > 1,
-  )).toBe(true);
+  await expect
+    .poll(() =>
+      page
+        .locator('[data-collection-image]')
+        .first()
+        .evaluate(
+          (element: HTMLImageElement) =>
+            !element.hasAttribute('data-image-src') && element.complete && element.naturalWidth > 1,
+        ),
+    )
+    .toBe(true);
 });
 
-test('desktop enlargement requests a sharper image before the gesture ends', async ({ page, isMobile }) => {
+test('desktop enlargement requests a sharper image before the gesture ends', async ({
+  page,
+  isMobile,
+}) => {
   test.skip(isMobile, 'PCの操作中も拡大後の実幅に合う画像を取得する。');
   const requests = await installCdnImages(page);
   await page.addInitScript(() => sessionStorage.setItem('picks:image-size', '88'));
   await page.goto('/picks');
   await expectCollectionReady(page);
   const image = page.locator('[data-collection-image]').first();
-  await expect.poll(() => image.evaluate((element: HTMLImageElement) =>
-    !element.hasAttribute('data-image-src') && element.complete && element.naturalWidth > 1,
-  )).toBe(true);
+  await expect
+    .poll(() =>
+      image.evaluate(
+        (element: HTMLImageElement) =>
+          !element.hasAttribute('data-image-src') && element.complete && element.naturalWidth > 1,
+      ),
+    )
+    .toBe(true);
   const original = new URL(await image.evaluate((element: HTMLImageElement) => element.currentSrc));
   const originalWidth = Number(original.searchParams.get('w'));
 
   await inputSizeWithoutCommit(page, 280);
 
-  await expect.poll(() => requests.some((url) => {
-    const requested = new URL(url);
-    return requested.pathname === original.pathname && Number(requested.searchParams.get('w')) > originalWidth;
-  })).toBe(true);
-  await expect.poll(() => image.evaluate((element: HTMLImageElement, width) =>
-    element.complete && element.naturalWidth > 1 && Number(new URL(element.currentSrc).searchParams.get('w')) > width,
-  originalWidth)).toBe(true);
+  await expect
+    .poll(() =>
+      requests.some((url) => {
+        const requested = new URL(url);
+        return (
+          requested.pathname === original.pathname &&
+          Number(requested.searchParams.get('w')) > originalWidth
+        );
+      }),
+    )
+    .toBe(true);
+  await expect
+    .poll(() =>
+      image.evaluate(
+        (element: HTMLImageElement, width) =>
+          element.complete &&
+          element.naturalWidth > 1 &&
+          Number(new URL(element.currentSrc).searchParams.get('w')) > width,
+        originalWidth,
+      ),
+    )
+    .toBe(true);
   expect(await page.evaluate(() => sessionStorage.getItem('picks:image-size'))).toBe('88');
 });
 
-test('desktop shrinkage fetches newly visible images at their current width before the gesture ends', async ({ page, isMobile }) => {
+test('desktop shrinkage fetches newly visible images at their current width before the gesture ends', async ({
+  page,
+  isMobile,
+}) => {
   test.skip(isMobile, 'PCでは縮小で現れた画像も現在の実幅に合わせて取得する。');
   const requests = await installCdnImages(page);
   await page.addInitScript(() => sessionStorage.setItem('picks:image-size', '280'));
@@ -181,9 +276,13 @@ test('desktop shrinkage fetches newly visible images at their current width befo
   await expectCollectionReady(page);
   await page.evaluate(() => document.fonts.ready);
   const images = page.locator('[data-collection-image]');
-  const deferredIndex = await images.evaluateAll((elements) => elements.findIndex((image) =>
-    image.hasAttribute('data-image-src') && image.getBoundingClientRect().top > innerHeight + 240,
-  ));
+  const deferredIndex = await images.evaluateAll((elements) =>
+    elements.findIndex(
+      (image) =>
+        image.hasAttribute('data-image-src') &&
+        image.getBoundingClientRect().top > innerHeight + 240,
+    ),
+  );
   expect(deferredIndex).toBeGreaterThan(0);
   const image = images.nth(deferredIndex);
   const pathname = new URL((await image.getAttribute('data-image-src'))!).pathname;
@@ -193,16 +292,29 @@ test('desktop shrinkage fetches newly visible images at their current width befo
   await inputSizeWithoutCommit(page, 88);
 
   await expect(image).toBeInViewport();
-  await expect.poll(() => image.evaluate((element: HTMLImageElement) =>
-    !element.hasAttribute('data-image-src') && element.complete && element.naturalWidth > 1,
-  )).toBe(true);
+  await expect
+    .poll(() =>
+      image.evaluate(
+        (element: HTMLImageElement) =>
+          !element.hasAttribute('data-image-src') && element.complete && element.naturalWidth > 1,
+      ),
+    )
+    .toBe(true);
   const expected = await image.evaluate((element: HTMLImageElement) => {
     const style = getComputedStyle(element);
-    const width = Math.ceil(element.getBoundingClientRect().width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight));
+    const width = Math.ceil(
+      element.getBoundingClientRect().width -
+        parseFloat(style.paddingLeft) -
+        parseFloat(style.paddingRight),
+    );
     const candidates = element.closest('picture')!.querySelector('source')!.srcset.split(', ');
     return {
       sizes: `${width}px`,
-      source: candidates.find((candidate) => Number(candidate.split(' ')[1].slice(0, -1)) >= width * devicePixelRatio)!.split(' ')[0],
+      source: candidates
+        .find(
+          (candidate) => Number(candidate.split(' ')[1].slice(0, -1)) >= width * devicePixelRatio,
+        )!
+        .split(' ')[0],
     };
   });
   await expect(image).toHaveAttribute('sizes', expected.sizes);

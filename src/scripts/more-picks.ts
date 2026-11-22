@@ -28,9 +28,13 @@ export function initMorePicks() {
     const style = getComputedStyle(track);
     const gap = parseFloat(style.columnGap);
     const step = card.getBoundingClientRect().width + gap;
-    const width = track.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    const width =
+      track.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
     const count = Math.max(1, Math.floor((width + gap) / step));
-    track.scrollBy({ left: direction * step * count, behavior: reducedMotion.matches ? 'instant' : 'smooth' });
+    track.scrollBy({
+      left: direction * step * count,
+      behavior: reducedMotion.matches ? 'instant' : 'smooth',
+    });
   };
 
   previous.addEventListener('click', () => scroll(-1));
@@ -44,8 +48,12 @@ export function initMorePicks() {
     const item = card.getBoundingClientRect();
     const inset = parseFloat(getComputedStyle(track).scrollPaddingInlineStart) || 0;
     // 横位置だけを補正し、Tab移動でカードやフォーカス枠が切れないようにする。
-    const offset = item.left < viewport.left + inset ? item.left - viewport.left - inset
-      : item.right > viewport.right - inset ? item.right - viewport.right + inset : 0;
+    const offset =
+      item.left < viewport.left + inset
+        ? item.left - viewport.left - inset
+        : item.right > viewport.right - inset
+          ? item.right - viewport.right + inset
+          : 0;
     if (offset) track.scrollBy({ left: offset, behavior: 'instant' });
   });
   new ResizeObserver(update).observe(track);

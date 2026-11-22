@@ -4,10 +4,14 @@ import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
-import { createContentSecurityPolicy, writeContentSecurityPolicy } from '../build/content-security-policy.mjs';
+import {
+  createContentSecurityPolicy,
+  writeContentSecurityPolicy,
+} from '../build/content-security-policy.mjs';
 import { createInlineScriptMinifier } from '../build/minify-inline-scripts.mjs';
 
-const hash = (content: string) => `'sha256-${createHash('sha256').update(content).digest('base64')}'`;
+const hash = (content: string) =>
+  `'sha256-${createHash('sha256').update(content).digest('base64')}'`;
 
 test('CSP hashes exact inline scripts, modules and styles, including the no-JS fallback', () => {
   const script = '\nwindow.label = "雪 &amp; <b>";\n';
@@ -15,10 +19,10 @@ test('CSP hashes exact inline scripts, modules and styles, including the no-JS f
   const css = '[data-deferred-picture] { display: none !important; }';
   const policy = createContentSecurityPolicy([
     `<script data-value="a>b">${script.replaceAll('\n', '\r\n')}</script>` +
-    `<script type="module">${module}</script><noscript><style>${css}</style></noscript>` +
-    '<script src="/app.js">ignored external body</script>' +
-    '<script type="application/ld+json">{"name":"product"}</script>' +
-    '<!-- <script>comment</script> --><textarea><script>text only</script></textarea>',
+      `<script type="module">${module}</script><noscript><style>${css}</style></noscript>` +
+      '<script src="/app.js">ignored external body</script>' +
+      '<script type="application/ld+json">{"name":"product"}</script>' +
+      '<!-- <script>comment</script> --><textarea><script>text only</script></textarea>',
   ]);
   assert.ok(policy.includes(hash(script)));
   assert.ok(policy.includes(hash(module)));
@@ -56,15 +60,21 @@ test('the deployed header allows the minified script, not its earlier source', a
 test('one shared CSP covers more than 100 pages while preserving existing headers', async (t) => {
   const directory = await mkdtemp(join(tmpdir(), 'picks-csp-'));
   t.after(() => rm(directory, { recursive: true, force: true }));
-  const original = '/*\n  X-Frame-Options: DENY\n\n/_astro/*\n  Cache-Control: public, max-age=31536000, immutable\n';
+  const original =
+    '/*\n  X-Frame-Options: DENY\n\n/_astro/*\n  Cache-Control: public, max-age=31536000, immutable\n';
   await writeFile(join(directory, '_headers'), original);
   await mkdir(join(directory, 'picks/things'), { recursive: true });
-  await Promise.all(Array.from({ length: 110 }, (_, i) => writeFile(
-    join(directory, 'picks/things', `${i}.html`), '<script>window.ready = true;</script>',
-  )));
+  await Promise.all(
+    Array.from({ length: 110 }, (_, i) =>
+      writeFile(
+        join(directory, 'picks/things', `${i}.html`),
+        '<script>window.ready = true;</script>',
+      ),
+    ),
+  );
   await writeContentSecurityPolicy(directory);
   const headers = await readFile(join(directory, '_headers'), 'utf8');
-  assert.equal(headers.replace(/^  Content-Security-Policy: .*\n/m, ''), original);
+  assert.equal(headers.replace(/^ {2}Content-Security-Policy: .*\n/m, ''), original);
   assert.equal((headers.match(/Content-Security-Policy:/g) ?? []).length, 1);
   assert.equal((headers.match(/'sha256-/g) ?? []).length, 1);
   assert.equal(headers.split('\n').filter((line) => line.startsWith('/')).length, 2);
@@ -77,7 +87,10 @@ test('the collection alone receives a Wasm policy with its own inline hashes', a
   await mkdir(join(directory, 'picks'));
   await writeFile(join(directory, 'index.html'), '<script>home()</script>');
   await writeFile(join(directory, 'picks/index.html'), '<script>picks()</script>');
-  await writeFile(join(directory, '_headers'), '/*\n  X-Frame-Options: DENY\n\n/picks\n  Cache-Control: public\n');
+  await writeFile(
+    join(directory, '_headers'),
+    '/*\n  X-Frame-Options: DENY\n\n/picks\n  Cache-Control: public\n',
+  );
   await writeContentSecurityPolicy(directory);
   const headers = await readFile(join(directory, '_headers'), 'utf8');
   const [global, collection] = headers.split('\n/picks\n');
@@ -95,14 +108,17 @@ test('Cloudflare limits fail the build before writing an ignored or conflicting 
   t.after(() => rm(directory, { recursive: true, force: true }));
   const original = '/*\n  X-Frame-Options: DENY\n';
   await writeFile(join(directory, '_headers'), original);
-  await writeFile(join(directory, 'index.html'), Array.from(
-    { length: 40 }, (_, i) => `<script>window.value = ${i};</script>`,
-  ).join(''));
+  await writeFile(
+    join(directory, 'index.html'),
+    Array.from({ length: 40 }, (_, i) => `<script>window.value = ${i};</script>`).join(''),
+  );
   await assert.rejects(writeContentSecurityPolicy(directory), /2,000-character/);
   assert.equal(await readFile(join(directory, '_headers'), 'utf8'), original);
 
   await writeFile(join(directory, 'index.html'), '<p>Page</p>');
-  const manyRules = original + Array.from({ length: 100 }, (_, i) => `/page-${i}\n  X-Frame-Options: DENY`).join('\n');
+  const manyRules =
+    original +
+    Array.from({ length: 100 }, (_, i) => `/page-${i}\n  X-Frame-Options: DENY`).join('\n');
   await writeFile(join(directory, '_headers'), manyRules);
   await assert.rejects(writeContentSecurityPolicy(directory), /100 header rule/);
   assert.equal(await readFile(join(directory, '_headers'), 'utf8'), manyRules);

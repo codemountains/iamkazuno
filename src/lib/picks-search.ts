@@ -12,7 +12,8 @@ export interface PickSearchHit {
 
 // 商品データと検索窓に同じ変換をかける。表示名には入力時の表記を残す。
 export function normalizeSearchQuery(text: string): string {
-  return text.normalize('NFKC')
+  return text
+    .normalize('NFKC')
     .replace(/([a-zA-Z])([A-Z][a-z])/g, '$1 $2')
     .toLowerCase()
     .replace(/[ぁ-ゖゝゞ]/g, (kana) => String.fromCharCode(kana.charCodeAt(0) + 0x60))

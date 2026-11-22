@@ -18,17 +18,21 @@ export function initNotePhotos() {
   let pointerStart: number | null = null;
   let visibleIndex = -1;
 
-  const position = () => Math.max(0, Math.min(slides.length - 1, Math.round(track.scrollLeft / track.clientWidth)));
+  const position = () =>
+    Math.max(0, Math.min(slides.length - 1, Math.round(track.scrollLeft / track.clientWidth)));
   const syncPosition = () => {
     if (pointerStart !== null && Math.abs(track.scrollLeft - pointerStart) > 2) {
       takeControl();
     }
-    if (destination !== null && Math.abs(track.scrollLeft - destination * track.clientWidth) <= 1) destination = null;
+    if (destination !== null && Math.abs(track.scrollLeft - destination * track.clientWidth) <= 1)
+      destination = null;
     const index = position();
     if (index === visibleIndex) return;
     visibleIndex = index;
     count.textContent = `${index + 1} / ${slides.length}`;
-    slides.forEach((slide, i) => { slide.inert = i !== index; });
+    slides.forEach((slide, i) => {
+      slide.inert = i !== index;
+    });
   };
   const move = (step: number) => {
     pointerStart = null;
@@ -43,7 +47,8 @@ export function initNotePhotos() {
   };
   const syncTimer = () => {
     window.clearInterval(timer);
-    if (playing && inView && !hovering && !document.hidden) timer = window.setInterval(() => move(1), 3_500);
+    if (playing && inView && !hovering && !document.hidden)
+      timer = window.setInterval(() => move(1), 3_500);
   };
   const setPlaying = (enabled: boolean) => {
     playing = enabled;
@@ -72,23 +77,40 @@ export function initNotePhotos() {
     setPlaying(false);
   };
   // 写真の上から本文を縦にスクロールしただけなら、自動再生を維持する。
-  track.addEventListener('pointerdown', () => { pointerStart = track.scrollLeft; });
-  track.addEventListener('wheel', (event) => { if (event.deltaX || event.shiftKey) takeControl(); }, { passive: true });
+  track.addEventListener('pointerdown', () => {
+    pointerStart = track.scrollLeft;
+  });
+  track.addEventListener(
+    'wheel',
+    (event) => {
+      if (event.deltaX || event.shiftKey) takeControl();
+    },
+    { passive: true },
+  );
   track.addEventListener('scroll', syncPosition, { passive: true });
   track.addEventListener('pointerenter', (event) => {
     hovering = event.pointerType === 'mouse';
     syncTimer();
   });
-  track.addEventListener('pointerleave', () => { hovering = false; syncTimer(); });
-  gallery.addEventListener('focusin', (event) => {
-    if (event.target instanceof HTMLElement && event.target.matches(':focus-visible')) setPlaying(false);
-  });
-  motion.addEventListener('change', () => { if (motion.matches) setPlaying(false); });
-  document.addEventListener('visibilitychange', syncTimer);
-  new IntersectionObserver(([entry]) => {
-    inView = entry.intersectionRatio >= 0.5;
+  track.addEventListener('pointerleave', () => {
+    hovering = false;
     syncTimer();
-  }, { threshold: 0.5 }).observe(track);
+  });
+  gallery.addEventListener('focusin', (event) => {
+    if (event.target instanceof HTMLElement && event.target.matches(':focus-visible'))
+      setPlaying(false);
+  });
+  motion.addEventListener('change', () => {
+    if (motion.matches) setPlaying(false);
+  });
+  document.addEventListener('visibilitychange', syncTimer);
+  new IntersectionObserver(
+    ([entry]) => {
+      inView = entry.intersectionRatio >= 0.5;
+      syncTimer();
+    },
+    { threshold: 0.5 },
+  ).observe(track);
 
   syncPosition();
   setPlaying(playing);

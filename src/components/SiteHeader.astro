@@ -2,13 +2,18 @@
 import Wordmark from './Wordmark.astro';
 import ThemePicker from './ThemePicker.astro';
 
-interface Props { section?: 'picks' | 'notes' }
+interface Props {
+  section?: 'picks' | 'notes';
+}
 const { section = 'picks' } = Astro.props;
 ---
+
 <header id="top" class="site-header">
   <div class="site-identity">
     <Wordmark section={section} />
-    <p class="site-subtitle">{section === 'notes' ? 'Thoughts, put into words.' : 'Things I use and love.'}</p>
+    <p class="site-subtitle">
+      {section === 'notes' ? 'Thoughts, put into words.' : 'Things I use and love.'}
+    </p>
   </div>
   <ThemePicker />
 </header>

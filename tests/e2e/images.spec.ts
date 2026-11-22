@@ -4,11 +4,17 @@ import { test, expect, expectCollectionReady } from './fixtures';
 
 async function expectImageLoaded(image: Locator) {
   await expect(image).toBeVisible();
-  await expect.poll(() => image.evaluate((element: HTMLImageElement) =>
-    !element.hasAttribute('data-image-src')
-      && !element.currentSrc.startsWith('data:')
-      && element.complete && element.naturalWidth > 1,
-  )).toBe(true);
+  await expect
+    .poll(() =>
+      image.evaluate(
+        (element: HTMLImageElement) =>
+          !element.hasAttribute('data-image-src') &&
+          !element.currentSrc.startsWith('data:') &&
+          element.complete &&
+          element.naturalWidth > 1,
+      ),
+    )
+    .toBe(true);
 }
 
 async function expectTransparentPlaceholder(image: Locator) {
@@ -45,10 +51,14 @@ test('distant images stay deferred until scrolling near them', async ({ page }) 
   await expectImageLoaded(distantImage);
 });
 
-test('a category URL prioritizes its first four images and leaves excluded images deferred', async ({ page }) => {
+test('a category URL prioritizes its first four images and leaves excluded images deferred', async ({
+  page,
+}) => {
   await page.goto('/picks?category=ski');
   await expectCollectionReady(page);
-  const selectedImages = page.locator('[data-item-grid] > [data-item]:visible [data-collection-image]');
+  const selectedImages = page.locator(
+    '[data-item-grid] > [data-item]:visible [data-collection-image]',
+  );
   for (let index = 0; index < 4; index += 1) {
     const image = selectedImages.nth(index);
     await expectImageLoaded(image);
@@ -56,11 +66,18 @@ test('a category URL prioritizes its first four images and leaves excluded image
     await expect(image).toHaveAttribute('fetchpriority', 'high');
   }
 
-  const excludedImages = page.locator('[data-item-grid] > [data-item][hidden] [data-collection-image]');
+  const excludedImages = page.locator(
+    '[data-item-grid] > [data-item][hidden] [data-collection-image]',
+  );
   expect(await excludedImages.count()).toBeGreaterThan(0);
-  expect(await excludedImages.evaluateAll((images) => images.every((image) =>
-    image.hasAttribute('data-image-src') && image.getAttribute('src')?.startsWith('data:'),
-  ))).toBe(true);
+  expect(
+    await excludedImages.evaluateAll((images) =>
+      images.every(
+        (image) =>
+          image.hasAttribute('data-image-src') && image.getAttribute('src')?.startsWith('data:'),
+      ),
+    ),
+  ).toBe(true);
 });
 
 test('switching categories loads newly visible images', async ({ page }) => {
@@ -69,12 +86,17 @@ test('switching categories loads newly visible images', async ({ page }) => {
   const bootsImage = page.locator('a[href="/picks/things/mountain-boots"] [data-collection-image]');
   await expect(bootsImage).toHaveAttribute('data-image-src', '/images/samples/sample.svg');
 
-  await page.getByRole('group', { name: 'カテゴリで絞り込む' }).locator('[data-filter="mountain"]').click();
+  await page
+    .getByRole('group', { name: 'カテゴリで絞り込む' })
+    .locator('[data-filter="mountain"]')
+    .click();
   await expect(page).toHaveURL('/picks?category=mountain');
   await expectImageLoaded(bootsImage);
 });
 
-test('initial and scrolled images load when external JavaScript modules are unavailable', async ({ page }) => {
+test('initial and scrolled images load when external JavaScript modules are unavailable', async ({
+  page,
+}) => {
   await page.route(/\/_astro\/[^/]+\.js(?:\?.*)?$/, (route) => route.abort());
   await page.goto('/picks');
   const images = page.locator('[data-item-grid] > [data-item]:visible [data-collection-image]');
@@ -86,7 +108,9 @@ test('initial and scrolled images load when external JavaScript modules are unav
 });
 
 test('images remain available when IntersectionObserver is unsupported', async ({ page }) => {
-  await page.addInitScript(() => { Reflect.deleteProperty(window, 'IntersectionObserver'); });
+  await page.addInitScript(() => {
+    Reflect.deleteProperty(window, 'IntersectionObserver');
+  });
   await page.goto('/picks');
   await expectCollectionReady(page);
   const images = page.locator('[data-collection-image]');
@@ -95,7 +119,10 @@ test('images remain available when IntersectionObserver is unsupported', async (
   await expectImageLoaded(images.last());
 });
 
-test('size adjustments after reload load newly visible images before the gesture ends', async ({ page, isMobile }) => {
+test('size adjustments after reload load newly visible images before the gesture ends', async ({
+  page,
+  isMobile,
+}) => {
   await page.goto('/picks');
   await page.evaluate(() => sessionStorage.setItem('picks:image-size', '232'));
   await page.reload();
@@ -104,7 +131,8 @@ test('size adjustments after reload load newly visible images before the gesture
   const grid = page.locator('[data-item-grid]');
   const images = page.locator('[data-collection-image]');
   const slider = page.getByRole('slider', { name: '画像サイズ' });
-  const columnCount = () => grid.evaluate((element) => getComputedStyle(element).gridTemplateColumns.split(' ').length);
+  const columnCount = () =>
+    grid.evaluate((element) => getComputedStyle(element).gridTemplateColumns.split(' ').length);
   const initialColumns = await columnCount();
   if (isMobile) expect(initialColumns).toBe(2);
   await expectImageLoaded(images.first());
@@ -112,19 +140,31 @@ test('size adjustments after reload load newly visible images before the gesture
   expect(initialSizes).toMatch(/^\d+px$/);
 
   // 保存された大きいサイズでは画面外、小さくすると画面内になる未取得画像を追跡する。
-  const deferredIndex = await images.evaluateAll((elements) => elements.findIndex((image) =>
-    image.hasAttribute('data-image-src') && image.getBoundingClientRect().top > innerHeight + 240,
-  ));
+  const deferredIndex = await images.evaluateAll((elements) =>
+    elements.findIndex(
+      (image) =>
+        image.hasAttribute('data-image-src') &&
+        image.getBoundingClientRect().top > innerHeight + 240,
+    ),
+  );
   expect(deferredIndex).toBeGreaterThan(0);
   const newlyVisibleImage = images.nth(deferredIndex);
   await expectTransparentPlaceholder(newlyVisibleImage);
-  const inputSize = (value: number, commit = false) => slider.evaluate(async (element: HTMLInputElement, input) => {
-    element.value = String(input.value);
-    element.dispatchEvent(new Event('input', { bubbles: true }));
-    if (input.commit) element.dispatchEvent(new Event('change', { bubbles: true }));
-    // レイアウト更新とIntersectionObserverの通知が実際に走るまで待つ。
-    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
-  }, { value, commit });
+  const inputSize = (value: number, commit = false) =>
+    slider.evaluate(
+      async (element: HTMLInputElement, input) => {
+        element.value = String(input.value);
+        element.dispatchEvent(new Event('input', { bubbles: true }));
+        if (input.commit) element.dispatchEvent(new Event('change', { bubbles: true }));
+        // レイアウト更新とIntersectionObserverの通知が実際に走るまで待つ。
+        await new Promise<void>((resolve) =>
+          requestAnimationFrame(() =>
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+          ),
+        );
+      },
+      { value, commit },
+    );
 
   await inputSize(88);
   await expect.poll(columnCount).toBeGreaterThan(initialColumns);
@@ -148,10 +188,17 @@ test('size adjustments after reload load newly visible images before the gesture
 
   await inputSize(232, true);
   await expect.poll(columnCount).toBe(initialColumns);
-  await expect.poll(() => images.evaluateAll((elements, expectedSizes) => elements
-    .filter((image) => !image.hasAttribute('data-image-src'))
-    .every((image) => image.getAttribute('sizes') === expectedSizes), initialSizes,
-  )).toBe(true);
+  await expect
+    .poll(() =>
+      images.evaluateAll(
+        (elements, expectedSizes) =>
+          elements
+            .filter((image) => !image.hasAttribute('data-image-src'))
+            .every((image) => image.getAttribute('sizes') === expectedSizes),
+        initialSizes,
+      ),
+    )
+    .toBe(true);
   await expect(newlyVisibleImage).not.toHaveAttribute('data-image-src');
 
   // 小さいサイズで確定した場合は、途中で取得した画像も最終サイズへ揃える。
@@ -161,13 +208,22 @@ test('size adjustments after reload load newly visible images before the gesture
   const finalSizes = await images.first().getAttribute('sizes');
   expect(finalSizes).not.toBe(initialSizes);
   await expect(newlyVisibleImage).toHaveAttribute('sizes', finalSizes!);
-  await expect.poll(() => images.evaluateAll((elements, expectedSizes) => elements
-    .filter((image) => !image.hasAttribute('data-image-src'))
-    .every((image) => image.getAttribute('sizes') === expectedSizes), finalSizes,
-  )).toBe(true);
+  await expect
+    .poll(() =>
+      images.evaluateAll(
+        (elements, expectedSizes) =>
+          elements
+            .filter((image) => !image.hasAttribute('data-image-src'))
+            .every((image) => image.getAttribute('sizes') === expectedSizes),
+        finalSizes,
+      ),
+    )
+    .toBe(true);
 });
 
-test('returning from a distant detail page restores a loaded collection image', async ({ page }) => {
+test('returning from a distant detail page restores a loaded collection image', async ({
+  page,
+}) => {
   await page.goto('/picks');
   await expectCollectionReady(page);
   const link = page.locator('a[href="/picks/things/sample-uncategorized"]');
@@ -191,9 +247,18 @@ test.describe('without JavaScript', () => {
     await page.goto('/picks');
     const images = page.locator('[data-item] .item-image-wrap img:visible');
     await expect(images).toHaveCount(sampleThings.filter((thing) => thing.main_image).length);
-    expect(await page.locator('[data-item] .item-image-wrap').evaluateAll((wrappers) => wrappers.every((wrapper) =>
-      Array.from(wrapper.querySelectorAll('img')).filter((image) => image.getClientRects().length > 0).length <= 1,
-    ))).toBe(true);
+    expect(
+      await page
+        .locator('[data-item] .item-image-wrap')
+        .evaluateAll((wrappers) =>
+          wrappers.every(
+            (wrapper) =>
+              Array.from(wrapper.querySelectorAll('img')).filter(
+                (image) => image.getClientRects().length > 0,
+              ).length <= 1,
+          ),
+        ),
+    ).toBe(true);
     await expectImageLoaded(images.first());
     await images.last().scrollIntoViewIfNeeded();
     await expectImageLoaded(images.last());

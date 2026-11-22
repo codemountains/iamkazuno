@@ -20,15 +20,15 @@ microCMS MCP を使う。最初に `microcms_get_api_list` で接続先の API �
 
 現行のフィールド対応は以下。実行時のスキーマが異なる場合は最新の定義に従う。
 
-| API | フィールド | 書き込み値 |
-| --- | --- | --- |
-| things | `name` | 商品名の文字列 |
-| things | `main_image` | アップロード済み画像 URL の文字列 |
-| things | `ref_brand` | brands のコンテンツ ID 文字列 |
-| things | `description` | 指示された説明をリッチエディタ用の HTML 文字列にしたもの |
-| things | `ref_categories` | categories のコンテンツ ID を1件含む配列 |
-| things | `more_picks` | 関連する things のコンテンツ ID の配列 |
-| brands / categories | `name` | 名称の文字列 |
+| API                 | フィールド       | 書き込み値                                               |
+| ------------------- | ---------------- | -------------------------------------------------------- |
+| things              | `name`           | 商品名の文字列                                           |
+| things              | `main_image`     | アップロード済み画像 URL の文字列                        |
+| things              | `ref_brand`      | brands のコンテンツ ID 文字列                            |
+| things              | `description`    | 指示された説明をリッチエディタ用の HTML 文字列にしたもの |
+| things              | `ref_categories` | categories のコンテンツ ID を1件含む配列                 |
+| things              | `more_picks`     | 関連する things のコンテンツ ID の配列                   |
+| brands / categories | `name`           | 名称の文字列                                             |
 
 ### 既存ブランドを優先する
 
@@ -61,10 +61,10 @@ microCMS MCP を使う。最初に `microcms_get_api_list` で接続先の API �
 
 入力、参照先、完成画像の URL がそろってから書き込む。登録依頼とこれらの既定値で作成内容が確定していれば、改めて実行確認を挟まない。
 
-| 作成対象 | 公開指示なし | 公開指示あり |
-| --- | --- | --- |
-| things | `microcms_create_content_draft` | `microcms_create_content_published` |
-| 新規ブランド | things と同じく下書き | things と同じく公開 |
+| 作成対象     | 公開指示なし                    | 公開指示あり                        |
+| ------------ | ------------------------------- | ----------------------------------- |
+| things       | `microcms_create_content_draft` | `microcms_create_content_published` |
+| 新規ブランド | things と同じく下書き           | things と同じく公開                 |
 
 - ブランドがなければ、確定した公式名を `brands` の `name` に設定して上記の状態で作成する。成功応答から実際の ID を取得する。既存ブランドを使う場合はその ID を使い、表記や公開状態は変更しない。
 - things に `name`、`main_image`、`ref_brand`、選定した `ref_categories` と `more_picks` を上表の形式で設定する。説明の登録指示がある場合は `description` も追加する。

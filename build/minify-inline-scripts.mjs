@@ -4,7 +4,13 @@ import { fileURLToPath } from 'node:url';
 import { transform } from 'esbuild';
 import { Parser } from 'htmlparser2';
 
-const javascriptTypes = new Set(['', 'text/javascript', 'application/javascript', 'text/ecmascript', 'application/ecmascript']);
+const javascriptTypes = new Set([
+  '',
+  'text/javascript',
+  'application/javascript',
+  'text/ecmascript',
+  'application/ecmascript',
+]);
 
 /** Create one cache per build: common initializers occur on every page. */
 export function createInlineScriptMinifier() {
@@ -22,9 +28,10 @@ export function createInlineScriptMinifier() {
         if (name !== 'script') return;
         // Astro already bundles modules. JSON, import maps and external scripts stay untouched.
         const type = (attributes.type ?? '').trim().toLowerCase();
-        start = !Object.hasOwn(attributes, 'src') && javascriptTypes.has(type)
-          ? parser.endIndex + 1
-          : undefined;
+        start =
+          !Object.hasOwn(attributes, 'src') && javascriptTypes.has(type)
+            ? parser.endIndex + 1
+            : undefined;
       },
       onclosetag(name, implied) {
         if (name !== 'script') return;
@@ -51,9 +58,10 @@ export function createInlineScriptMinifier() {
         const code = result.code.trimEnd();
         // Minification can turn \u003C!-- back into <!--. Keep the original in that
         // case so serialized content cannot enter HTML's escaped script tokenizer state.
-        minified = code.includes('<!--') || Buffer.byteLength(code) >= Buffer.byteLength(original)
-          ? original
-          : code;
+        minified =
+          code.includes('<!--') || Buffer.byteLength(code) >= Buffer.byteLength(original)
+            ? original
+            : code;
         cache.set(original, minified);
       }
       parts.push(html.slice(previous, script.start), minified);

@@ -4,10 +4,15 @@ import type { Category, Thing } from '../types/content';
 export type CollectionPreloadImage = { url: string; width: number };
 export type CollectionPreloadEntry = [string, CollectionPreloadImage | null];
 
-export function getCollectionPreloadEntries(things: Thing[], categories: Category[]): CollectionPreloadEntry[] {
+export function getCollectionPreloadEntries(
+  things: Thing[],
+  categories: Category[],
+): CollectionPreloadEntry[] {
   return ['', ...categories.map((category) => category.id)].map((category) => {
-    const image = things.find((thing) => thing.image && (!category
-      || thing.categories.some((entry) => entry.id === category)))?.image;
+    const image = things.find(
+      (thing) =>
+        thing.image && (!category || thing.categories.some((entry) => entry.id === category)),
+    )?.image;
     return [category, image ? { url: image.url, width: image.width } : null];
   });
 }

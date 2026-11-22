@@ -3,26 +3,37 @@ import { sampleCategories, sampleThings } from '../../src/data/sample';
 import { test, expect, expectCollectionReady } from './fixtures';
 
 async function expectCategory(page: Page, category = '') {
-  const expectedThings = sampleThings.filter((thing) => !category
-    || thing.ref_categories?.some((reference) => reference?.id === category));
+  const expectedThings = sampleThings.filter(
+    (thing) => !category || thing.ref_categories?.some((reference) => reference?.id === category),
+  );
   const visibleCards = page.locator('[data-item-grid] > [data-item]:visible .item-card-link');
   const filters = page.getByRole('group', { name: 'カテゴリで絞り込む' });
 
   await expect(visibleCards).toHaveCount(expectedThings.length);
-  await expect.poll(() => visibleCards.evaluateAll((links) => links.map((link) =>
-    new URL((link as HTMLAnchorElement).href).pathname,
-  ))).toEqual(expectedThings.map((thing) => `/picks/things/${thing.id}`));
+  await expect
+    .poll(() =>
+      visibleCards.evaluateAll((links) =>
+        links.map((link) => new URL((link as HTMLAnchorElement).href).pathname),
+      ),
+    )
+    .toEqual(expectedThings.map((thing) => `/picks/things/${thing.id}`));
   await expect(filters.locator('[aria-pressed="true"]')).toHaveCount(1);
-  await expect(filters.locator(`[data-filter="${category}"]`)).toHaveAttribute('aria-pressed', 'true');
+  await expect(filters.locator(`[data-filter="${category}"]`)).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
 
   const count = String(expectedThings.length).padStart(2, '0');
   const label = sampleCategories.find((candidate) => candidate.id === category)?.name;
-  await expect(page.getByRole('status')).toHaveText(category
-    ? `${label} — ${count} things`
-    : `${count} things, well loved.`);
+  await expect(page.getByRole('status')).toHaveText(
+    category ? `${label} — ${count} things` : `${count} things, well loved.`,
+  );
 }
 
-test('category changes keep items, selection, counts, and the URL in sync', async ({ page, isMobile }) => {
+test('category changes keep items, selection, counts, and the URL in sync', async ({
+  page,
+  isMobile,
+}) => {
   await page.goto('/picks');
   await expectCollectionReady(page);
   await expectCategory(page);
@@ -52,7 +63,9 @@ test('a category URL applies its filter on direct visits and reloads', async ({ 
   await expectCategory(page, 'ski');
 });
 
-test('an unknown category shows all items and selecting all clears the category URL', async ({ page }) => {
+test('an unknown category shows all items and selecting all clears the category URL', async ({
+  page,
+}) => {
   await page.goto('/picks?category=unknown-category');
   await expectCollectionReady(page);
   await expectCategory(page);
@@ -62,7 +75,9 @@ test('an unknown category shows all items and selecting all clears the category 
   await expectCategory(page);
 });
 
-test('browser back and forward restore the selected category and visible items', async ({ page }) => {
+test('browser back and forward restore the selected category and visible items', async ({
+  page,
+}) => {
   await page.goto('/picks');
   await expectCollectionReady(page);
   const filters = page.getByRole('group', { name: 'カテゴリで絞り込む' });

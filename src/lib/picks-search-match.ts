@@ -1,6 +1,9 @@
 import { normalizeSearchQuery, type PickSearchEvidence } from './picks-search';
 
-export interface MatchPart { text: string; matched: boolean }
+export interface MatchPart {
+  text: string;
+  matched: boolean;
+}
 
 interface SearchFields extends PickSearchEvidence {
   title: string;
@@ -13,13 +16,21 @@ interface PickSearchMatch {
   detail?: { kind: 'alias' | 'description'; parts: MatchPart[] };
 }
 
-const graphemes = typeof Intl.Segmenter === 'function' ? new Intl.Segmenter('ja', { granularity: 'grapheme' }) : undefined;
-const words = typeof Intl.Segmenter === 'function' ? new Intl.Segmenter('ja', { granularity: 'word' }) : undefined;
+const graphemes =
+  typeof Intl.Segmenter === 'function'
+    ? new Intl.Segmenter('ja', { granularity: 'grapheme' })
+    : undefined;
+const words =
+  typeof Intl.Segmenter === 'function'
+    ? new Intl.Segmenter('ja', { granularity: 'word' })
+    : undefined;
 const modelSeparator = /^[\s‐‑‒–—―−ー-]+$/u;
 
 // 正規化で文字数が変わるため、検索用文字列の各位置から原文の書記素へ戻れるようにする。
 function project(text: string) {
-  const original = graphemes ? Array.from(graphemes.segment(text), ({ segment }) => segment) : Array.from(text);
+  const original = graphemes
+    ? Array.from(graphemes.segment(text), ({ segment }) => segment)
+    : Array.from(text);
   const units = original.map((char) => normalizeSearchQuery(char) || ' ');
   const offsets: number[] = [];
   let folded = '';
@@ -58,7 +69,7 @@ function matchText(text: string, terms: string[], excerpt = false) {
     at = next < 0 ? -1 : hits.indexOf(1, next);
   }
   // 「行動食」のような複合語は、先に出る単独の「食」より連続した一致箇所を抜き出す。
-  const best = ranges.reduce((a, b) => a.end - a.start >= b.end - b.start ? a : b);
+  const best = ranges.reduce((a, b) => (a.end - a.start >= b.end - b.start ? a : b));
   const start = excerpt ? Math.max(0, best.start - 8) : 0;
   const end = excerpt ? Math.min(original.length, start + 40) : original.length;
   const parts: MatchPart[] = [];
@@ -80,9 +91,15 @@ function matchText(text: string, terms: string[], excerpt = false) {
 
 function searchWords(text: string) {
   const normalized = normalizeSearchQuery(text);
-  return [...new Set(words
-    ? Array.from(words.segment(normalized)).filter((part) => part.isWordLike).map((part) => part.segment)
-    : normalized.split(' ').filter(Boolean))];
+  return [
+    ...new Set(
+      words
+        ? Array.from(words.segment(normalized))
+            .filter((part) => part.isWordLike)
+            .map((part) => part.segment)
+        : normalized.split(' ').filter(Boolean),
+    ),
+  ];
 }
 
 function matchName(name: string, terms: string[], fieldMatched: boolean) {
@@ -101,13 +118,23 @@ function matchName(name: string, terms: string[], fieldMatched: boolean) {
   }
   if (marks.size) return { parts: matchText(name, [...marks]).parts, found: exact.found };
   // 一致したフィールドしか分からないときは、その登録名を表示する。
-  return { parts: [{ text: name, matched: true }], found: terms.length === 1 ? new Set(terms) : exact.found };
+  return {
+    parts: [{ text: name, matched: true }],
+    found: terms.length === 1 ? new Set(terms) : exact.found,
+  };
 }
 
 function excerptTerms(excerpt: string) {
-  const entities: Record<string, string> = { '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'" };
+  const entities: Record<string, string> = {
+    '&amp;': '&',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&quot;': '"',
+    '&#39;': "'",
+  };
   return Array.from(excerpt.matchAll(/<mark>([^<]*)<\/mark>/g), ([, text]) =>
-    normalizeSearchQuery(text.replace(/&(?:amp|lt|gt|quot|#39);/g, (entity) => entities[entity]))).filter(Boolean);
+    normalizeSearchQuery(text.replace(/&(?:amp|lt|gt|quot|#39);/g, (entity) => entities[entity])),
+  ).filter(Boolean);
 }
 
 export function getPickSearchMatch(query: string, fields: SearchFields): PickSearchMatch {
@@ -132,7 +159,8 @@ export function getPickSearchMatch(query: string, fields: SearchFields): PickSea
     if (best === remaining.length) return result;
   }
   const description = matchText(fields.description ?? '', remaining, true);
-  if (description.found.size > best) result.detail = { kind: 'description', parts: description.parts };
+  if (description.found.size > best)
+    result.detail = { kind: 'description', parts: description.parts };
   if (!result.detail && matchedAliases.length) {
     result.detail = { kind: 'alias', parts: [{ text: matchedAliases[0], matched: true }] };
   }

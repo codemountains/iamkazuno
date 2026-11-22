@@ -18,31 +18,56 @@ export const getStaticPaths = (async () => {
   }));
 }) satisfies GetStaticPaths;
 
-interface Props { thing: Thing; morePicks: Thing[]; source: Content['source'] }
+interface Props {
+  thing: Thing;
+  morePicks: Thing[];
+  source: Content['source'];
+}
 const { thing, morePicks, source } = Astro.props;
 const sample = source === 'sample';
-const preconnectImageCdn = [thing, ...morePicks].some((item) => item.image?.url.startsWith('https://images.microcms-assets.io/'));
+const preconnectImageCdn = [thing, ...morePicks].some((item) =>
+  item.image?.url.startsWith('https://images.microcms-assets.io/'),
+);
 const description = `${thing.name}${thing.brand ? ` — ${thing.brand.name}` : ''}。/picksのコレクション。`;
 ---
 
-<BaseLayout title={`${thing.name} — /picks`} description={description} noindex={sample} preconnectImageCdn={preconnectImageCdn}>
+<BaseLayout
+  title={`${thing.name} — /picks`}
+  description={description}
+  noindex={sample}
+  preconnectImageCdn={preconnectImageCdn}
+>
   <div class="site-shell site-shell--wide">
     <SiteHeader />
   </div>
   <main id="main" class="site-shell thing-detail">
     <div class="detail-topline">
-      <a class="collection-back" href={collectionPath} data-back-to-picks data-astro-prefetch><span aria-hidden="true">←</span> Back to picks</a>
+      <a class="collection-back" href={collectionPath} data-back-to-picks data-astro-prefetch>
+        <span aria-hidden="true">←</span> Back to picks
+      </a>
     </div>
     <article class="detail-grid" aria-labelledby="thing-title">
       <header class="detail-heading">
         {thing.brand && <p class="detail-brand">{thing.brand.name}</p>}
         <h1 id="thing-title">{thing.name}</h1>
       </header>
-      <div class="detail-image-wrap"><ThingImage image={thing.image} name={thing.name} eager detail /></div>
+      <div class="detail-image-wrap">
+        <ThingImage image={thing.image} name={thing.name} eager detail />
+      </div>
       {(thing.descriptionHtml || thing.categories.length > 0) && (
         <div class="detail-copy">
-          {thing.descriptionHtml && <div class="detail-description"><div class="rich-text" set:html={thing.descriptionHtml} /></div>}
-          {thing.categories.length > 0 && <ul class="detail-categories" aria-label="カテゴリ">{thing.categories.map((category) => <li>{category.name}</li>)}</ul>}
+          {thing.descriptionHtml && (
+            <div class="detail-description">
+              <div class="rich-text" set:html={thing.descriptionHtml} />
+            </div>
+          )}
+          {thing.categories.length > 0 && (
+            <ul class="detail-categories" aria-label="カテゴリ">
+              {thing.categories.map((category) => (
+                <li>{category.name}</li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
     </article>

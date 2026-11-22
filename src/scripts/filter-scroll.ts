@@ -1,4 +1,6 @@
-export function initFilterScroll(controls: HTMLElement): { reveal(button: HTMLButtonElement): void } {
+export function initFilterScroll(controls: HTMLElement): {
+  reveal(button: HTMLButtonElement): void;
+} {
   const navigation = controls.closest<HTMLElement>('[data-filter-navigation]');
   const previous = navigation?.querySelector<HTMLButtonElement>('[data-filter-scroll="previous"]');
   const next = navigation?.querySelector<HTMLButtonElement>('[data-filter-scroll="next"]');
@@ -37,12 +39,14 @@ export function initFilterScroll(controls: HTMLElement): { reveal(button: HTMLBu
     const buttonLeft = buttonRect.left - viewportLeft + left;
     const buttonRight = buttonLeft + buttonRect.width;
     const visibleLeft = left + (left > tolerance ? overlayWidth : 0);
-    const visibleRight = left + controls.clientWidth - (maximum - left > tolerance ? overlayWidth : 0);
+    const visibleRight =
+      left + controls.clientWidth - (maximum - left > tolerance ? overlayWidth : 0);
     let target = left;
 
     // 長いラベルは先頭を優先し、再度呼ばれても左右に往復させない。
     if (buttonRect.width > controls.clientWidth - overlayWidth * 2) {
-      if (buttonLeft < visibleLeft || buttonLeft >= visibleRight) target = buttonLeft - overlayWidth;
+      if (buttonLeft < visibleLeft || buttonLeft >= visibleRight)
+        target = buttonLeft - overlayWidth;
     } else if (buttonLeft < visibleLeft) {
       target = buttonLeft - overlayWidth;
     } else if (buttonRight > visibleRight) {
@@ -68,7 +72,8 @@ export function initFilterScroll(controls: HTMLElement): { reveal(button: HTMLBu
   next?.addEventListener('click', () => scroll(1));
   controls.addEventListener('scroll', update, { passive: true });
   controls.addEventListener('focusin', (event) => {
-    if (event.target instanceof HTMLButtonElement && event.target.matches('[data-filter]')) reveal(event.target);
+    if (event.target instanceof HTMLButtonElement && event.target.matches('[data-filter]'))
+      reveal(event.target);
   });
 
   if (navigation) navigation.hidden = false;

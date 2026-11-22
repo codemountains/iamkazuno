@@ -34,12 +34,17 @@ function httpUrl(value: unknown, path: string): string {
   return url.href;
 }
 
-export function validateImage(value: unknown, path: string, allowLocalImages: boolean): ContentImage {
+export function validateImage(
+  value: unknown,
+  path: string,
+  allowLocalImages: boolean,
+): ContentImage {
   const input = record(value, path);
   const rawUrl = requiredText(input.url, `${path}.url`);
-  const url = allowLocalImages && /^\/(?:[\w-]+\/)*[\w-]+\.(?:svg|png|jpe?g|webp|avif)$/i.test(rawUrl)
-    ? rawUrl
-    : httpUrl(rawUrl, `${path}.url`);
+  const url =
+    allowLocalImages && /^\/(?:[\w-]+\/)*[\w-]+\.(?:svg|png|jpe?g|webp|avif)$/i.test(rawUrl)
+      ? rawUrl
+      : httpUrl(rawUrl, `${path}.url`);
 
   for (const key of ['width', 'height'] as const) {
     if (typeof input[key] !== 'number' || !Number.isSafeInteger(input[key]) || input[key] <= 0) {
