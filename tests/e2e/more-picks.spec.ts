@@ -111,7 +111,10 @@ test('horizontal scrolling reveals loaded images and usable detail links', async
   await expect(page.getByRole('link', { name: 'Back to picks' })).toHaveAttribute('href', '/picks');
 });
 
-test('the progress bar and overlay arrows follow the visible cards', async ({ page, isMobile }) => {
+test('the progress bar and lower arrow controls follow the visible cards', async ({
+  page,
+  isMobile,
+}) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto(bootsPath);
   const section = morePicks(page);
@@ -131,19 +134,11 @@ test('the progress bar and overlay arrows follow the visible cards', async ({ pa
   expect(initialProgress).toBeGreaterThan(0);
   expect(initialProgress).toBeLessThan(1);
   const rowBounds = (await row.boundingBox())!;
+  const controlsBounds = (await controls.boundingBox())!;
   const progressBounds = (await progress.boundingBox())!;
   const previousBounds = (await previous.boundingBox())!;
-  const nextBounds = (await next.boundingBox())!;
-  const firstImage = (await row.locator('.item-image-wrap').first().boundingBox())!;
-  expect(progressBounds.y).toBeGreaterThanOrEqual(rowBounds.y + rowBounds.height);
-  expect(previousBounds.y).toBeGreaterThan(firstImage.y);
-  expect(previousBounds.y + previousBounds.height).toBeLessThan(firstImage.y + firstImage.height);
-  expect(previousBounds.x).toBeLessThan(firstImage.x);
-  expect(previousBounds.x + previousBounds.width).toBeGreaterThan(firstImage.x);
-  expect(nextBounds.y).toBeCloseTo(previousBounds.y, 0);
-  const rightEdge = progressBounds.x + progressBounds.width;
-  expect(nextBounds.x).toBeLessThan(rightEdge);
-  expect(nextBounds.x + nextBounds.width).toBeGreaterThan(rightEdge);
+  expect(controlsBounds.y).toBeGreaterThanOrEqual(rowBounds.y + rowBounds.height);
+  expect(previousBounds.x).toBeGreaterThan(progressBounds.x + progressBounds.width);
 
   await activate(next);
   await expect.poll(() => row.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0);

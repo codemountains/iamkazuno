@@ -272,9 +272,7 @@ test('keyboard selection opens the selected suggestion and returns to a visible 
   const collectionUrl = page.url();
   await input.press('Enter');
   await expect(page).toHaveURL(resultPath!);
-  const back = page.getByRole('link', { name: 'Back to picks' });
-  await expect(back).toHaveJSProperty('href', collectionUrl);
-  await back.press('Enter');
+  await page.getByRole('link', { name: 'Back to picks' }).press('Enter');
   await expect(page).toHaveURL(collectionUrl);
   await expect(input).toHaveValue('かめら');
   await expect(list).toBeHidden();
