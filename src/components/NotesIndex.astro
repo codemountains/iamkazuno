@@ -3,9 +3,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import SiteHeader from './SiteHeader.astro';
 import SiteFooter from './SiteFooter.astro';
 import NoteDate from './NoteDate.astro';
+import { notesDescription, notesTitle } from '../lib/notes';
 import type { NotesPage } from '../lib/notes-pagination';
 import type { NotesContent } from '../types/notes';
-import { notePath, notesPagePath } from '../lib/paths';
+import { notePath, notesFeedPath, notesPagePath } from '../lib/paths';
 import '../styles/notes.css';
 
 interface Props {
@@ -17,13 +18,21 @@ const { notes, currentPage, totalPages, totalNotes } = page;
 ---
 
 <BaseLayout
-  title={currentPage === 1 ? '/notes — Thoughts, put into words.' : `Page ${currentPage} — /notes`}
-  description="日常や非日常の振り返り、考えたこと。とりとめのないことを、言葉にして残しておく場所。"
+  title={currentPage === 1 ? notesTitle : `Page ${currentPage} — /notes`}
+  description={notesDescription}
   siteName="/notes"
   image="/og-notes.png"
-  imageAlt="/notes — Thoughts, put into words."
+  imageAlt={notesTitle}
   noindex={source === 'sample'}
 >
+  <link
+    slot="head"
+    rel="alternate"
+    type="application/rss+xml"
+    title={notesTitle}
+    href={notesFeedPath}
+  />
+
   <div class="site-shell site-shell--wide">
     <SiteHeader section="notes" />
   </div>
@@ -48,7 +57,23 @@ const { notes, currentPage, totalPages, totalNotes } = page;
             {String(totalNotes).padStart(2, '0')}
           </span>
         </h2>
-        {totalNotes > 1 && <p>Newest first</p>}
+        <a
+          class="notes-rss-link"
+          href={notesFeedPath}
+          type="application/rss+xml"
+          aria-label="RSSフィードを開く"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="5" cy="19" r="2" fill="currentColor" />
+            <path
+              d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+          </svg>
+          RSS
+        </a>
       </div>
       {notes.length > 0 ? (
         <ol class="note-list">
