@@ -24,3 +24,16 @@ Workers Buildsの接続後、次の外部設定を行います。
 2. microCMSで利用する各APIの **API設定 → Webhook** を開き、「カスタム通知」にHook URLを登録します。公開内容が変わる操作を通知対象にします。[Webhookの設定と通知タイミング](https://document.microcms.io/manual/webhook-setting) を参照してください。
 
 Hook URL自体が認証情報になるため、リポジトリには保存しないでください。microCMSはWebhook失敗時に自動再送しないため、通知に失敗した場合はCloudflare側で手動再ビルドします。
+
+## 公開後にクロール対象を確認する
+
+1. 本番の `robots.txt` を取得し、Googlebot と OAI-SearchBot に適用されるグループが `/picks` を許可していること、`Sitemap` が本番のインデックスを指すことを確認します。以下のコマンドで、User-Agent ごとの HTTP ステータス・ヘッダー・本文を比較できます。
+
+   ```sh
+   for agent in Googlebot OAI-SearchBot; do
+     curl -sS -i -A "$agent" https://iamkaz.uno/robots.txt
+   done
+   ```
+
+2. `Sitemap` の URL と、その XML の各 `<sitemap><loc>` を順に GET し、直接 HTTP 200 で XML を取得できることを確認します。子サイトマップの `<url><loc>` を集め、`/picks` と一覧カードの全リンク先が含まれることを照合します。
+3. 各掲載 URL をリダイレクトに追従せず GET します。HTTP 200 で HTML の canonical が掲載 URL と一致し、robots メタタグと `X-Robots-Tag` ヘッダーに `noindex` や `none` がないことを確認します。旧 `/things/{id}` は対応する詳細への 301、存在しない詳細は 404 かつ `noindex` となり、どちらもサイトマップの対象外です。
