@@ -6,6 +6,10 @@ import type { NotesContent } from '../types/notes';
 import { resolveContentConfiguration } from './content-validation';
 import { validateNotes } from './notes-validation';
 
+export const notesTitle = '/notes — Thoughts, put into words.';
+export const notesDescription =
+  '日常や非日常の振り返り、考えたこと。とりとめのないことを、言葉にして残しておく場所。';
+
 let buildNotes: Promise<NotesContent> | undefined;
 
 export async function getNotes(env?: ContentEnvironment): Promise<NotesContent> {

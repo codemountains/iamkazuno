@@ -58,6 +58,7 @@ const shareImage = Astro.site && image ? new URL(image, Astro.site) : undefined;
     {shareImage && <meta property="og:image:alt" content={imageAlt} />}
     <meta name="twitter:card" content={shareImage ? 'summary_large_image' : 'summary'} />
     <title>{title}</title>
+    <slot name="head" />
   </head>
   <body>
     <a class="skip-link" href="#main">

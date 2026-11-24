@@ -32,7 +32,7 @@
 .notes-collection-heading {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   gap: 16px;
   border-bottom: 1px solid var(--line);
   padding-bottom: 18px;
@@ -51,11 +51,16 @@
   color: var(--muted);
   font-size: var(--font-size-caption);
 }
-.notes-collection-heading > p {
-  margin: 0;
-  font-family: var(--font-mono);
+.notes-rss-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
   color: var(--muted);
-  font-size: var(--font-size-caption);
+  font: var(--font-size-control)/1.6 var(--font-mono);
+}
+.notes-rss-link:hover {
+  color: var(--accent);
 }
 .note-list {
   list-style: none;

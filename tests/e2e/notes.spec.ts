@@ -101,6 +101,48 @@ test('notes have their own canonical URLs and article metadata', async ({ page }
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, follow');
 });
 
+test('the notes index advertises a readable RSS feed with canonical article links', async ({
+  page,
+  request,
+}) => {
+  await page.goto('/notes');
+  const discovery = page.locator('head link[rel="alternate"][type="application/rss+xml"]');
+  await expect(discovery).toHaveAttribute('href', '/notes/rss.xml');
+
+  const response = await request.get('/notes/rss.xml');
+  await expect(response).toBeOK();
+  expect(response.headers()['content-type']).toMatch(/\b(?:rss\+)?xml\b/);
+
+  const feed = await page.evaluate(
+    (body) => {
+      const xml = new DOMParser().parseFromString(body, 'application/xml');
+      const channel = xml.querySelector('rss[version="2.0"] > channel');
+      return {
+        link: channel?.querySelector(':scope > link')?.textContent,
+        items: Array.from(channel?.querySelectorAll('item') ?? [], (item) => ({
+          title: item.querySelector('title')?.textContent,
+          description: item.querySelector('description')?.textContent,
+          link: item.querySelector('link')?.textContent,
+          guid: item.querySelector('guid')?.textContent,
+          pubDate: item.querySelector('pubDate')?.textContent,
+        })),
+      };
+    },
+    await response.text(),
+  );
+
+  const { link, title, href } = await firstNote(page);
+  expect(feed.link).toBe('https://iamkaz.uno/notes');
+  expect(feed.items).toHaveLength(sampleNotes.length);
+  expect(feed.items[0]).toEqual({
+    title,
+    description: await link.locator('.note-excerpt').innerText(),
+    link: `https://iamkaz.uno${href}`,
+    guid: `https://iamkaz.uno${href}`,
+    pubDate: new Date(sampleNotes[0].publishedAt!).toUTCString(),
+  });
+});
+
 test('manual theme choice persists while moving between notes and picks', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'light' });
   await page.goto('/notes');
@@ -251,6 +293,27 @@ test('portrait photos fit inside the slide without cropping', async ({ page }) =
 
 test.describe('without JavaScript', () => {
   test.use({ javaScriptEnabled: false });
+
+  test('the RSS link opens from the right side of the All notes heading', async ({ page }) => {
+    const rss = page.getByRole('link', { name: /RSS/i });
+    await page.goto(photoPath);
+    await expect(rss).toHaveCount(0);
+
+    await page.goto('/notes');
+    await expect(rss).toBeVisible();
+    await expect(rss).toHaveAttribute('href', '/notes/rss.xml');
+    const row = (await page.locator('.notes-collection-heading').boundingBox())!;
+    const heading = (await page.getByRole('heading', { name: /All notes/ }).boundingBox())!;
+    const button = (await rss.boundingBox())!;
+    expect(button.x).toBeGreaterThanOrEqual(heading.x + heading.width);
+    expect(button.x + button.width).toBeCloseTo(row.x + row.width, 0);
+    const headingCenterY = heading.y + heading.height / 2;
+    expect(headingCenterY).toBeGreaterThan(button.y);
+    expect(headingCenterY).toBeLessThan(button.y + button.height);
+
+    await rss.press('Enter');
+    await expect(page).toHaveURL('/notes/rss.xml');
+  });
 
   test('readers can scroll from the first photo to the last', async ({ page }) => {
     await page.goto(photoPath);

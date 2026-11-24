@@ -20,6 +20,7 @@
     "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
+    "@astrojs/rss": "4.0.19",
     "@astrojs/sitemap": "3.7.5",
     "@fontsource-variable/dm-sans": "5.3.0",
     "@fontsource/dm-mono": "5.3.0",
