@@ -8,9 +8,30 @@ import CollectionImages from '../../components/CollectionImages.astro';
 import CollectionImagePreload from '../../components/CollectionImagePreload.astro';
 import { getContent } from '../../lib/content';
 import { collectionSize } from '../../lib/collection-size';
+import { canonicalUrl, thingPath } from '../../lib/paths';
 
 const { things, categories, source } = await getContent();
 const sample = source === 'sample';
+const canonical = sample ? undefined : canonicalUrl(Astro.url, Astro.site);
+// 「<」をエスケープして、CMSの文字列がscript要素の解析に影響しないようにする。
+const structuredData =
+  canonical &&
+  JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    url: canonical.href,
+    name: '/picks',
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: things.length,
+      itemListElement: things.map(({ id, name, variantLabel }, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        name: variantLabel ? `${name} ${variantLabel}` : name,
+        url: new URL(thingPath(id), canonical).href,
+      })),
+    },
+  }).replaceAll('<', '\\u003c');
 const preconnectImageCdn = things.some((thing) =>
   thing.image?.url.startsWith('https://images.microcms-assets.io/'),
 );
@@ -34,6 +55,9 @@ const initialFilterStyles =
   preconnectImageCdn={preconnectImageCdn}
 >
   <CollectionImagePreload slot="preload" things={things} categories={categories} />
+  <Fragment slot="head">
+    {structuredData && <script is:inline type="application/ld+json" set:html={structuredData} />}
+  </Fragment>
   <div class="site-shell site-shell--wide site-shell--collection">
     <SiteHeader pageHeading />
 

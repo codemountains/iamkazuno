@@ -1,5 +1,17 @@
 import { test, expect, expectCollectionReady } from './fixtures';
 
+test('the noindex sample collection omits structured data and retains its canonical URL', async ({
+  page,
+}) => {
+  await page.goto('/picks?category=ski');
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, follow');
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    'href',
+    'https://iamkaz.uno/picks',
+  );
+  await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(0);
+});
+
 test('variant labels follow the product name and use square brackets in page titles', async ({
   page,
 }) => {
