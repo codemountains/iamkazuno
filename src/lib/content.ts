@@ -56,7 +56,7 @@ async function loadContent(env: ContentEnvironment): Promise<Content> {
         endpoint: 'things',
         queries: {
           fields:
-            'id,name,search_aliases,description,main_image,ref_brand,ref_categories,more_picks',
+            'id,name,variant_label,search_aliases,description,main_image,ref_brand,ref_categories,more_picks',
           depth: 1,
         },
       }),

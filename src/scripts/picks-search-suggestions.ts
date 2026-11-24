@@ -76,7 +76,7 @@ export function initSearchSuggestions(input: HTMLInputElement, panel: HTMLElemen
     const rows = document.createDocumentFragment();
     for (const item of items ?? []) {
       const link = item.querySelector<HTMLAnchorElement>('.item-card-link');
-      const title = link?.querySelector('.item-copy h2')?.textContent?.trim();
+      const title = link?.querySelector('.item-copy .thing-name')?.textContent?.trim();
       if (!link || !title) continue;
 
       const row = document.createElement('li');
@@ -87,11 +87,15 @@ export function initSearchSuggestions(input: HTMLInputElement, panel: HTMLElemen
       option.tabIndex = -1;
       option.setAttribute('role', 'option');
       option.setAttribute('aria-selected', 'false');
+      const variant = link.querySelector('.item-copy .thing-variant')?.textContent?.trim();
       const brand = link.querySelector('.item-brand')?.textContent?.trim();
       const hit = hits.get(link.pathname);
       const render = (evidence?: PickSearchEvidence) => {
-        const match = getPickSearchMatch(query, { ...evidence, title, brand });
-        option.replaceChildren(matchLine(match.title, 'picks-suggestion-title'));
+        const match = getPickSearchMatch(query, { ...evidence, title, variant, brand });
+        const heading = document.createElement('span');
+        heading.append(matchLine(match.title, 'picks-suggestion-title'));
+        if (variant) heading.append(' ', matchLine(match.variant, 'thing-variant'));
+        option.replaceChildren(heading);
         if (brand) option.append(' ', matchLine(match.brand, 'picks-suggestion-brand'));
         if (match.detail) {
           const detail = matchLine(match.detail.parts, 'picks-suggestion-detail');

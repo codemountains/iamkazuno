@@ -22,6 +22,7 @@ export type PickImage = ContentImage;
 export interface Thing {
   id: string;
   name: string;
+  variantLabel?: string;
   searchAliases?: string[];
   brand: Brand | null;
   image: PickImage | null;
@@ -54,6 +55,7 @@ export interface MicroCMSBrand extends MicroCMSNamedContent {
 export interface MicroCMSThing {
   id: string;
   name?: string | null;
+  variant_label?: string | null;
   search_aliases?: MicroCMSSearchAlias[] | null;
   description?: string | null;
   main_image?: PickImage | null;

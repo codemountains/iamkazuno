@@ -1,0 +1,16 @@
+---
+import type { Thing } from '../types/content';
+
+interface Props {
+  thing: Thing;
+}
+const { thing } = Astro.props;
+---
+
+<span class="thing-name">{thing.name}</span>
+{thing.variantLabel && (
+  <>
+    {' '}
+    <span class="thing-variant">{thing.variantLabel}</span>
+  </>
+)}

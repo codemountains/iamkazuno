@@ -46,6 +46,7 @@ async function loadEngine() {
   const [bundle, { paths, aliasFieldCount }] = await Promise.all([loadBundle(), loadPaths()]);
   const metaWeights: Record<string, number> = {
     title: 10,
+    variant: 10,
     brand: 8,
     description: 0,
     alias_labels: 0,

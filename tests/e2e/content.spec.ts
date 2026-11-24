@@ -1,5 +1,43 @@
 import { test, expect, expectCollectionReady } from './fixtures';
 
+test('variant labels follow the product name and use square brackets in page titles', async ({
+  page,
+}) => {
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.goto('/picks');
+  const item = page.getByRole('link', { name: 'スキー板 25-26', exact: true });
+  const cardLabel = item.locator('.thing-variant');
+  await expect(cardLabel).toHaveText('25-26');
+  await expect(cardLabel).toHaveCSS('font-size', '12px');
+  await expect(cardLabel).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+  await item.click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName('スキー板 25-26');
+  const label = page.locator('h1 .thing-variant');
+  await expect(label).toHaveText('25-26');
+  await expect(label).toHaveCSS('font-size', '14px');
+  await expect(label).toHaveCSS('border-radius', '5px');
+  await expect(page.locator('h1 .thing-name')).toHaveCSS('margin-inline-end', '4px');
+  await expect(page).toHaveTitle('スキー板 [25-26] — /picks');
+  await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
+    'content',
+    'スキー板 [25-26] — /picks',
+  );
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    'href',
+    'https://iamkaz.uno/picks/things/ski-skis',
+  );
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await expect(label).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+
+  await page.goto('/picks/things/mountain-boots');
+  await expect(page).toHaveTitle('ブーツ — /picks');
+  await expect(page.locator('h1 .thing-variant')).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'スキー板 25-26', exact: true })).toHaveAttribute(
+    'href',
+    '/picks/things/ski-skis',
+  );
+});
+
 test('items without images open from the collection and show a placeholder on the detail page', async ({
   page,
 }) => {

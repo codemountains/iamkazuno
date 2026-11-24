@@ -7,11 +7,13 @@ export interface MatchPart {
 
 interface SearchFields extends PickSearchEvidence {
   title: string;
+  variant?: string;
   brand?: string;
 }
 
 interface PickSearchMatch {
   title: MatchPart[];
+  variant: MatchPart[];
   brand: MatchPart[];
   detail?: { kind: 'alias' | 'description'; parts: MatchPart[] };
 }
@@ -141,9 +143,16 @@ export function getPickSearchMatch(query: string, fields: SearchFields): PickSea
   const terms = searchWords(query);
   const matched = new Set(fields.matchedMetaFields);
   const title = matchName(fields.title, terms, matched.has('title'));
+  const variant = matchName(fields.variant ?? '', terms, matched.has('variant'));
   const brand = matchName(fields.brand ?? '', terms, matched.has('brand'));
-  const result: PickSearchMatch = { title: title.parts, brand: brand.parts };
-  const remaining = terms.filter((term) => !title.found.has(term) && !brand.found.has(term));
+  const result: PickSearchMatch = {
+    title: title.parts,
+    variant: variant.parts,
+    brand: brand.parts,
+  };
+  const remaining = terms.filter(
+    (term) => !title.found.has(term) && !variant.found.has(term) && !brand.found.has(term),
+  );
   if (!remaining.length) return result;
 
   const aliases = fields.aliases ?? [];

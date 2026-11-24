@@ -28,6 +28,17 @@ test('an alias match shows the registered model including its hyphen', () => {
   }
 });
 
+test('a season match highlights the label separately from the product name', () => {
+  const match = getPickSearchMatch('すきー板 ２５－２６', {
+    title: 'スキー板',
+    variant: '25-26',
+    description: '25-26 のモデル',
+  });
+  assert.deepEqual(marked(match.title), ['スキー板']);
+  assert.deepEqual(marked(match.variant), ['25-26']);
+  assert.equal(match.detail, undefined);
+});
+
 test('a brand alias is highlighted in full when the title shares its first word', () => {
   const match = getPickSearchMatch('さんぷるおぶじぇくつ', {
     title: 'カメラ（サンプル 004）',

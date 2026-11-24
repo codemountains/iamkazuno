@@ -1,6 +1,7 @@
 ---
 import type { Thing } from '../types/content';
 import ThingImage from './ThingImage.astro';
+import ThingName from './ThingName.astro';
 import { thingPath } from '../lib/paths';
 
 interface Props {
@@ -52,7 +53,9 @@ const Heading = related ? 'h3' : 'h2';
       </div>
       <div class="item-copy">
         {thing.brand && <p class="item-brand">{thing.brand.name}</p>}
-        <Heading id={`item-${thing.id}`}>{thing.name}</Heading>
+        <Heading id={`item-${thing.id}`}>
+          <ThingName thing={thing} />
+        </Heading>
       </div>
     </a>
   </article>
