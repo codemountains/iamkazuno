@@ -2,7 +2,7 @@
 import { collectionSize } from '../lib/collection-size';
 ---
 
-<div class="collection-size-control" data-size-control hidden>
+<div class="collection-size-control glass-surface" data-size-control hidden>
   <svg
     class="size-icon size-icon--small"
     width="18"
@@ -37,6 +37,9 @@ import { collectionSize } from '../lib/collection-size';
 
 <style>
   .collection-size-control {
+    --size-track: color-mix(in srgb, var(--ink) 40%, var(--paper));
+    --thumb-edge: color-mix(in srgb, var(--ink) 40%, transparent);
+    --thumb-shadow: inset 0 1px 1px #fff, 0 2px 4px #0003;
     position: fixed;
     z-index: 20;
     left: 50%;
@@ -49,11 +52,7 @@ import { collectionSize } from '../lib/collection-size';
     height: 48px;
     max-height: calc(100svh - 18px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     padding: 0 18px;
-    border: 1px solid var(--line);
     border-radius: 999px;
-    color: var(--muted);
-    background: var(--paper);
-    box-shadow: 0 4px 18px #0000000d;
     transform: translateX(-50%);
     transition:
       opacity 160ms ease,
@@ -91,14 +90,14 @@ import { collectionSize } from '../lib/collection-size';
     background: linear-gradient(
       to right,
       var(--accent) var(--size-progress),
-      var(--line) var(--size-progress)
+      var(--size-track) var(--size-progress)
     );
   }
 
   .size-range::-moz-range-track {
     height: 3px;
     border-radius: 99px;
-    background: var(--line);
+    background: var(--size-track);
   }
 
   .size-range::-moz-range-progress {
@@ -110,20 +109,24 @@ import { collectionSize } from '../lib/collection-size';
   .size-range::-webkit-slider-thumb {
     appearance: none;
     -webkit-appearance: none;
-    width: 14px;
-    height: 14px;
-    margin-top: -5.5px;
-    border: 0;
-    border-radius: 50%;
-    background: var(--ink);
+    width: 24px;
+    height: 18px;
+    margin-top: -7.5px;
+    box-sizing: border-box;
+    border: 1px solid var(--thumb-edge);
+    border-radius: 99px;
+    background: var(--paper);
+    box-shadow: var(--thumb-shadow);
   }
 
   .size-range::-moz-range-thumb {
-    width: 14px;
-    height: 14px;
-    border: 0;
-    border-radius: 50%;
-    background: var(--ink);
+    width: 24px;
+    height: 18px;
+    box-sizing: border-box;
+    border: 1px solid var(--thumb-edge);
+    border-radius: 99px;
+    background: var(--paper);
+    box-shadow: var(--thumb-shadow);
   }
 
   .size-range:focus-visible {
