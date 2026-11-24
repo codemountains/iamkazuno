@@ -408,6 +408,22 @@ test('a full-width model number and hiragana brand alias find their products', a
   await expect(cards).toHaveCount(sampleThings.length);
 });
 
+test('a model season finds the corresponding pick and appears beside its suggestion title', async ({
+  page,
+}) => {
+  await page.goto('/picks');
+  await page.getByRole('combobox').fill('25-26');
+  const suggestion = page.getByRole('option', { name: /スキー板 25-26/ });
+  await expect(suggestion).toHaveAttribute(
+    'href',
+    new URL('/picks/things/ski-skis', page.url()).href,
+  );
+  await expect(suggestion.locator('.picks-suggestion-title')).toHaveText('スキー板');
+  await expect(suggestion.locator('.picks-suggestion-title + .thing-variant mark')).toHaveText(
+    '25-26',
+  );
+});
+
 test('fuzzy matches show the registered model and the matching brand', async ({ page }) => {
   await page.goto('/picks');
   const input = page.getByRole('combobox');
@@ -487,7 +503,7 @@ for (const [asset, requestUrl] of [
     const retry = page.getByRole('button', { name: 'Retry search' });
     await expect(retry).toBeVisible();
     await expect(page.getByRole('link', { name: 'ブーツ', exact: true })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'スキー板', exact: true })).toBeHidden();
+    await expect(page.getByRole('link', { name: 'スキー板 25-26', exact: true })).toBeHidden();
     await expect(page.locator('[data-empty-state]')).toBeHidden();
     await page.unroute(requestUrl);
     await retry.press('Enter');

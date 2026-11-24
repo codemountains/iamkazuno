@@ -144,6 +144,7 @@ export const sampleThings: MicroCMSThing[] = [
   // 元テンプレートには設定せず、派生サンプルへ関連設定が広がるのを防ぐ。
   ...sampleTemplates.map((thing): MicroCMSThing => ({
     ...thing,
+    variant_label: thing.id === 'ski-skis' ? '25-26' : undefined,
     search_aliases:
       thing.id === 'other-camera'
         ? [

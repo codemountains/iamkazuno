@@ -131,6 +131,7 @@ export function validateThings(
     return {
       id,
       name: optionalText(data.name, `${path}.name`) || 'Unnamed item',
+      variantLabel: optionalText(data.variant_label, `${path}.variant_label`) || undefined,
       ...searchAliases(data, path),
       brand: brandId ? (knownBrands.get(brandId) ?? null) : null,
       image:

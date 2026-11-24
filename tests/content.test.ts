@@ -249,14 +249,17 @@ test('all optional fields may be absent, empty or null without blocking publicat
   const explicit = {
     id: 'null-fields',
     name: ' ',
+    variant_label: null,
     description: null,
     main_image: null,
     ref_brand: null,
     ref_categories: null,
     more_picks: null,
   };
-  for (const thing of validateThings([empty, explicit], [], [])) {
+  const blank = { id: 'blank-label', variant_label: '  ' };
+  for (const thing of validateThings([empty, explicit, blank], [], [])) {
     assert.equal(thing.name, 'Unnamed item');
+    assert.equal(thing.variantLabel, undefined);
     assert.equal(thing.brand, null);
     assert.equal(thing.image, null);
     assert.equal(thing.descriptionHtml, '');
@@ -354,6 +357,10 @@ test('present malformed values still fail rather than silently displaying broken
   assert.throws(() => validateThings(sampleThings, brands, categories), /URL/);
   assert.throws(() => validateThings([{ ...thing, name: 42 }], brands, categories), /name/);
   assert.throws(
+    () => validateThings([{ ...thing, variant_label: 2026 }], brands, categories),
+    /variant_label/,
+  );
+  assert.throws(
     () => validateThings([{ ...thing, description: {} }], brands, categories),
     /description/,
   );
@@ -391,6 +398,7 @@ test('CMS retrieval uses only the three Content API endpoints and retrieves more
   const sourceThings = Array.from({ length: 101 }, (_, index) => ({
     ...cmsThing(),
     id: `thing-${index}`,
+    variant_label: ' 26 AW ',
     search_aliases: [{ fieldId: 'search_alias', value: `model-${index}` }],
   }));
   const requests = mockCMS(t, sourceThings);
@@ -398,6 +406,7 @@ test('CMS retrieval uses only the three Content API endpoints and retrieves more
   assert.equal(content.source, 'microcms');
   assert.equal(content.things.length, 101);
   assert.equal(content.things[100].id, 'thing-100');
+  assert.equal(content.things[100].variantLabel, '26 AW');
   assert.deepEqual(content.things[100].searchAliases, ['model-100']);
   assert.deepEqual(content.things[100].brand?.searchAliases, ['サンプルオブジェクツ']);
   assert.deepEqual(
@@ -415,7 +424,7 @@ test('CMS retrieval uses only the three Content API endpoints and retrieves more
     thingRequests.every(
       (url) =>
         url.searchParams.get('fields') ===
-        'id,name,search_aliases,description,main_image,ref_brand,ref_categories,more_picks',
+        'id,name,variant_label,search_aliases,description,main_image,ref_brand,ref_categories,more_picks',
     ),
   );
   const brandRequests = requests.filter((url) => url.pathname === '/api/v1/brands');

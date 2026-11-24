@@ -5,6 +5,7 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 import SiteHeader from '../../../components/SiteHeader.astro';
 import SiteFooter from '../../../components/SiteFooter.astro';
 import ThingImage from '../../../components/ThingImage.astro';
+import ThingName from '../../../components/ThingName.astro';
 import MorePicks from '../../../components/MorePicks.astro';
 import { getContent } from '../../../lib/content';
 import { getMorePicks } from '../../../lib/more-picks';
@@ -29,7 +30,8 @@ const sample = source === 'sample';
 const preconnectImageCdn = [thing, ...morePicks].some((item) =>
   item.image?.url.startsWith('https://images.microcms-assets.io/'),
 );
-const product = thing.brand ? `${thing.brand.name}の「${thing.name}」` : `「${thing.name}」`;
+const titleName = thing.variantLabel ? `${thing.name} [${thing.variantLabel}]` : thing.name;
+const product = thing.brand ? `${thing.brand.name}の「${titleName}」` : `「${titleName}」`;
 const categories = thing.categories.map(({ name }) => name).join('・');
 const description =
   excerptFromHtml(thing.descriptionHtml) ||
@@ -37,7 +39,7 @@ const description =
 ---
 
 <BaseLayout
-  title={`${thing.name} — /picks`}
+  title={`${titleName} — /picks`}
   description={description}
   noindex={sample}
   preconnectImageCdn={preconnectImageCdn}
@@ -54,7 +56,9 @@ const description =
     <article class="detail-grid" aria-labelledby="thing-title">
       <header class="detail-heading">
         {thing.brand && <p class="detail-brand">{thing.brand.name}</p>}
-        <h1 id="thing-title">{thing.name}</h1>
+        <h1 id="thing-title">
+          <ThingName thing={thing} />
+        </h1>
       </header>
       <div class="detail-image-wrap">
         <ThingImage image={thing.image} name={thing.name} eager detail />

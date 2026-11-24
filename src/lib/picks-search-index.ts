@@ -44,6 +44,7 @@ export function picksSearchRecord(thing: Thing): CustomRecord {
     content: foldedText === text ? text : `${text} ${foldedText}`,
     meta: {
       title: indexedName(thing.name),
+      ...(thing.variantLabel && { variant: indexedName(thing.variantLabel) }),
       brand: indexedName(thing.brand?.name ?? ''),
       ...Object.fromEntries(aliases.map((alias, i) => [`alias_${i}`, indexedName(alias)])),
       // 正規化した索引語とは別に、候補に表示する表記を同じ検索結果から取得できるようにする。
