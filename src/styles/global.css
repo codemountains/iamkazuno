@@ -372,7 +372,7 @@ svg {
   .frosted-panel {
     background:
       linear-gradient(155deg, #ffffff1a, transparent 55%),
-      color-mix(in srgb, var(--paper) 55%, transparent);
+      color-mix(in srgb, var(--paper) var(--frosted-panel-opacity, 55%), transparent);
     -webkit-backdrop-filter: blur(20px) saturate(145%);
     backdrop-filter: blur(20px) saturate(145%);
   }
