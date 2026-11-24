@@ -361,7 +361,32 @@ svg {
 .picks-search:placeholder-shown + .picks-search-clear {
   display: none;
 }
+.frosted-panel {
+  border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+  background: var(--paper);
+  box-shadow:
+    inset 0 1px 0 #ffffff52,
+    0 4px 16px #00000014;
+}
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .frosted-panel {
+    background:
+      linear-gradient(155deg, #ffffff1a, transparent 55%),
+      color-mix(in srgb, var(--paper) 55%, transparent);
+    -webkit-backdrop-filter: blur(20px) saturate(145%);
+    backdrop-filter: blur(20px) saturate(145%);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .frosted-panel {
+    background: var(--paper);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
 .picks-suggestions {
+  --suggestion-highlight: color-mix(in srgb, var(--soft) 88%, var(--accent));
+  --suggestion-secondary: color-mix(in srgb, var(--ink) 80%, var(--muted));
   position: absolute;
   z-index: 5;
   top: calc(100% + 6px);
@@ -371,10 +396,8 @@ svg {
   flex-direction: column;
   max-height: min(26rem, 55dvh);
   overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: var(--paper);
-  box-shadow: 0 6px 18px #0002;
+  border-radius: 12px;
+  text-shadow: 0 0 2px var(--paper);
 }
 .picks-suggestions [role='listbox'] {
   min-height: 0;
@@ -391,14 +414,14 @@ svg {
   border: 0;
   border-top: 1px solid var(--line);
   background: transparent;
-  color: var(--muted);
+  color: var(--suggestion-secondary);
   font-family: var(--font-mono);
   font-size: var(--font-size-caption);
   text-align: left;
   cursor: pointer;
 }
 .picks-suggestions-more:focus-visible {
-  background: var(--soft);
+  background: var(--suggestion-highlight);
   outline-offset: -3px;
 }
 .picks-suggestions [role='option'] {
@@ -407,13 +430,13 @@ svg {
   gap: 2px;
   min-height: 44px;
   padding: 8px;
-  border-radius: 3px;
+  border-radius: 8px;
   font-size: var(--font-size-label);
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
 .picks-suggestion-brand {
-  color: var(--muted);
+  color: var(--suggestion-secondary);
   font-family: var(--font-mono);
   font-size: var(--font-size-caption);
 }
@@ -422,7 +445,7 @@ svg {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--muted);
+  color: var(--suggestion-secondary);
   font-size: var(--font-size-control);
 }
 .picks-suggestions mark {
@@ -431,13 +454,12 @@ svg {
   font-weight: 700;
 }
 .picks-suggestions [aria-selected='true'] {
-  background: var(--soft);
-  box-shadow: inset 2px 0 var(--accent);
+  background: var(--suggestion-highlight);
 }
 @media (hover: hover) {
   .picks-suggestions [role='option']:hover,
   .picks-suggestions-more:hover {
-    background: var(--soft);
+    background: var(--suggestion-highlight);
   }
 }
 .results-label {
