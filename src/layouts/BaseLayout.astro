@@ -2,6 +2,7 @@
 import '../styles/fonts.css';
 import '../styles/global.css';
 import ThemeInit from '../components/ThemeInit.astro';
+import { canonicalUrl } from '../lib/paths';
 
 interface Props {
   title?: string;
@@ -26,8 +27,7 @@ const {
   type = 'website',
   publishedAt,
 } = Astro.props;
-const pathname = Astro.url.pathname.replace(/\/+$/, '') || '/';
-const canonical = Astro.site ? new URL(pathname, Astro.site) : undefined;
+const canonical = canonicalUrl(Astro.url, Astro.site);
 const shareImage = Astro.site && image ? new URL(image, Astro.site) : undefined;
 ---
 

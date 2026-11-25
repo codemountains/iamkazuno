@@ -6,3 +6,8 @@ export const notesFeedPath = `${notesPath}/rss.xml`;
 export const notesPagePath = (page: number) =>
   page === 1 ? notesPath : `${notesPath}/page/${page}`;
 export const notePath = (id: string) => `${notesPath}/${encodeURIComponent(id)}`;
+
+export function canonicalUrl(url: URL, site: URL | undefined): URL | undefined {
+  const pathname = url.pathname.replace(/\/+$/, '') || '/';
+  return site ? new URL(pathname, site) : undefined;
+}
