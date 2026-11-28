@@ -65,6 +65,7 @@ async function expectOriginalCollection(page: Page, itemTop: number, restoreFocu
 test('More picks preserves the configured order and displays all nine items', async ({ page }) => {
   await page.goto(bootsPath);
   const section = morePicks(page);
+  await expect(section.locator('.dot-divider + h2')).toBeVisible();
   await expect(section.getByRole('heading', { level: 2, name: 'More picks' })).toBeVisible();
   await expect(section.getByRole('heading', { level: 3 })).toHaveCount(configuredIds.length);
   const links = track(page).locator('.item-card-link');
@@ -237,6 +238,7 @@ test('an unset field hides More picks and one configured item does not overflow'
 }) => {
   await page.goto(watchPath);
   await expect(morePicks(page)).toHaveCount(0);
+  await expect(page.locator('.dot-divider')).toHaveCount(0);
   await page.goto(backpackPath);
   await expect(track(page).locator('.item-card-link')).toHaveCount(1);
   expect(await track(page).evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(
