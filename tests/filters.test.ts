@@ -179,6 +179,7 @@ function setup(
       if (selector === '[data-picks-search]') return input;
       if (selector === '[data-picks-suggestions]') return null;
       if (selector === '[data-picks-search-clear]') return null;
+      if (selector === '[data-picks-search-shortcut]') return null;
       if (selector === '[data-search-retry]') return retry;
       if (selector === '[data-search-error]') return error;
       if (selector === '[data-empty-message]') return emptyMessage;

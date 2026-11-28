@@ -34,6 +34,7 @@ export default defineConfig({
         'images.spec.ts',
         'image-preload.spec.ts',
         'prefetch.spec.ts',
+        'preferences.spec.ts',
         'search.spec.ts',
         'security.spec.ts',
         'more-picks.spec.ts',

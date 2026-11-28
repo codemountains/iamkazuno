@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import ThemePicker from '../components/ThemePicker.astro';
+import SettingsMenu from '../components/SettingsMenu.astro';
 import { collectionPath, notesPath } from '../lib/paths';
 ---
 
@@ -11,9 +11,7 @@ import { collectionPath, notesPath } from '../lib/paths';
   image="/og-home.png"
   imageAlt="iamkaz.uno"
 >
-  <div class="home-theme-control">
-    <ThemePicker />
-  </div>
+  <SettingsMenu />
   <main id="main" class="home">
     <div class="home-content">
       <h1>
@@ -32,19 +30,6 @@ import { collectionPath, notesPath } from '../lib/paths';
 </BaseLayout>
 
 <style>
-  .home-theme-control {
-    position: absolute;
-    top: 30px;
-    right: 32px;
-  }
-
-  @media (max-width: 600px) {
-    .home-theme-control {
-      top: 20px;
-      right: 16px;
-    }
-  }
-
   .home {
     min-height: 100svh;
     display: grid;

@@ -4,6 +4,34 @@ import { initFilterMotion } from './filter-motion';
 import { searchPicks } from './pagefind-search';
 import { initSearchSuggestions } from './picks-search-suggestions';
 
+function initSearchShortcut(input: HTMLInputElement) {
+  const shortcut = document.querySelector<HTMLButtonElement>('[data-picks-search-shortcut]');
+  if (!shortcut) return;
+
+  if (typeof IntersectionObserver === 'function') {
+    // 低い画面では検索欄が下に隠れた状態から、1回のスクロールで上端を越える。
+    // 下側も監視範囲に含め、検索欄が上端を通過したときに通知を受ける。
+    new IntersectionObserver(
+      ([entry]) => shortcut.toggleAttribute('hidden', entry.boundingClientRect.bottom >= 0),
+      { rootMargin: '0px 0px 100% 0px' },
+    ).observe(input);
+  } else {
+    const update = () => {
+      shortcut.toggleAttribute('hidden', input.getBoundingClientRect().bottom >= 0);
+    };
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    update();
+  }
+
+  shortcut.addEventListener('click', () => {
+    // タップ中にフォーカスを移し、モバイルのソフトウェアキーボードを開けるようにする。
+    input.focus({ preventScroll: true });
+    const toolbar = input.closest('.collection-toolbar') ?? input;
+    toolbar.scrollIntoView({ block: 'start', behavior: 'instant' });
+  });
+}
+
 export function initFilters(search = searchPicks): Promise<void> | undefined {
   const filterGroup = document.querySelector<HTMLElement>('[data-filters]');
   const itemGrid = document.querySelector<HTMLElement>('[data-item-grid]');
@@ -197,6 +225,7 @@ export function initFilters(search = searchPicks): Promise<void> | undefined {
 
   if (input) {
     input.hidden = false;
+    initSearchShortcut(input);
     let composing = false;
     const onInput = () => {
       const url = new URL(window.location.href);

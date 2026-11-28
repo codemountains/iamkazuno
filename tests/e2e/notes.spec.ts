@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import { sampleNotes } from '../../src/data/sample-notes';
-import { test, expect } from './fixtures';
+import { test, expect, settingsButton } from './fixtures';
 
 const photoNote = sampleNotes.find((note) => note.id === 'sample-note')!;
 const photoPath = `/notes/${photoNote.id}`;
@@ -146,7 +146,10 @@ test('the notes index advertises a readable RSS feed with canonical article link
 test('manual theme choice persists while moving between notes and picks', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'light' });
   await page.goto('/notes');
+  const settings = settingsButton(page);
+  await settings.click();
   const toggle = page.getByRole('switch', { name: 'ダークモード' });
+  await expect(page.getByRole('slider', { name: '画像サイズ' })).toBeHidden();
   await expect(toggle).toHaveAttribute('aria-checked', 'false');
   await toggle.click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
@@ -154,6 +157,7 @@ test('manual theme choice persists while moving between notes and picks', async 
   await page.locator('.site-footer a[href="/picks"]').first().click();
   await expect(page).toHaveURL('/picks');
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await settings.click();
   await expect(toggle).toHaveAttribute('aria-checked', 'true');
 
   await page.locator('.site-footer a[href="/notes"]').first().click();
@@ -162,6 +166,8 @@ test('manual theme choice persists while moving between notes and picks', async 
   await link.click();
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await settings.click();
+  await expect(page.getByRole('slider', { name: '画像サイズ' })).toBeHidden();
   await expect(toggle).toHaveAttribute('aria-checked', 'true');
   await toggle.click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
@@ -333,6 +339,7 @@ test.describe('without JavaScript', () => {
 
   test('notes remain readable and navigable', async ({ page }) => {
     await page.goto('/notes');
+    await expect(settingsButton(page)).toBeHidden();
     await expect(page.locator('[data-theme-toggle]')).toBeHidden();
     const { link, title, href } = await firstNote(page);
     await link.click();
