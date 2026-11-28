@@ -1,6 +1,6 @@
 ---
 import Wordmark from './Wordmark.astro';
-import ThemePicker from './ThemePicker.astro';
+import SettingsMenu from './SettingsMenu.astro';
 
 interface Props {
   section?: 'picks' | 'notes';
@@ -22,7 +22,9 @@ const { section = 'picks', pageHeading = false } = Astro.props;
       {section === 'notes' ? 'Thoughts, put into words.' : 'Things I use and love.'}
     </p>
   </div>
-  <ThemePicker />
+  <SettingsMenu>
+    <slot name="settings" />
+  </SettingsMenu>
 </header>
 
 <style>

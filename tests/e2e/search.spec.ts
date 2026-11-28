@@ -1,8 +1,81 @@
 import type { Page } from '@playwright/test';
 import { sampleThings } from '../../src/data/sample';
-import { test, expect, expectCollectionReady } from './fixtures';
+import { test, expect, expectCollectionReady, settingsButton } from './fixtures';
 
 const visibleLinks = (page: Page) => page.locator('[data-item]:visible .item-card-link');
+
+test('the Search shortcut appears when a single scroll skips the field on a short viewport', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 136 });
+  await page.goto('/picks');
+  await expectCollectionReady(page);
+  const shortcut = page.getByRole('button', { name: 'Search', exact: true });
+  await expect(page.getByRole('combobox')).not.toBeInViewport();
+  await expect(shortcut).toBeHidden();
+
+  await page.evaluate(() => window.scrollTo({ top: 800, behavior: 'instant' }));
+  await expect(shortcut).toBeInViewport({ ratio: 1 });
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+  await expect(shortcut).toBeHidden();
+});
+
+test('the floating Search button returns to the existing query and category', async ({
+  page,
+  isMobile,
+}) => {
+  const url = '/picks?category=mountain&q=sample';
+  await page.goto(url);
+  await expectCollectionReady(page);
+  const input = page.getByRole('combobox');
+  const shortcut = page.getByRole('button', { name: 'Search', exact: true });
+  await expect(input).toHaveValue('sample');
+  await expect(page.locator('[data-filters]')).toHaveAttribute('data-counts', 'matches');
+  await expect(shortcut).toBeHidden();
+
+  const scrollPastSearch = () =>
+    page.evaluate(() => window.scrollTo({ top: 500, behavior: 'instant' }));
+  await scrollPastSearch();
+  await expect(input).not.toBeInViewport();
+  await expect(shortcut).toBeInViewport({ ratio: 1 });
+  const { centerOffset, bottomGap, leftGap, rightGap, height } = await shortcut.evaluate(
+    (button) => {
+      const rect = button.getBoundingClientRect();
+      return {
+        centerOffset: Math.abs(rect.x + rect.width / 2 - document.documentElement.clientWidth / 2),
+        bottomGap: window.innerHeight - rect.bottom,
+        leftGap: button.querySelector('svg')!.getBoundingClientRect().left - rect.left,
+        rightGap: rect.right - button.querySelector('span')!.getBoundingClientRect().right,
+        height: rect.height,
+      };
+    },
+  );
+  expect(centerOffset).toBeLessThan(2);
+  expect(bottomGap).toBeLessThan(height);
+  expect(height).toBe(48);
+  expect(leftGap).toBeCloseTo(9, 1);
+  expect(rightGap).toBeCloseTo(11, 1);
+  expect(await shortcut.locator('svg').boundingBox()).toMatchObject({ width: 18, height: 18 });
+  await expect(shortcut.getByText('Search', { exact: true })).toHaveCSS('font-size', '15px');
+
+  // 検索欄が一部でも画面に戻ったら、ショートカットを隠す。
+  await input.evaluate((element) => {
+    const { top, height } = element.getBoundingClientRect();
+    window.scrollBy({ top: top + height / 2, behavior: 'instant' });
+  });
+  await expect(input).toBeInViewport();
+  await expect(shortcut).toBeHidden();
+  await scrollPastSearch();
+  await expect(shortcut).toBeInViewport();
+  if (isMobile) await shortcut.tap();
+  else await shortcut.press('Enter');
+  await expect(input).toBeFocused();
+  await expect(input).toBeInViewport({ ratio: 1 });
+  await expect(input).toHaveValue('sample');
+  await expect(page.locator('[data-filter="mountain"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(shortcut).toBeHidden();
+  await expect(page).toHaveURL(url);
+});
 
 test('the grid resolves without fragments and only open suggestions load details, tolerating a missing fragment', async ({
   page,
@@ -141,9 +214,18 @@ test('name and description matches rank and filter existing cards, then restore 
   const empty = page.locator('[data-empty-state]');
   await expect(empty).toContainText('No matching things.');
   await expect(empty.locator('svg.empty-state-search-icon[aria-hidden="true"]')).toBeVisible();
+  const settings = settingsButton(page);
+  await settings.click();
+  await expect(page.getByRole('switch', { name: 'ダークモード' })).toBeVisible();
+  const slider = page.getByRole('slider', { name: '画像サイズ' });
+  await expect(slider).toBeHidden();
+  await settings.click();
   await input.fill('');
   await expect(page).toHaveURL('/picks?category=mountain');
   await expect(input).toHaveAttribute('aria-expanded', 'false');
+  await settings.click();
+  await expect(slider).toBeVisible();
+  await settings.click();
   const mountainPaths = sampleThings
     .filter((thing) => thing.ref_categories?.some((cat) => cat?.id === 'mountain'))
     .map((thing) => `/picks/things/${thing.id}`);
@@ -221,9 +303,11 @@ test('keyboard selection opens the selected suggestion and returns to a visible 
   await page.goto('/picks');
   await expectCollectionReady(page);
   if (isMobile) {
+    await settingsButton(page).click();
     const slider = page.getByRole('slider', { name: '画像サイズ' });
     await slider.press('End');
     await expect(slider).toHaveValue('280');
+    await settingsButton(page).click();
   }
   const input = page.getByRole('combobox');
   const list = page.getByRole('listbox');

@@ -125,8 +125,7 @@ svg {
   min-height: 105px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 24px;
+  padding-inline-end: 44px;
   border-bottom: 1px solid var(--line);
 }
 .site-identity {
@@ -313,6 +312,33 @@ svg {
 }
 .picks-search-field:has(.picks-search[hidden]) {
   display: none;
+}
+.picks-search-shortcut {
+  --frosted-panel-opacity: 92%;
+  position: sticky;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: fit-content;
+  min-height: 48px;
+  margin: 16px auto 0;
+  padding: 0 10px 0 8px;
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+.picks-search-shortcut svg {
+  width: 18px;
+  height: 18px;
+}
+@media (hover: hover) {
+  .picks-search-shortcut:hover {
+    color: var(--accent);
+  }
 }
 .picks-search-icon {
   position: absolute;
@@ -1106,10 +1132,7 @@ svg {
     width: calc(100% - 48px);
   }
   .site-header {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
     min-height: 96px;
-    gap: 16px;
     padding-block: 20px;
   }
   .wordmark {
@@ -1201,9 +1224,6 @@ svg {
 /* 一覧と詳細のヘッダー・フッターは同じ幅を使う。 */
 .site-shell--wide {
   width: calc(100% - 64px);
-}
-.site-shell--collection {
-  padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
 }
 /* 一覧は画面幅を使う。auto-fillで少数カテゴリにも空き列を残す。 */
 .item-grid--adjustable {

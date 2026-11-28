@@ -6,6 +6,7 @@ import ItemCard from '../../components/ItemCard.astro';
 import CollectionSizeControl from '../../components/CollectionSizeControl.astro';
 import CollectionImages from '../../components/CollectionImages.astro';
 import CollectionImagePreload from '../../components/CollectionImagePreload.astro';
+import PicksSearchIcon from '../../components/PicksSearchIcon.astro';
 import { getContent } from '../../lib/content';
 import { collectionSize } from '../../lib/collection-size';
 import { canonicalUrl, thingPath } from '../../lib/paths';
@@ -58,8 +59,10 @@ const initialFilterStyles =
   <Fragment slot="head">
     {structuredData && <script is:inline type="application/ld+json" set:html={structuredData} />}
   </Fragment>
-  <div class="site-shell site-shell--wide site-shell--collection">
-    <SiteHeader pageHeading />
+  <div class="site-shell site-shell--wide">
+    <SiteHeader pageHeading>
+      <CollectionSizeControl slot="settings" />
+    </SiteHeader>
 
     <main id="main">
       <script define:vars={{ collectionSize }} data-size-prepare>
@@ -178,22 +181,9 @@ const initialFilterStyles =
             <span data-count-suffix>, well loved.</span>
           </p>
           <div class="picks-search-field">
-            <svg
-              class="picks-search-icon"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              aria-hidden="true"
-              focusable="false"
-            >
-              <circle cx="10.5" cy="10.5" r="6.5" />
-              <path d="m15.5 15.5 5 5" />
-            </svg>
+            <PicksSearchIcon class="picks-search-icon" />
             <input
+              id="picks-search"
               class="picks-search"
               type="text"
               role="combobox"
@@ -276,6 +266,16 @@ const initialFilterStyles =
             data-search-all-categories
           ></button>
         </div>
+        <button
+          type="button"
+          class="picks-search-shortcut frosted-panel"
+          aria-controls="picks-search"
+          data-picks-search-shortcut
+          hidden
+        >
+          <PicksSearchIcon />
+          <span lang="en">Search</span>
+        </button>
         <script is:inline data-filter-apply>
           (() => {
             // 外部の操作用moduleを待たず、初回の絞り込み・件数を確定する。
@@ -314,7 +314,6 @@ const initialFilterStyles =
     </main>
 
     <SiteFooter />
-    <CollectionSizeControl />
   </div>
 </BaseLayout>
 

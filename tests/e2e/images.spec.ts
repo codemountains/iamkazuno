@@ -1,6 +1,6 @@
 import type { Locator } from '@playwright/test';
 import { sampleThings } from '../../src/data/sample';
-import { test, expect, expectCollectionReady } from './fixtures';
+import { test, expect, expectCollectionReady, settingsButton } from './fixtures';
 
 async function expectImageLoaded(image: Locator) {
   await expect(image).toBeVisible();
@@ -130,6 +130,7 @@ test('size adjustments after reload load newly visible images before the gesture
   await page.evaluate(() => document.fonts.ready);
   const grid = page.locator('[data-item-grid]');
   const images = page.locator('[data-collection-image]');
+  await settingsButton(page).click();
   const slider = page.getByRole('slider', { name: '画像サイズ' });
   const columnCount = () =>
     grid.evaluate((element) => getComputedStyle(element).gridTemplateColumns.split(' ').length);

@@ -1,5 +1,5 @@
 import { sampleThings } from '../../src/data/sample';
-import { test, expect, expectCollectionReady } from './fixtures';
+import { test, expect, expectCollectionReady, settingsButton } from './fixtures';
 
 test('keyboard users can skip the header, filter, open a detail, and return focus to the item', async ({
   page,
@@ -95,6 +95,7 @@ test.describe('without JavaScript', () => {
     await expect(page.locator('[data-item]:visible')).toHaveCount(sampleThings.length);
     await expect(page.getByText('Showing all items.', { exact: true })).toBeVisible();
     await expect(page.locator('[data-filter-navigation]')).toBeHidden();
+    await expect(settingsButton(page)).toBeHidden();
     await expect(page.locator('[data-size-control]')).toBeHidden();
     await expect(page.locator('[data-theme-toggle]')).toBeHidden();
 

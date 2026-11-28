@@ -1,10 +1,19 @@
 import type { Locator } from '@playwright/test';
-import { test, expect, expectCollectionReady } from './fixtures';
+import { test, expect, expectCollectionReady, settingsButton } from './fixtures';
 
 async function columnCount(grid: Locator) {
   return grid.evaluate(
     (element) => getComputedStyle(element).gridTemplateColumns.split(' ').length,
   );
+}
+
+async function expectSettingsAtTopRight(settings: Locator) {
+  await expect(settings).toBeInViewport({ ratio: 1 });
+  const insets = await settings.evaluate((button) => {
+    const { right, top } = button.getBoundingClientRect();
+    return { right: document.documentElement.clientWidth - right, top };
+  });
+  expect(insets).toEqual({ right: 16, top: 16 });
 }
 
 for (const initialTheme of ['light', 'dark'] as const) {
@@ -18,6 +27,7 @@ for (const initialTheme of ['light', 'dark'] as const) {
     const root = page.locator('html');
     const toggle = page.getByRole('switch', { name: 'ダークモード' });
     await expect(root).toHaveAttribute('data-theme', initialTheme);
+    await settingsButton(page).click();
     await expect(toggle).toHaveAttribute('aria-checked', String(initialTheme === 'dark'));
 
     const nextTheme = initialTheme === 'light' ? 'dark' : 'light';
@@ -35,6 +45,8 @@ test('manual theme choice survives navigation and reload, independently of OS ch
   await expectCollectionReady(page);
 
   const toggle = page.getByRole('switch', { name: 'ダークモード' });
+  const settings = settingsButton(page);
+  await settings.click();
   await toggle.click();
   await expect(toggle).toHaveAttribute('aria-checked', 'true');
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
@@ -43,18 +55,24 @@ test('manual theme choice survives navigation and reload, independently of OS ch
   await page.emulateMedia({ colorScheme: 'light' });
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 
+  await settings.click();
   await page.getByRole('link', { name: 'ブーツ', exact: true }).click();
   await expect(page).toHaveURL(/\/picks\/things\/mountain-boots\/?$/);
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await settings.click();
   await expect(toggle).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByRole('slider', { name: '画像サイズ' })).toBeHidden();
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await settings.click();
   await expect(toggle).toHaveAttribute('aria-checked', 'true');
 
   await toggle.click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await settings.click();
   await page.getByRole('link', { name: 'Back to picks', exact: true }).click();
   await expectCollectionReady(page);
+  await settings.click();
   await expect(toggle).toHaveAttribute('aria-checked', 'false');
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
@@ -67,6 +85,8 @@ test('image size controls the actual grid and persists through detail navigation
   await page.goto('/picks');
   await expectCollectionReady(page);
 
+  const settings = settingsButton(page);
+  await settings.click();
   const slider = page.getByRole('slider', { name: '画像サイズ' });
   const grid = page.locator('[data-item-grid]');
   const firstCard = grid.locator('[data-item]').first();
@@ -116,46 +136,74 @@ test('image size controls the actual grid and persists through detail navigation
   else await expect.poll(() => columnCount(grid)).toBeLessThan(smallColumns);
   const largeColumns = await columnCount(grid);
 
+  await settings.click();
   await page.getByRole('link', { name: 'ブーツ', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'ブーツ', exact: true })).toBeVisible();
   await page.getByRole('link', { name: 'Back to picks', exact: true }).click();
   await expectCollectionReady(page);
-  await expect(slider).toHaveValue('280');
   await expect.poll(() => columnCount(grid)).toBe(largeColumns);
+  await settings.click();
+  await expect(slider).toHaveValue('280');
   await page.reload();
   await expectCollectionReady(page);
-  await expect(slider).toHaveValue('280');
   await expect.poll(() => columnCount(grid)).toBe(largeColumns);
+  await settings.click();
+  await expect(slider).toHaveValue('280');
 });
 
-test('image size control becomes usable after scrolling and stays visible for keyboard input', async ({
+test('display settings scroll with the page and support keyboard dismissal', async ({
   page,
   browserName,
-  isMobile,
 }) => {
   await page.goto('/picks');
   await expectCollectionReady(page);
 
-  const control = page.locator('[data-size-control]');
+  const settings = settingsButton(page);
+  const toggle = page.getByRole('switch', { name: 'ダークモード' });
   const slider = page.getByRole('slider', { name: '画像サイズ' });
-  const scroll = (top: number) =>
-    browserName === 'webkit' && isMobile
-      ? page.evaluate((distance) => window.scrollBy({ top: distance, behavior: 'instant' }), top)
-      : page.mouse.wheel(0, top);
-  await scroll(600);
-  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
-  await expect(control).toHaveAttribute('data-scroll-hidden', '');
-  await expect(control).not.toHaveAttribute('data-scroll-hidden');
-  await expect(control).toHaveCSS('opacity', '1');
+  // WebKitの既定設定では、ボタンを含む全コントロールへの移動はOption+Tab。
+  const nextControl = browserName === 'webkit' ? 'Alt+Tab' : 'Tab';
+  await expectSettingsAtTopRight(settings);
+  await expect(settings).toHaveAttribute('aria-expanded', 'false');
+  await expect(toggle).toBeHidden();
+  await expect(slider).toBeHidden();
+  await settings.press(nextControl);
+  await expect(page.locator('[data-filter=""]')).toBeFocused();
 
-  await slider.press('Home');
+  await settings.press('Enter');
+  await expect(settings).toHaveAttribute('aria-expanded', 'true');
+  await page.keyboard.press(nextControl);
+  await expect(toggle).toBeFocused();
+  await page.keyboard.press(nextControl);
   await expect(slider).toBeFocused();
-  await expect(slider).toHaveValue('88');
-  const beforeScroll = await page.evaluate(() => window.scrollY);
-  await scroll(300);
-  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(beforeScroll);
-  await expect(control).not.toHaveAttribute('data-scroll-hidden');
-  await expect(control).toHaveCSS('opacity', '1');
-  await slider.press('ArrowRight');
-  await expect(slider).toHaveValue('96');
+  await expect(slider).toBeInViewport({ ratio: 1 });
+  await page.keyboard.press('ArrowRight');
+  await expect(slider).toHaveValue('248');
+  await page.keyboard.press('Escape');
+  await expect(settings).toHaveAttribute('aria-expanded', 'false');
+  await expect(settings).toBeFocused();
+  await expect(slider).toBeHidden();
+
+  await settings.click();
+  await expect(slider).toHaveValue('248');
+  await page.getByRole('group', { name: 'カテゴリで絞り込む' }).getByRole('button').first().click();
+  await expect(settings).toHaveAttribute('aria-expanded', 'false');
+
+  await page.evaluate(() => window.scrollTo({ top: 600, behavior: 'instant' }));
+  await expect(settings).not.toBeInViewport();
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+  await expectSettingsAtTopRight(settings);
+});
+
+test('home, notes, detail and not-found pages offer theme settings in the same corner', async ({
+  page,
+}) => {
+  for (const path of ['/', '/notes', '/picks/things/mountain-boots', '/missing-settings-test']) {
+    await page.goto(path);
+    const settings = settingsButton(page);
+    await expectSettingsAtTopRight(settings);
+    await settings.click();
+    await expect(page.getByRole('switch', { name: 'ダークモード' })).toBeVisible();
+    await expect(page.getByRole('slider', { name: '画像サイズ' })).toBeHidden();
+  }
 });

@@ -1,9 +1,12 @@
 import { test as base, expect, type Page } from '@playwright/test';
 
+export function settingsButton(page: Page) {
+  return page.getByRole('button', { name: '表示設定', exact: true });
+}
+
 // DOMが表示されても操作用moduleの初期化は終わっていない場合がある。
 export async function expectCollectionReady(page: Page) {
   await expect(page.getByRole('group', { name: 'カテゴリで絞り込む' })).toBeVisible();
-  await expect(page.getByRole('slider', { name: '画像サイズ' })).toBeVisible();
   await expect(page.locator('[data-size-control]')).toHaveAttribute('data-size-ready', 'true');
 }
 

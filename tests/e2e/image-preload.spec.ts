@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 import { Parser } from 'htmlparser2';
 import sharp from 'sharp';
 import { sampleThings } from '../../src/data/sample';
-import { test, expect, expectCollectionReady } from './fixtures';
+import { test, expect, expectCollectionReady, settingsButton } from './fixtures';
 
 const cdnOrigin = 'https://images.microcms-assets.io';
 const imageUrl = (id: string) => `${cdnOrigin}/assets/preload-test/${id}.png`;
@@ -80,6 +80,7 @@ async function installCdnImages(page: Page) {
 }
 
 async function inputSizeWithoutCommit(page: Page, size: number) {
+  await settingsButton(page).click();
   await page
     .getByRole('slider', { name: '画像サイズ' })
     .evaluate(async (element: HTMLInputElement, value) => {
