@@ -462,21 +462,6 @@ svg {
     background: var(--suggestion-highlight);
   }
 }
-.results-label {
-  display: flex;
-  max-width: 30%;
-  font-family: var(--font-mono);
-  font-size: var(--font-size-caption);
-  line-height: 1.5;
-  color: var(--muted);
-  white-space: nowrap;
-  margin: 0;
-}
-.results-label [data-count-prefix] {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: pre;
-}
 .search-error {
   display: flex;
   align-items: center;
@@ -1088,13 +1073,6 @@ svg {
   }
   .picks-suggestions {
     width: 100%;
-  }
-  .results-label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
   }
   .footer-main {
     gap: 20px;

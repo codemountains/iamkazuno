@@ -41,10 +41,7 @@ test('the grid resolves without fragments and only open suggestions load details
   expect(fragments).toHaveLength(5);
 });
 
-test('search is laid out with the filters and count, and is loaded on demand', async ({
-  page,
-  isMobile,
-}) => {
+test('search is laid out with the filters and is loaded on demand', async ({ page, isMobile }) => {
   const searchRequests: string[] = [];
   page.on('request', (request) => {
     if (new URL(request.url()).pathname.startsWith('/pagefind/'))
@@ -56,26 +53,25 @@ test('search is laid out with the filters and count, and is loaded on demand', a
   const input = page.getByRole('combobox');
   const count = page.getByRole('status');
   await expect(input).toHaveAccessibleName(/.+/);
-  const [filterRect, inputRect, countRect] = await Promise.all([
+  const [filterRect, inputRect, countRect, toolbarRect] = await Promise.all([
     filters.boundingBox(),
     input.boundingBox(),
     count.boundingBox(),
+    page.locator('.collection-toolbar').boundingBox(),
   ]);
+  expect(countRect!.width).toBeLessThanOrEqual(1);
+  expect(countRect!.height).toBeLessThanOrEqual(1);
+  await expect.poll(() => count.ariaSnapshot()).toContain(`${sampleThings.length} things`);
   if (isMobile) {
-    const toolbarRect = await page.locator('.collection-toolbar').boundingBox();
     expect(filterRect!.y + filterRect!.height).toBeLessThanOrEqual(inputRect!.y);
     expect(inputRect!.x).toBeCloseTo(toolbarRect!.x, 0);
     expect(inputRect!.width).toBeCloseTo(toolbarRect!.width, 0);
-    expect(countRect!.width).toBeLessThanOrEqual(1);
-    expect(countRect!.height).toBeLessThanOrEqual(1);
-    await expect.poll(() => count.ariaSnapshot()).toContain(`${sampleThings.length} things`);
   } else {
-    await expect(count).toBeInViewport();
     expect(
-      Math.abs(inputRect!.y + inputRect!.height / 2 - (countRect!.y + countRect!.height / 2)),
+      Math.abs(inputRect!.y + inputRect!.height / 2 - (filterRect!.y + filterRect!.height / 2)),
     ).toBeLessThan(5);
-    expect(filterRect!.x + filterRect!.width).toBeLessThanOrEqual(countRect!.x + 1);
-    expect(countRect!.x + countRect!.width).toBeLessThanOrEqual(inputRect!.x + 1);
+    expect(filterRect!.x + filterRect!.width).toBeLessThanOrEqual(inputRect!.x + 1);
+    expect(inputRect!.x + inputRect!.width).toBeCloseTo(toolbarRect!.x + toolbarRect!.width, 0);
   }
   await filters.locator('[data-filter="mountain"]').click();
   expect(searchRequests).toEqual([]);
