@@ -28,6 +28,7 @@ for (const initialTheme of ['light', 'dark'] as const) {
     const toggle = page.getByRole('switch', { name: 'ダークモード' });
     await expect(root).toHaveAttribute('data-theme', initialTheme);
     await settingsButton(page).click();
+    await expect(page.getByText('Appearance', { exact: true })).toBeVisible();
     await expect(toggle).toHaveAttribute('aria-checked', String(initialTheme === 'dark'));
 
     const nextTheme = initialTheme === 'light' ? 'dark' : 'light';

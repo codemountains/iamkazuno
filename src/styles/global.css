@@ -314,7 +314,6 @@ svg {
   display: none;
 }
 .picks-search-shortcut {
-  --frosted-panel-opacity: 92%;
   position: sticky;
   bottom: max(18px, env(safe-area-inset-bottom));
   z-index: 4;
@@ -327,9 +326,15 @@ svg {
   margin: 16px auto 0;
   padding: 0 10px 0 8px;
   border-radius: 999px;
-  color: var(--ink);
+  color: color-mix(in srgb, var(--ink) 65%, var(--accent));
   font-size: 0.9375rem;
   cursor: pointer;
+}
+.picks-search-shortcut[data-scrolling] {
+  visibility: hidden;
+}
+.picks-search-shortcut > * {
+  filter: drop-shadow(0 0 1px var(--paper));
 }
 .picks-search-shortcut svg {
   width: 18px;
@@ -337,7 +342,7 @@ svg {
 }
 @media (hover: hover) {
   .picks-search-shortcut:hover {
-    color: var(--accent);
+    color: color-mix(in srgb, var(--ink) 85%, var(--accent));
   }
 }
 .picks-search-icon {

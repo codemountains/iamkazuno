@@ -108,6 +108,8 @@ export function initCollectionPrefetch(): void {
     )
       return;
     running = true;
+    // ブラウザの再読み込みでは navigate が発火せず、pagehide より先に fetch が拒否されることがある。
+    window.addEventListener('beforeunload', leavePage);
     for (const anchor of anchors) observer.observe(anchor);
   }
 
@@ -121,6 +123,7 @@ export function initCollectionPrefetch(): void {
 
   function leavePage(): void {
     pageActive = false;
+    window.removeEventListener('beforeunload', leavePage);
     stop();
     for (const controller of active) controller.abort();
   }

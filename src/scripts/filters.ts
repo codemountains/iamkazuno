@@ -8,6 +8,18 @@ function initSearchShortcut(input: HTMLInputElement) {
   const shortcut = document.querySelector<HTMLButtonElement>('[data-picks-search-shortcut]');
   if (!shortcut) return;
 
+  let scrollTimer: number;
+  const onScrollStop = () => shortcut.removeAttribute('data-scrolling');
+  window.addEventListener(
+    'scroll',
+    () => {
+      shortcut.toggleAttribute('data-scrolling', true);
+      window.clearTimeout(scrollTimer);
+      scrollTimer = window.setTimeout(onScrollStop, 180);
+    },
+    { passive: true },
+  );
+
   if (typeof IntersectionObserver === 'function') {
     // 低い画面では検索欄が下に隠れた状態から、1回のスクロールで上端を越える。
     // 下側も監視範囲に含め、検索欄が上端を通過したときに通知を受ける。

@@ -20,6 +20,42 @@ test('the Search shortcut appears when a single scroll skips the field on a shor
   await expect(shortcut).toBeHidden();
 });
 
+test('the Search shortcut stays hidden while scrolling and returns after scrolling stops', async ({
+  page,
+}) => {
+  await page.clock.install({ time: new Date('2026-01-01T00:00:00Z') });
+  await page.clock.pauseAt(new Date('2026-01-01T00:01:00Z'));
+  await page.goto('/picks');
+  await expectCollectionReady(page);
+  const shortcut = page.getByRole('button', { name: 'Search', exact: true });
+  const scrollTo = (top: number) =>
+    page.evaluate(
+      (top) =>
+        new Promise<void>((resolve) => {
+          window.addEventListener('scroll', () => resolve(), { once: true });
+          window.scrollTo({ top, behavior: 'instant' });
+        }),
+      top,
+    );
+
+  await scrollTo(500);
+  await page.clock.runFor(500);
+  await expect(shortcut).toBeVisible();
+
+  await scrollTo(600);
+  await expect(shortcut).toBeHidden();
+  await page.clock.runFor(120);
+  await scrollTo(700);
+  await page.clock.runFor(120);
+  await expect(shortcut).toBeHidden();
+  await page.clock.runFor(500);
+  await expect(shortcut).toBeVisible();
+
+  await scrollTo(0);
+  await page.clock.runFor(500);
+  await expect(shortcut).toBeHidden();
+});
+
 test('the floating Search button returns to the existing query and category', async ({
   page,
   isMobile,
