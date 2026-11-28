@@ -308,7 +308,7 @@ svg {
 }
 .picks-search-field {
   position: relative;
-  width: clamp(140px, 17vw, 225px);
+  width: clamp(14rem, 25vw, 19rem);
   min-width: 0;
 }
 .picks-search-field:has(.picks-search[hidden]) {
