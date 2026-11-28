@@ -550,6 +550,26 @@ test('fuzzy matches show the registered model and the matching brand', async ({ 
   await expect(first.locator('.picks-suggestion-brand mark')).toHaveText('SAMPLE');
 });
 
+test('search suggestions show product thumbnails only for illustrated picks', async ({ page }) => {
+  await page.goto('/picks?q=25-26');
+  const input = page.getByRole('combobox');
+  await expect(page.locator('[data-filters]')).toHaveAttribute('data-counts', 'matches');
+  await expect(page.locator('#picks-suggestions img[src]:not([src^="data:"])')).toHaveCount(0);
+
+  await input.focus();
+  const thumbnail = page.getByRole('option', { name: /スキー板 25-26/ }).locator('img');
+  await expect(thumbnail).toBeVisible();
+  await expect(thumbnail).toHaveAttribute('alt', '');
+  await expect
+    .poll(() => thumbnail.evaluate((img: HTMLImageElement) => img.naturalWidth))
+    .toBeGreaterThan(1);
+
+  await input.fill('画像未設定');
+  const unillustrated = page.getByRole('option', { name: /画像未設定のサンプル/ });
+  await expect(unillustrated).toBeVisible();
+  await expect(unillustrated.locator('img')).toHaveCount(0);
+});
+
 test('description-only matches show a single-line excerpt with the original wording', async ({
   page,
 }) => {

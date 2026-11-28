@@ -1,6 +1,31 @@
 import type { PickSearchEvidence, PickSearchHit } from '../lib/picks-search';
 import { getPickSearchMatch, type MatchPart } from '../lib/picks-search-match';
+import { getThingImageSources } from '../lib/thing-image';
 import { rememberCollectionDeparture } from './picks-navigation';
+
+function addThumbnail(option: HTMLAnchorElement, link: HTMLAnchorElement) {
+  const cardImage = link.querySelector<HTMLImageElement>('[data-collection-image]');
+  if (!cardImage) return;
+
+  const thumbnail = new Image(44, 44);
+  thumbnail.className = 'picks-suggestion-thumbnail';
+  thumbnail.alt = '';
+  thumbnail.decoding = 'async';
+  thumbnail.addEventListener('error', () => thumbnail.remove(), { once: true });
+  if (cardImage.currentSrc && !cardImage.currentSrc.startsWith('data:')) {
+    // 一覧で既に選ばれた画像は、候補でも同じURLを再利用する。
+    thumbnail.src = cardImage.currentSrc;
+  } else {
+    const url = cardImage.dataset.imageSrc ?? cardImage.src;
+    const sources = getThingImageSources({ url, width: Number(cardImage.getAttribute('width')) });
+    if (sources) {
+      thumbnail.sizes = `${thumbnail.width}px`;
+      thumbnail.srcset = sources.webpSrcset;
+    }
+    thumbnail.src = sources?.src ?? url;
+  }
+  option.prepend(thumbnail);
+}
 
 function matchLine(parts: readonly MatchPart[], className: string) {
   const line = document.createElement('span');
@@ -87,6 +112,9 @@ export function initSearchSuggestions(input: HTMLInputElement, panel: HTMLElemen
       option.tabIndex = -1;
       option.setAttribute('role', 'option');
       option.setAttribute('aria-selected', 'false');
+      const copy = document.createElement('span');
+      copy.className = 'picks-suggestion-copy';
+      option.append(copy);
       const variant = link.querySelector('.item-copy .thing-variant')?.textContent?.trim();
       const brand = link.querySelector('.item-brand')?.textContent?.trim();
       const hit = hits.get(link.pathname);
@@ -95,22 +123,22 @@ export function initSearchSuggestions(input: HTMLInputElement, panel: HTMLElemen
         const heading = document.createElement('span');
         heading.append(matchLine(match.title, 'picks-suggestion-title'));
         if (variant) heading.append(' ', matchLine(match.variant, 'thing-variant'));
-        option.replaceChildren(heading);
-        if (brand) option.append(' ', matchLine(match.brand, 'picks-suggestion-brand'));
+        copy.replaceChildren(heading);
+        if (brand) copy.append(' ', matchLine(match.brand, 'picks-suggestion-brand'));
         if (match.detail) {
           const detail = matchLine(match.detail.parts, 'picks-suggestion-detail');
           detail.dataset.matchKind = match.detail.kind;
-          option.append(' ', detail);
+          copy.append(' ', detail);
         }
       };
       render(hit);
-      if (hit) {
-        pendingDetails.push(async () => {
-          const evidence = await hit.loadEvidence();
-          // 入力やカテゴリが変わった後で届いた詳細は、その時点の候補に反映しない。
-          if (option.isConnected) render(evidence);
-        });
-      }
+      pendingDetails.push(async () => {
+        addThumbnail(option, link);
+        if (!hit) return;
+        const evidence = await hit.loadEvidence();
+        // 入力やカテゴリが変わった後で届いた詳細は、その時点の候補に反映しない。
+        if (option.isConnected) render(evidence);
+      });
       option.addEventListener('click', (event) => rememberCollectionDeparture(event, link));
       options.push(option);
       row.append(option);
