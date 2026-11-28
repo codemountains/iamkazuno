@@ -172,13 +172,7 @@ const initialFilterStyles =
           <noscript>
             <p class="no-script-note">Showing all items.</p>
           </noscript>
-          <p
-            class="results-label"
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
-            data-results-label
-          >
+          <p class="sr-only" role="status" aria-live="polite" aria-atomic="true" data-results-label>
             <span data-count-prefix></span>
             <span data-result-count>{String(things.length).padStart(2, '0')} things</span>
             <span data-count-suffix>, well loved.</span>
