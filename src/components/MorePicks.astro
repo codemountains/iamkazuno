@@ -1,5 +1,6 @@
 ---
 import type { Thing } from '../types/content';
+import DotDivider from './DotDivider.astro';
 import ItemCard from './ItemCard.astro';
 
 interface Props {
@@ -10,6 +11,7 @@ const { things } = Astro.props;
 
 {things.length > 0 && (
   <section class="more-picks" aria-labelledby="more-picks-title" data-more-picks>
+    <DotDivider />
     <h2 class="more-picks-heading" id="more-picks-title">
       More picks
     </h2>

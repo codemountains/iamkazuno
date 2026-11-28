@@ -873,12 +873,10 @@ svg {
 }
 .more-picks {
   margin-top: 64px;
-  padding-top: 28px;
-  border-top: 1px solid var(--line);
   min-width: 0;
 }
 .more-picks-heading {
-  margin: 0 0 24px;
+  margin: 28px 0 24px;
   font-size: 20px;
   line-height: 1.4;
   font-weight: 500;
@@ -1213,10 +1211,9 @@ svg {
   }
   .more-picks {
     margin-top: 40px;
-    padding-top: 24px;
   }
   .more-picks-heading {
-    margin-bottom: 18px;
+    margin-block: 24px 18px;
   }
   .more-picks-controls {
     gap: 20px;

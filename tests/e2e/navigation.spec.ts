@@ -73,7 +73,7 @@ test('home links to the collection and item details with loaded images and descr
   ).toBeVisible();
 
   const categories = page.getByRole('list', { name: 'カテゴリ', exact: true });
-  await expect(categories).toHaveText('mountain');
+  await expect(categories).toHaveText('#mountain');
   await expect(categories.getByRole('link')).toHaveCount(0);
   await expect(categories.getByRole('button')).toHaveCount(0);
 
