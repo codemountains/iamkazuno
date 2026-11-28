@@ -4,6 +4,7 @@ import type { Note } from '../../types/notes';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SiteHeader from '../../components/SiteHeader.astro';
 import SiteFooter from '../../components/SiteFooter.astro';
+import DotDivider from '../../components/DotDivider.astro';
 import NoteDate from '../../components/NoteDate.astro';
 import NotePhotos from '../../components/NotePhotos.astro';
 import { getNotes } from '../../lib/notes';
@@ -66,11 +67,7 @@ const { note, newer, older, source, listPage } = Astro.props;
       {note.bodyHtml && (
         <>
           <div class="note-body rich-text" set:html={note.bodyHtml} />
-          <div class="note-end" aria-hidden="true">
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
+          <DotDivider class="note-end" />
         </>
       )}
       {note.photoSection && <NotePhotos section={note.photoSection} />}

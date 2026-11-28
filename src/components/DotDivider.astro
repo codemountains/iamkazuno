@@ -1,0 +1,25 @@
+---
+interface Props {
+  class?: string;
+}
+---
+
+<div class:list={['dot-divider', Astro.props.class]} aria-hidden="true">
+  <span></span>
+  <span></span>
+  <span></span>
+</div>
+
+<style>
+  .dot-divider {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+  }
+  .dot-divider span {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+</style>
