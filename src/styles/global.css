@@ -868,10 +868,6 @@ svg {
   max-width: 100%;
   overflow-wrap: anywhere;
 }
-.detail-description + .detail-categories {
-  border-top: 1px solid var(--line);
-  padding-top: 16px;
-}
 .detail-description {
   min-width: 0;
 }

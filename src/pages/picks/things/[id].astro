@@ -4,6 +4,7 @@ import type { Thing, Content } from '../../../types/content';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import SiteHeader from '../../../components/SiteHeader.astro';
 import SiteFooter from '../../../components/SiteFooter.astro';
+import DotDivider from '../../../components/DotDivider.astro';
 import ThingImage from '../../../components/ThingImage.astro';
 import ThingName from '../../../components/ThingName.astro';
 import MorePicks from '../../../components/MorePicks.astro';
@@ -70,6 +71,7 @@ const description =
               <div class="rich-text" set:html={thing.descriptionHtml} />
             </div>
           )}
+          {thing.descriptionHtml && thing.categories.length > 0 && <DotDivider />}
           {thing.categories.length > 0 && (
             <ul class="detail-categories" aria-label="カテゴリ">
               {thing.categories.map((category) => (
