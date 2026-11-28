@@ -3,9 +3,14 @@ import test, { type TestContext } from 'node:test';
 import { initCollectionPrefetch } from '../src/scripts/collection-prefetch';
 
 class Target {
-  private listeners = new Map<string, Array<(event: Record<string, unknown>) => void>>();
+  private listeners = new Map<string, Set<(event: Record<string, unknown>) => void>>();
   addEventListener(type: string, listener: (event: Record<string, unknown>) => void) {
-    this.listeners.set(type, [...(this.listeners.get(type) ?? []), listener]);
+    const listeners = this.listeners.get(type) ?? new Set();
+    listeners.add(listener);
+    this.listeners.set(type, listeners);
+  }
+  removeEventListener(type: string, listener: (event: Record<string, unknown>) => void) {
+    this.listeners.get(type)?.delete(listener);
   }
   emit(type: string, event: Record<string, unknown> = {}) {
     for (const listener of this.listeners.get(type) ?? [])
@@ -421,6 +426,16 @@ test('document navigation aborts prefetch and stops refilling slots before pageh
   h.visibility(false);
   h.window.emit('online');
   assert.equal(h.requests.length, 2);
+  assert.equal(h.observed.size, 0);
+});
+
+test('browser reload clears viewport timers before a new prefetch can start', (t) => {
+  const h = setup(t);
+  h.intersect();
+  h.advance(299);
+  h.window.emit('beforeunload');
+  h.advance(1);
+  assert.equal(h.requests.length, 0);
   assert.equal(h.observed.size, 0);
 });
 
