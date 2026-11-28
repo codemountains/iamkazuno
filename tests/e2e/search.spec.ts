@@ -650,6 +650,28 @@ for (const [asset, requestUrl] of [
   });
 }
 
+test('a detail category link switches the category while keeping the search results filtered', async ({
+  page,
+}) => {
+  const query = '行動食';
+  const itemName = '複数カテゴリのサンプル';
+  await page.goto('/picks?category=mountain&q=' + encodeURIComponent(query));
+  await expect(page.locator('[data-filters]')).toHaveAttribute('data-counts', 'matches');
+  await page.getByRole('link', { name: itemName, exact: true }).click();
+  await page.getByRole('link', { name: '#myog', exact: true }).click();
+
+  await expect(page).toHaveURL(
+    (url) =>
+      url.pathname === '/picks' &&
+      url.searchParams.get('category') === 'myog' &&
+      url.searchParams.get('q') === query,
+  );
+  await expect(page.getByRole('combobox')).toHaveValue(query);
+  await expect(page.locator('[data-filter="myog"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(visibleLinks(page)).toHaveCount(1);
+  await expect(visibleLinks(page)).toHaveAccessibleName(itemName);
+});
+
 test('category counts follow the query and a category with zero results can show all matches', async ({
   page,
 }) => {

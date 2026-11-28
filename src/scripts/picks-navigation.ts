@@ -287,6 +287,15 @@ export function initDetailNavigation() {
     '',
   );
   link.href = position?.listUrl ?? collectionPath;
+  const query = new URLSearchParams(link.search).get('q');
+  if (query) {
+    const categoryLinks = document.querySelectorAll<HTMLAnchorElement>('[data-category-link]');
+    for (const categoryLink of categoryLinks) {
+      const target = new URL(categoryLink.href);
+      target.searchParams.set('q', query);
+      categoryLink.href = target.pathname + target.search;
+    }
+  }
   link.addEventListener('click', (event) => {
     if (!isSameTabClick(event, link)) return;
     takeStoredPosition(returnKey);

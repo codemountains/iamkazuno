@@ -858,9 +858,7 @@ svg {
   list-style: none;
   margin: 0;
   padding: 0;
-  color: var(--muted);
   font-family: var(--font-mono);
-  font-size: var(--font-size-caption);
   line-height: 1.6;
 }
 .detail-categories li {
@@ -955,8 +953,11 @@ svg {
 .more-picks-track > .item {
   scroll-snap-align: start;
 }
+.detail-categories,
 .rich-text {
   font-size: var(--font-size-body);
+}
+.rich-text {
   line-height: 1.85;
   overflow-wrap: anywhere;
 }
@@ -975,6 +976,7 @@ svg {
   font-weight: 600;
   margin: 2em 0 0.8em;
 }
+.detail-categories a,
 .rich-text a {
   color: var(--accent);
   text-decoration: underline;
@@ -1134,6 +1136,7 @@ svg {
   .detail-heading h1 {
     font-size: clamp(28px, 8vw, 32px);
   }
+  .detail-categories,
   .rich-text {
     font-size: 0.9375rem;
   }
