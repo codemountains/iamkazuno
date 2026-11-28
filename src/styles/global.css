@@ -422,7 +422,7 @@ svg {
   z-index: 5;
   top: calc(100% + 6px);
   right: 0;
-  width: max(100%, 19rem);
+  width: max(100%, 22rem);
   display: flex;
   flex-direction: column;
   max-height: min(26rem, 55dvh);
@@ -456,15 +456,27 @@ svg {
   outline-offset: -3px;
 }
 .picks-suggestions [role='option'] {
-  display: grid;
-  align-content: center;
-  gap: 2px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   min-height: 44px;
   padding: 8px;
   border-radius: 8px;
   font-size: var(--font-size-label);
   line-height: 1.4;
   overflow-wrap: anywhere;
+}
+.picks-suggestion-thumbnail {
+  flex: none;
+  object-fit: contain;
+  padding: 3px;
+  border-radius: 5px;
+  background: var(--card);
+}
+.picks-suggestion-copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
 }
 .picks-suggestion-brand {
   color: var(--suggestion-secondary);
