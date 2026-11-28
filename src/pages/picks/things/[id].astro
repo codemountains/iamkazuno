@@ -10,7 +10,7 @@ import MorePicks from '../../../components/MorePicks.astro';
 import { getContent } from '../../../lib/content';
 import { getMorePicks } from '../../../lib/more-picks';
 import { excerptFromHtml } from '../../../lib/rich-text';
-import { collectionPath } from '../../../lib/paths';
+import { categoryPath, collectionPath } from '../../../lib/paths';
 
 export const getStaticPaths = (async () => {
   const content = await getContent();
@@ -73,7 +73,11 @@ const description =
           {thing.categories.length > 0 && (
             <ul class="detail-categories" aria-label="カテゴリ">
               {thing.categories.map((category) => (
-                <li>#{category.name}</li>
+                <li>
+                  <a href={categoryPath(category.id)} data-category-link>
+                    #{category.name}
+                  </a>
+                </li>
               ))}
             </ul>
           )}

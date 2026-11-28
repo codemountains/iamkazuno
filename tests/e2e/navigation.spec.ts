@@ -68,19 +68,23 @@ test('home links to the collection and item details with loaded images and descr
   await expect(page).toHaveURL('/picks/things/mountain-boots');
   await expect(page.getByRole('heading', { level: 1, name: 'ブーツ', exact: true })).toBeVisible();
   await expectImageLoaded(page.locator('.detail-image-wrap img'));
-  await expect(
-    page.getByText('いつもの登山道から、まだ歩いたことのない稜線へ。', { exact: true }),
-  ).toBeVisible();
+  const description = page.getByText('いつもの登山道から、まだ歩いたことのない稜線へ。', {
+    exact: true,
+  });
+  await expect(description).toBeVisible();
 
   const categories = page.getByRole('list', { name: 'カテゴリ', exact: true });
-  await expect(categories).toHaveText('#mountain');
-  await expect(categories.getByRole('link')).toHaveCount(0);
-  await expect(categories.getByRole('button')).toHaveCount(0);
+  const tag = categories.getByRole('link', { name: '#mountain', exact: true });
+  await expect(tag).toHaveCSS(
+    'font-size',
+    await description.evaluate((p) => getComputedStyle(p).fontSize),
+  );
 
-  await page.getByRole('link', { name: 'Back to picks' }).click();
-  await expect(page).toHaveURL('/picks');
+  await tag.click();
+  await expect(page).toHaveURL('/picks?category=mountain');
   await expectCollectionReady(page);
-  await expect(page.locator('[data-filter=""]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('[data-filter="mountain"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('combobox')).toHaveValue('');
 });
 
 test('returning after a detail reload restores the category and item position', async ({
